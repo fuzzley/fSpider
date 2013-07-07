@@ -1,0 +1,300 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Fuzzley - Spider Solitaire</title>
+    <link href="content/site.css" rel="stylesheet" />
+    <link href="content/spider.css" rel="stylesheet" />
+</head>
+<body>
+    <div id="canvas-wrap">
+    </div>
+    <div id="statistics-container">
+        <div id="score-wrap" class="modal-wrap">
+            <div id="score-display">Score: 0</div>
+        </div>
+        <div id="moves-wrap" class="modal-wrap">
+            <div id="moves-display">Moves: 0</div>
+        </div>
+        <div id="time-ellapsed-wrap" class="modal-wrap">
+            <div id="time-ellapsed-display">Time: 00:00</div>
+        </div>
+    </div>
+    <div id="controls-container" class="modal-wrap">
+        <button id="new-game-btn">New Game</button>
+        <select id="difficulty-select">
+            <option>1 Suit</option>
+            <option>2 Suits</option>
+            <option>4 Suits</option>
+        </select>
+        <button id="undo-btn" disabled="disabled">Undo (Ctrl+Z)</button>
+        <button id="redo-btn" disabled="disabled">Redo (Ctrl+Y)</button>
+    </div>
+    <div id="canvas-resources">
+        <!-- cards-img-suitVal(clubs=0,hearts,spades,diamonds=3)-typeVal(ace=0..king=12) -->
+        <!-- aces -->
+        <img id="card-img-0-0" src="content/art_assets/cards/card_0_0.png" />
+        <img id="card-img-1-0" src="content/art_assets/cards/card_1_0.png" />
+        <img id="card-img-2-0" src="content/art_assets/cards/card_2_0.png" />
+        <img id="card-img-3-0" src="content/art_assets/cards/card_3_0.png" />
+        <!-- twos -->
+        <img id="card-img-0-1" src="content/art_assets/cards/card_0_1.png" />
+        <img id="card-img-1-1" src="content/art_assets/cards/card_1_1.png" />
+        <img id="card-img-2-1" src="content/art_assets/cards/card_2_1.png" />
+        <img id="card-img-3-1" src="content/art_assets/cards/card_3_1.png" />
+        <!-- threes -->
+        <img id="card-img-0-2" src="content/art_assets/cards/card_0_2.png" />
+        <img id="card-img-1-2" src="content/art_assets/cards/card_1_2.png" />
+        <img id="card-img-2-2" src="content/art_assets/cards/card_2_2.png" />
+        <img id="card-img-3-2" src="content/art_assets/cards/card_3_2.png" />
+        <!-- fours -->
+        <img id="card-img-0-3" src="content/art_assets/cards/card_0_3.png" />
+        <img id="card-img-1-3" src="content/art_assets/cards/card_1_3.png" />
+        <img id="card-img-2-3" src="content/art_assets/cards/card_2_3.png" />
+        <img id="card-img-3-3" src="content/art_assets/cards/card_3_3.png" />
+        <!-- fives -->
+        <img id="card-img-0-4" src="content/art_assets/cards/card_0_4.png" />
+        <img id="card-img-1-4" src="content/art_assets/cards/card_1_4.png" />
+        <img id="card-img-2-4" src="content/art_assets/cards/card_2_4.png" />
+        <img id="card-img-3-4" src="content/art_assets/cards/card_3_4.png" />
+        <!-- sixes -->
+        <img id="card-img-0-5" src="content/art_assets/cards/card_0_5.png" />
+        <img id="card-img-1-5" src="content/art_assets/cards/card_1_5.png" />
+        <img id="card-img-2-5" src="content/art_assets/cards/card_2_5.png" />
+        <img id="card-img-3-5" src="content/art_assets/cards/card_3_5.png" />
+        <!-- sevens -->
+        <img id="card-img-0-6" src="content/art_assets/cards/card_0_6.png" />
+        <img id="card-img-1-6" src="content/art_assets/cards/card_1_6.png" />
+        <img id="card-img-2-6" src="content/art_assets/cards/card_2_6.png" />
+        <img id="card-img-3-6" src="content/art_assets/cards/card_3_6.png" />
+        <!-- eights -->
+        <img id="card-img-0-7" src="content/art_assets/cards/card_0_7.png" />
+        <img id="card-img-1-7" src="content/art_assets/cards/card_1_7.png" />
+        <img id="card-img-2-7" src="content/art_assets/cards/card_2_7.png" />
+        <img id="card-img-3-7" src="content/art_assets/cards/card_3_7.png" />
+        <!-- nines -->
+        <img id="card-img-0-8" src="content/art_assets/cards/card_0_8.png" />
+        <img id="card-img-1-8" src="content/art_assets/cards/card_1_8.png" />
+        <img id="card-img-2-8" src="content/art_assets/cards/card_2_8.png" />
+        <img id="card-img-3-8" src="content/art_assets/cards/card_3_8.png" />
+        <!-- tens -->
+        <img id="card-img-0-9" src="content/art_assets/cards/card_0_9.png" />
+        <img id="card-img-1-9" src="content/art_assets/cards/card_1_9.png" />
+        <img id="card-img-2-9" src="content/art_assets/cards/card_2_9.png" />
+        <img id="card-img-3-9" src="content/art_assets/cards/card_3_9.png" />
+        <!-- jacks -->
+        <img id="card-img-0-10" src="content/art_assets/cards/card_0_10.png" />
+        <img id="card-img-1-10" src="content/art_assets/cards/card_1_10.png" />
+        <img id="card-img-2-10" src="content/art_assets/cards/card_2_10.png" />
+        <img id="card-img-3-10" src="content/art_assets/cards/card_3_10.png" />
+        <!-- queens -->
+        <img id="card-img-0-11" src="content/art_assets/cards/card_0_11.png" />
+        <img id="card-img-1-11" src="content/art_assets/cards/card_1_11.png" />
+        <img id="card-img-2-11" src="content/art_assets/cards/card_2_11.png" />
+        <img id="card-img-3-11" src="content/art_assets/cards/card_3_11.png" />
+        <!-- kings -->
+        <img id="card-img-0-12" src="content/art_assets/cards/card_0_12.png" />
+        <img id="card-img-1-12" src="content/art_assets/cards/card_1_12.png" />
+        <img id="card-img-2-12" src="content/art_assets/cards/card_2_12.png" />
+        <img id="card-img-3-12" src="content/art_assets/cards/card_3_12.png" />
+
+        <!-- back of cards -->
+        <!-- black bg (h = horizontal, v = vertical) -->
+        <img id="card-img-b1fh" src="content/art_assets/cards/b1_v.png" />
+        <!-- red bg (h = horizontal, v = vertical) -->
+        <img id="card-img-b2fh" src="content/art_assets/cards/b2_v.png" />
+
+        <!-- miscellaneous -->
+        <!-- tableau pile place holder (h = horizontal, v = vertical) -->
+        <img id="card-img-ph1-v" src="content/art_assets/cards/card_ph1_v.png" />
+    </div>
+
+    <script src="scripts/jquery/jquery-2.0.3.min.js"></script>
+    <script src="scripts/kinetic/kinetic-v4.5.4.min.js"></script>
+    <script src="scripts/howler/howler-1.1.7.min.js"></script>
+
+    <script src="scripts/spider/fSpider.utils.js"></script>
+    <script src="scripts/spider/fSpider.history.js"></script>
+    <script src="scripts/spider/fSpider.card.js"></script>
+    <script src="scripts/spider/fSpider.card.deck.js"></script>
+    <script src="scripts/spider/fSpider.card.groups.js"></script>
+    <script src="scripts/spider/fSpider.board.js"></script>
+
+    <script type="text/javascript">
+        var fSpider = fSpider || {};
+        fSpider.board = {};
+        fSpider.deck = {};
+        fSpider.stage = {};
+        fSpider.ctrlKeyCode = 17;
+        fSpider.ctrlDown = false;
+        fSpider.undoKey = 'Z';
+        fSpider.redoKey = 'Y';
+
+        fSpider.init = function () {
+            fSpider.initGameControls();
+
+            //prepare stage
+            var canvasWrap = $('#canvas-wrap');
+            fSpider.stage = new Kinetic.Stage({
+                container: 'canvas-wrap',
+                width: canvasWrap.width(),
+                height:canvasWrap.height()
+            });
+            var stage = fSpider.stage;
+
+            //prepare board
+            var cardIdFormat = '#card-img-{0}-{1}';
+            var bgImages = {
+                verticalFull: $('#card-img-b1fh').get(0)
+            };
+
+            fSpider.board = new fSpider.SpiderBoard(stage, $('#canvas-resources'), cardIdFormat);
+            var board = fSpider.board;
+            board.getHistory().onHistoryChanged(fSpider.onHistoryChanged);
+            board.onScoreChanged(fSpider.onScoreChanged);
+            board.onMovesChanged(fSpider.onMovesChanged);
+            board.onTimeEllapsedChanged(fSpider.onTimeEllapsedTick);
+            board.setBgImages(bgImages);
+            board.setTableauPlaceHolderImage($('#card-img-ph1-v').get(0));
+
+            $(window).resize(function () {
+                var canvasWrap = $('#canvas-wrap');
+                stage.setWidth(canvasWrap.width());
+                stage.setHeight(canvasWrap.height());
+                board.recalculateGlobalScale();
+                if (board.isGameInProgress() === true) {
+                    board.rescalePiles();
+                    board.arrangePiles();
+                    board.redraw();
+                }
+            });
+
+            $(document).on('keydown', function (evt) {
+                if (evt.keyCode === fSpider.ctrlKeyCode) {
+                    fSpider.ctrlDown = true;
+                } else if (String.fromCharCode(evt.keyCode) === fSpider.undoKey) {
+                    if (fSpider.ctrlDown === true) {
+                        fSpider.board.undo();
+                    }
+                } else if (String.fromCharCode(evt.keyCode) === fSpider.redoKey) {
+                    if (fSpider.ctrlDown === true) {
+                        fSpider.board.redo();
+                    }
+                }
+            });
+
+            $(document).on('keyup', function (evt) {
+                if (evt.keyCode === fSpider.ctrlKeyCode) {
+                    fSpider.ctrlDown = false;
+                }
+            });
+        };
+
+        fSpider.initGameControls = function () {
+            $('#new-game-btn').on('click', function () {
+                fSpider.startNewGame();
+            });
+            $('#undo-btn').on('click', function () {
+                if ($('#undo-btn').attr('disabled') !== 'disabled') {
+                    fSpider.board.undo();
+                }
+            });
+            $('#redo-btn').on('click', function () {
+                if ($('#redo-btn').attr('disabled') !== 'disabled') {
+                    fSpider.board.redo();
+                }
+            });
+        };
+
+        fSpider.startNewGame = function () {
+            if (fSpider.board.isGameInProgress() !== true || confirm("Are you sure you want to start a new game? Your current game will be replaced.") === true) {
+                fSpider.board.startNewGame(fSpider.getDifficulty());
+            }
+        };
+
+        fSpider.onHistoryChanged = function (history) {
+            if (history.canUndo() === true) {
+                $('#undo-btn').removeAttr('disabled');
+            } else {
+                $('#undo-btn').attr('disabled', 'disabled');
+            }
+            if (history.canRedo() === true) {
+                $('#redo-btn').removeAttr('disabled');
+            } else {
+                $('#redo-btn').attr('disabled', 'disabled');
+            }
+        };
+
+        fSpider.onScoreChanged = function (score) {
+            $('#score-display').text('Score: ' + score);
+        };
+
+        fSpider.onMovesChanged = function (moves) {
+            $('#moves-display').text('Moves: ' + moves);
+        };
+
+        fSpider.onTimeEllapsedTick = function (time) {
+            $('#time-ellapsed-display').text('Time: ' + fSpider.formatTime(time));
+        };
+
+        fSpider.getDifficulty = function () {
+            var difficulty = fSpider.SpiderBoard.difficulties.OneSuit;
+
+            var selected = $('#difficulty-select').find(':selected').text();
+
+            if (selected === '2 Suits') {
+                difficulty = fSpider.SpiderBoard.difficulties.TwoSuit;
+            } else if (selected === '4 Suits') {
+                difficulty = fSpider.SpiderBoard.difficulties.FourSuit;
+            }
+
+            return difficulty;
+        };
+
+        fSpider.formatTime = function (timeMS) {
+            var timeStr = '';
+
+            var remaining = timeMS;
+            var hours = Math.floor(remaining / 3600000);
+            remaining %= 3600000;
+            var mins = Math.floor(remaining / 60000);
+            remaining %= 60000;
+            var secs = Math.floor(remaining / 1000);
+
+            if (hours > 0) {
+                if (hours < 10) {
+                    timeStr += '0';
+                }
+                timeStr += String(hours);
+                timeStr += ':';
+            }
+
+            if (mins <= 0) {
+                timeStr += '00:';
+            } else {
+                if (mins < 10) {
+                    timeStr += '0';
+                }
+                timeStr += String(mins);
+                timeStr += ':';
+            }
+
+            if (secs <= 0) {
+                timeStr += '00';
+            } else {
+                if (secs < 10) {
+                    timeStr += '0';
+                }
+                timeStr += String(secs);
+            }
+
+            return timeStr;
+        };
+
+        $(window).load(function () {
+            fSpider.init();
+        });
+    </script>
+</body>
+</html>

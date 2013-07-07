@@ -1,0 +1,51 @@
+﻿#canvas-wrap {
+    height: 100%;
+    overflow: hidden;
+    background-image: url(art_assets/bg1.jpg);
+    background-repeat: no-repeat;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    -webkit-background-size: cover;
+    background-size: cover;
+}
+
+#canvas-resources {
+    display: none;
+}
+
+#moves-display {
+    color: #fff2f2;
+}
+
+#score-display {
+    color: #e4ffe5;
+}
+
+#time-ellapsed-display {
+    color: #fcfedf;
+}
+
+#statistics-container {
+    position: absolute;
+    left: .6em;
+    bottom: .6em;
+}
+
+.modal-wrap {
+    background: black;
+    opacity: 0.82;
+    padding: .6em;
+    margin: .3em;
+    cursor: default;
+    border-radius: .6em;
+}
+
+    .modal-wrap:hover {
+        opacity: 1;
+    }
+
+#controls-container {
+    position: absolute;
+    right: .6em;
+    bottom: .6em;
+}
