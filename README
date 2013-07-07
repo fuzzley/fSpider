@@ -1,1 +1,6 @@
-Just a simple Spider Solitaire clone. Written in javascript. The project utilizes KineticJS for the canvas/drawing functionality.
+Just a simple Spider Solitaire clone, written in javascript. 
+The project utilizes KineticJS (http://kineticjs.com/) for the canvas/drawing and howler (http://goldfirestudios.com/blog/104/howler.js-Modern-Web-Audio-Javascript-Library) for the [not yet implemented] sound effects.
+
+The latest version of the game is hosted on http://fuzley.info/spider. The page always contains the the most recent stable version of the game. You may have to clear your cache to see changes. If you find any problems, or if you'd like to see a feature implemented, please let me know :).
+
+On a final note, please critique my code. This project is an opportunity for me to learn javascript/html. If I am doing something incorrectly/inefficiently, please let me know.
