@@ -1,8 +1,7 @@
 ﻿#canvas-wrap {
     height: 100%;
     overflow: hidden;
-    background-image: url(art_assets/bg1.jpg);
-    background-repeat: no-repeat;
+    background: url(art_assets/bg1.jpg) no-repeat;
     -moz-background-size: cover;
     -o-background-size: cover;
     -webkit-background-size: cover;
@@ -21,7 +20,7 @@
     color: #e4ffe5;
 }
 
-#time-ellapsed-display {
+#time-elapsed-wrap {
     color: #fcfedf;
 }
 
