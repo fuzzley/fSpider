@@ -5,7 +5,7 @@ fSpider.Deck = (function (Deck, undefined) {
 
     //constructor
     function Deck() {
-        this.cards = []; //[fSpider.Card]
+        this.cards = [];
     }
 
     //getters/setters

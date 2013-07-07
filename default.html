@@ -240,14 +240,14 @@
         };
 
         fSpider.getDifficulty = function () {
-            var difficulty = fSpider.SpiderBoard.difficulties.OneSuit;
+            var difficulty = fSpider.SpiderBoard.DIFFICULTIES.OneSuit;
 
             var selected = $('#difficulty-select').find(':selected').text();
 
             if (selected === '2 Suits') {
-                difficulty = fSpider.SpiderBoard.difficulties.TwoSuit;
+                difficulty = fSpider.SpiderBoard.DIFFICULTIES.TwoSuit;
             } else if (selected === '4 Suits') {
-                difficulty = fSpider.SpiderBoard.difficulties.FourSuit;
+                difficulty = fSpider.SpiderBoard.DIFFICULTIES.FourSuit;
             }
 
             return difficulty;

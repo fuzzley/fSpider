@@ -19,13 +19,13 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
         this.group = new Kinetic.Group();
         this._hoverBorder = new Kinetic.Rect({
             visible: false,
-            opacity: TableauPile.hoverBorder.opacity,
-            fill: TableauPile.hoverBorder.fill,
-            stroke: TableauPile.hoverBorder.stroke,
-            strokeWidth: TableauPile.hoverBorder.strokeWidth,
-            cornerRadius: TableauPile.hoverBorder.cornerRadius,
-            width: Card.cardDim.w,
-            height: Card.cardDim.h
+            opacity: TableauPile.HOVER_BORDER.opacity,
+            fill: TableauPile.HOVER_BORDER.fill,
+            stroke: TableauPile.HOVER_BORDER.stroke,
+            strokeWidth: TableauPile.HOVER_BORDER.strokeWidth,
+            cornerRadius: TableauPile.HOVER_BORDER.cornerRadius,
+            width: Card.CARD_DIM.w,
+            height: Card.CARD_DIM.h
         });
 
         this.group.add(this._hoverBorder);
@@ -102,7 +102,7 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
     //public methods
     TableauPile.prototype.refresh = function () {
         //hover border
-        this.getHoverBorder().setVisible(this.isHovering() === true && TableauPile.hoverBorder.visible);
+        this.getHoverBorder().setVisible(this.isHovering() === true && TableauPile.HOVER_BORDER.visible);
     };
 
     TableauPile.prototype.getCompleteSequence = function () {
@@ -123,7 +123,7 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
                 continue; //just skip it
             }
             if (sequence.length === 0) { //no possible sequence started yet
-                if (card.getType() === Card.cardTypes.king) { //card is a king
+                if (card.getType() === Card.CARD_TYPES.king) { //card is a king
                     sequence.push(card); //start a possible sequence
                 }
             } else { //possible sequence already started
@@ -132,7 +132,7 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
                     sequence.push(card); //add to possible sequence
                 } else { //doesn't fit
                     sequence = []; //restart search
-                    if (card.getType() === Card.cardTypes.king) { //card is a king
+                    if (card.getType() === Card.CARD_TYPES.king) { //card is a king
                         sequence.push(card); //start a possible sequence
                     }
                 }
@@ -176,7 +176,7 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
 
     TableauPile.prototype.loadPlaceHolderImg = function (img) {
         this.setPlaceHolderImg(img);
-        this.setPlaceHolderKineticImg(Utils.loadKineticImage(this.getPlaceHolderImg(), Card.cardDim.w, Card.cardDim.h));
+        this.setPlaceHolderKineticImg(Utils.loadKineticImage(this.getPlaceHolderImg(), Card.CARD_DIM.w, Card.CARD_DIM.h));
         this.getGroup().add(this.getPlaceHolderKineticImg());
     };
 
@@ -274,7 +274,7 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
 
         //find amount of padding to add to face up cards
         var maxPadTopFaceUp = 20;
-        var padTopFaceUp = (h - Card.cardDim.h - faceDownTotalPad) / faceUpCount;
+        var padTopFaceUp = (h - Card.CARD_DIM.h - faceDownTotalPad) / faceUpCount;
         if (faceUpCount > 12) {
             padTopFaceUp /= 1.5;
         }
@@ -303,7 +303,7 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
             }
             card.setY(y, animTime, delay);
         }
-        var actualHeight = y + Card.cardDim.h;
+        var actualHeight = y + Card.CARD_DIM.h;
 
         this.group.setWidth(w);
         this.group.setHeight(actualHeight);
@@ -349,7 +349,7 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
         this.getGroup().remove();
     };
 
-    TableauPile.hoverBorder = {
+    TableauPile.HOVER_BORDER = {
         'visible': true,
         'stroke': '#FFFF99',
         'strokeWidth': 5,
@@ -450,7 +450,7 @@ fSpider.StockPile = (function (StockPile, undefined) {
 
         var cards = this.getCards();
 
-        var paddingRight = w - Card.cardDim.w;
+        var paddingRight = w - Card.CARD_DIM.w;
         if (paddingRight < 0) {
             paddingRight = 0;
         }

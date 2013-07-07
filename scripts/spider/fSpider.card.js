@@ -12,51 +12,51 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
     function Card(type, suit) {
         this.cardType = type;
         this.cardSuit = suit;
-        this.faceUp = false; //bool
+        this.faceUp = false;
         this.hovering = false;
         this.selected = false;
         this.pile = undefined;
         this._faceImg = undefined; //Image
         this._backImg = undefined; //Image
-        this._faceKineticImg = undefined;
+        this._faceKineticImg = undefined; //Kinetic.Image
         this._backKineticImg = undefined; //Kinetic.Image
         this._xAnim = null;
         this._yAnim = null;
         this._group = new Kinetic.Group({
-            width: Card.cardDim.w,
-            height: Card.cardDim.h
+            width: Card.CARD_DIM.w,
+            height: Card.CARD_DIM.h
         });
         this._border = new Kinetic.Rect({
-            x: 0 - Card.border.padding,
-            y: 0 - Card.border.padding,
+            x: 0 - Card.BORDER.padding,
+            y: 0 - Card.BORDER.padding,
             visible: true,
-            opacity: Card.border.opacity,
-            fill: Card.border.fill,
-            stroke: Card.border.stroke,
-            strokeWidth: Card.border.strokeWidth,
-            cornerRadius: Card.border.cornerRadius,
-            width: Card.cardDim.w + Card.border.padding,
-            height: Card.cardDim.h + Card.border.padding
+            opacity: Card.BORDER.opacity,
+            fill: Card.BORDER.fill,
+            stroke: Card.BORDER.stroke,
+            strokeWidth: Card.BORDER.strokeWidth,
+            cornerRadius: Card.BORDER.cornerRadius,
+            width: Card.CARD_DIM.w + Card.BORDER.padding,
+            height: Card.CARD_DIM.h + Card.BORDER.padding
         });
         this._activeBorder = new Kinetic.Rect({
             visible: false,
-            opacity: Card.activeBorder.opacity,
-            fill: Card.activeBorder.fill,
-            stroke: Card.activeBorder.stroke,
-            strokeWidth: Card.activeBorder.strokeWidth,
-            cornerRadius: Card.activeBorder.cornerRadius,
-            width: Card.cardDim.w,
-            height: Card.cardDim.h
+            opacity: Card.ACTIVE_BORDER.opacity,
+            fill: Card.ACTIVE_BORDER.fill,
+            stroke: Card.ACTIVE_BORDER.stroke,
+            strokeWidth: Card.ACTIVE_BORDER.strokeWidth,
+            cornerRadius: Card.ACTIVE_BORDER.cornerRadius,
+            width: Card.CARD_DIM.w,
+            height: Card.CARD_DIM.h
         });
         this._hoverBorder = new Kinetic.Rect({
             visible: false,
-            opacity: Card.hoverBorder.opacity,
-            fill: Card.hoverBorder.fill,
-            stroke: Card.hoverBorder.stroke,
-            strokeWidth: Card.hoverBorder.strokeWidth,
-            cornerRadius: Card.hoverBorder.cornerRadius,
-            width: Card.cardDim.w,
-            height: Card.cardDim.h
+            opacity: Card.HOVER_BORDER.opacity,
+            fill: Card.HOVER_BORDER.fill,
+            stroke: Card.HOVER_BORDER.stroke,
+            strokeWidth: Card.HOVER_BORDER.strokeWidth,
+            cornerRadius: Card.HOVER_BORDER.cornerRadius,
+            width: Card.CARD_DIM.w,
+            height: Card.CARD_DIM.h
         });
 
         this._group.add(this._activeBorder);
@@ -297,10 +297,10 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
         }
 
         //active boarder
-        this.getActiveBorder().setVisible((this.isHovering() === true || this.isSelected() === true) && Card.activeBorder.visible);
+        this.getActiveBorder().setVisible((this.isHovering() === true || this.isSelected() === true) && Card.ACTIVE_BORDER.visible);
 
         //hover border
-        this.getHoverBorder().setVisible(this.isHovering() === true && Card.hoverBorder.visible);
+        this.getHoverBorder().setVisible(this.isHovering() === true && Card.HOVER_BORDER.visible);
     };
 
     Card.prototype.remove = function () {
@@ -309,7 +309,7 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
 
     Card.prototype.loadFaceImg = function (img) {
         this.setFaceImg(img);
-        this.setFaceKineticImg(Utils.loadKineticImage(this.getFaceImg(), Card.cardDim.w, Card.cardDim.h));
+        this.setFaceKineticImg(Utils.loadKineticImage(this.getFaceImg(), Card.CARD_DIM.w, Card.CARD_DIM.h));
         this.getGroup().add(this.getFaceKineticImg());
         this.getBorder().remove();
         this.getGroup().add(this.getBorder()); //make sure it's on top
@@ -317,7 +317,7 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
 
     Card.prototype.loadBackImg = function (img) {
         this.setBackImg(img);
-        this.setBackKineticImg(Utils.loadKineticImage(this.getBackImg(), Card.cardDim.w, Card.cardDim.h));
+        this.setBackKineticImg(Utils.loadKineticImage(this.getBackImg(), Card.CARD_DIM.w, Card.CARD_DIM.h));
         this.getGroup().add(this.getBackKineticImg());
         this.getBorder().remove();
         this.getGroup().add(this.getBorder()); //make sure it's on top
@@ -336,7 +336,7 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
     };
 
     //static fields
-    Card.cardTypes = {
+    Card.CARD_TYPES = {
         ace: 0,
         two: 1,
         three: 2,
@@ -351,23 +351,23 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
         queen: 11,
         king: 12
     };
-    Card.cardSuits = {
+    Card.CARD_SUITS = {
         clubs: 0,
         hearts: 1,
         spades: 2,
         diamonds: 3
     };
-    Card.cardDim = { w: 90, h: 120 };
-    Card.border = {
+    Card.CARD_DIM = { w: 90, h: 120 };
+    Card.BORDER = {
         'visible': true,
-        'stroke': '#E8E8E8',
+        'stroke': '#F0F0F0',
         'strokeWidth': 1.5,
         'cornerRadius': 4.25,
         'fill': '',
         'opacity': 1,
         'padding': -.5
     };
-    Card.activeBorder = {
+    Card.ACTIVE_BORDER = {
         'visible': true,
         'stroke': '#fff9b0',
         'strokeWidth': 6,
@@ -375,7 +375,7 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
         'fill': '',
         'opacity': .9
     };
-    Card.hoverBorder = {
+    Card.HOVER_BORDER = {
         'visible': true,
         'stroke': '#a8a8a8',
         'strokeWidth': 1.5,

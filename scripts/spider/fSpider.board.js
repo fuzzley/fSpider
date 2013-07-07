@@ -54,7 +54,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
         this._tableauPlaceHolderImage = undefined;
         this._stockPile = undefined;
         this._tableauPiles = []; //[TableauPile]
-        this._playerAction = SpiderBoard.playerActions.none;
+        this._playerAction = SpiderBoard.PLAYER_ACTIONS.none;
         //add invisible background to layer so event handlers register
         this._layerBackground = new Kinetic.Rect({
             x: -9999,
@@ -241,7 +241,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
 
     SpiderBoard.prototype._buildBoard = function (difficulty) {
         if (difficulty === undefined) {
-            difficulty = SpiderBoard.difficulties.OneSuit;
+            difficulty = SpiderBoard.DIFFICULTIES.OneSuit;
         }
 
         this._buildDeck(104, this._getSuitsForDifficulty(difficulty));
@@ -265,8 +265,8 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
         var self = this;
 
         this._timeEllapsedTimer = setInterval(function () {
-            self._timeEllapsedTick(SpiderBoard.timeEllapsedInterval);
-        }, SpiderBoard.timeEllapsedInterval);
+            self._timeEllapsedTick(SpiderBoard.TIME_ELAPSED_INTERVAL);
+        }, SpiderBoard.TIME_ELAPSED_INTERVAL);
     };
 
     SpiderBoard.prototype._attachLayerEventHanders = function () {
@@ -381,12 +381,12 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
             for (var i = 0; i < fPiles.length; i++) {
                 var fPile = fPiles[i];
                 if (fPile.getSize() === 0) {
-                    this.increaseScore(SpiderBoard.scoreIncrementByAfterCompleteSequence);
-                    var scoreChangeAction = new ScoreChangeAction(this, SpiderBoard.scoreIncrementByAfterCompleteSequence);
+                    this.increaseScore(SpiderBoard.SCORE_INCREMENT_BY_AFTER_COMPLETE_SEQUENCE);
+                    var scoreChangeAction = new ScoreChangeAction(this, SpiderBoard.SCORE_INCREMENT_BY_AFTER_COMPLETE_SEQUENCE);
                     this._transferCardsFromTableauPile(originalPile, fPile, completeSequence, [scoreChangeAction]);
                     fPile.reverseCards();
                     this.getHistory().mergeActionSets(this.getHistory().cursor - 2, 2);
-                    this.arrangePiles(true, SpiderBoard.stockAnimTime, SpiderBoard.generalAnimTime);
+                    this.arrangePiles(true, SpiderBoard.STOCK_ANIM_TIME, SpiderBoard.GENERAL_ANIM_TIME);
                     return true;
                 }
             }
@@ -466,8 +466,8 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
     SpiderBoard.prototype._drawFromStockPile = function () {
         var actionSet = new ActionSet();
 
-        var animTime = SpiderBoard.stockAnimTime;
-        var delayFraction = SpiderBoard.stockDelayFraction;
+        var animTime = SpiderBoard.STOCK_ANIM_TIME;
+        var delayFraction = SpiderBoard.STOCK_DELAY_FRACTION;
 
         var sPile = this.getStockPile();
         var tPiles = this.getTableauPiles();
@@ -517,7 +517,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
         }
         this.arrangeTableauPile(originalPile, true);
 
-        this._playerAction = SpiderBoard.playerActions.none;
+        this._playerAction = SpiderBoard.PLAYER_ACTIONS.none;
         this.redraw();
     };
 
@@ -525,19 +525,19 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
     SpiderBoard.prototype._getSuitsForDifficulty = function (difficulty) {
         var suits;
 
-        var spades = Card.cardSuits.spades;
-        var clubs = Card.cardSuits.clubs;
-        var hearts = Card.cardSuits.hearts;
-        var diamonds = Card.cardSuits.diamonds;
+        var spades = Card.CARD_SUITS.spades;
+        var clubs = Card.CARD_SUITS.clubs;
+        var hearts = Card.CARD_SUITS.hearts;
+        var diamonds = Card.CARD_SUITS.diamonds;
 
         switch (difficulty) {
-            case SpiderBoard.difficulties.OneSuit:
+            case SpiderBoard.DIFFICULTIES.OneSuit:
                 suits = [spades, spades, spades, spades, spades, spades, spades, spades];
                 break;
-            case SpiderBoard.difficulties.TwoSuit:
+            case SpiderBoard.DIFFICULTIES.TwoSuit:
                 suits = [spades, spades, spades, spades, hearts, hearts, hearts, hearts];
                 break;
-            case SpiderBoard.difficulties.FourSuit:
+            case SpiderBoard.DIFFICULTIES.FourSuit:
                 suits = [spades, spades, clubs, clubs, hearts, hearts, diamonds, diamonds];
                 break;
         }
@@ -592,7 +592,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
         }
 
         if (this._selectedCard !== null) {
-            if (this._playerAction === SpiderBoard.playerActions.dragging) {
+            if (this._playerAction === SpiderBoard.PLAYER_ACTIONS.dragging) {
                 this._stopDraggingCards(this._selectedCard, { 'x': evt.layerX, 'y': evt.layerY });
             } else {
                 this._selectedCard.getPile();
@@ -605,7 +605,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
     };
 
     SpiderBoard.prototype._cardDragStart = function (evt, card) {
-        this._playerAction = SpiderBoard.playerActions.dragging;
+        this._playerAction = SpiderBoard.PLAYER_ACTIONS.dragging;
         card.getPile().getGroup().moveToTop();
     };
 
@@ -765,24 +765,24 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
 
     SpiderBoard.prototype.arrangeTableauPile = function (pile, animate, animTime, delayFraction) {
         if (animate === true && animTime === undefined) {
-            animTime = SpiderBoard.generalAnimTime;
+            animTime = SpiderBoard.GENERAL_ANIM_TIME;
         }
         if (delayFraction === undefined) {
-            delayFraction = SpiderBoard.generalDelayFraction;
+            delayFraction = SpiderBoard.GENERAL_DELAY_FRACTION;
         }
 
         var scale = this.getGlobalScale();
 
-        var availHeight = this.getStage().getHeight() - (SpiderBoard.boardMargin.t + SpiderBoard.boardMargin.b) * scale;
+        var availHeight = this.getStage().getHeight() - (SpiderBoard.BOARD_MARGIN.t + SpiderBoard.BOARD_MARGIN.b) * scale;
         var availMargin = {
-            l: SpiderBoard.tableauPileMargin.l * scale,
-            r: SpiderBoard.tableauPileMargin.r * scale,
-            t: SpiderBoard.tableauPileMargin.t,
-            b: SpiderBoard.tableauPileMargin.b
+            l: SpiderBoard.TABLEAU_PILE_MARGIN.l * scale,
+            r: SpiderBoard.TABLEAU_PILE_MARGIN.r * scale,
+            t: SpiderBoard.TABLEAU_PILE_MARGIN.t,
+            b: SpiderBoard.TABLEAU_PILE_MARGIN.b
         };
 
-        var w = Card.cardDim.w;
-        var h = availHeight - availMargin.t - Card.cardDim.h - availMargin.b - SpiderBoard.boardMargin.b;
+        var w = Card.CARD_DIM.w;
+        var h = availHeight - availMargin.t - Card.CARD_DIM.h - availMargin.b - SpiderBoard.BOARD_MARGIN.b;
 
         pile.arrangeCards(w, h, animTime, delayFraction);
     };
@@ -791,30 +791,30 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
         var i, x, y, w, h, availMargin;
 
         if (animate === true && animTime === undefined) {
-            animTime = SpiderBoard.generalAnimTime;
+            animTime = SpiderBoard.GENERAL_ANIM_TIME;
         }
         if (delayFraction === undefined) {
-            delayFraction = SpiderBoard.generalDelayFraction;
+            delayFraction = SpiderBoard.GENERAL_DELAY_FRACTION;
         }
 
         var scale = this.getGlobalScale();
 
         //find available height/width, given board margin
-        var availWidth = this.getStage().getWidth() - (SpiderBoard.boardMargin.l + SpiderBoard.boardMargin.r) * scale;
-        var availHeight = this.getStage().getHeight() - (SpiderBoard.boardMargin.t + SpiderBoard.boardMargin.b) * scale;
+        var availWidth = this.getStage().getWidth() - (SpiderBoard.BOARD_MARGIN.l + SpiderBoard.BOARD_MARGIN.r) * scale;
+        var availHeight = this.getStage().getHeight() - (SpiderBoard.BOARD_MARGIN.t + SpiderBoard.BOARD_MARGIN.b) * scale;
 
         ////**TABLEAU PILES**\\\\
         availMargin = {
-            l: SpiderBoard.tableauPileMargin.l * scale,
-            r: SpiderBoard.tableauPileMargin.r * scale,
-            t: SpiderBoard.tableauPileMargin.t,
-            b: SpiderBoard.tableauPileMargin.b
+            l: SpiderBoard.TABLEAU_PILE_MARGIN.l * scale,
+            r: SpiderBoard.TABLEAU_PILE_MARGIN.r * scale,
+            t: SpiderBoard.TABLEAU_PILE_MARGIN.t,
+            b: SpiderBoard.TABLEAU_PILE_MARGIN.b
         };
 
         var tableauPiles = this.getTableauPiles();
 
         //find available width if all tableau piles added
-        var emptyWidth = availWidth - (tableauPiles.length * Card.cardDim.w * scale);
+        var emptyWidth = availWidth - (tableauPiles.length * Card.CARD_DIM.w * scale);
 
         //find amount of extra room that can be alloted to each pile
         var emptyWidthEach = emptyWidth / tableauPiles.length;
@@ -829,16 +829,16 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
             availMargin.r = emptyMarginEach;
         }
 
-        y = (SpiderBoard.boardMargin.t + availMargin.t) * scale;
-        w = Card.cardDim.w;
-        h = availHeight - availMargin.t - Card.cardDim.h - availMargin.b - SpiderBoard.boardMargin.b;
+        y = (SpiderBoard.BOARD_MARGIN.t + availMargin.t) * scale;
+        w = Card.CARD_DIM.w;
+        h = availHeight - availMargin.t - Card.CARD_DIM.h - availMargin.b - SpiderBoard.BOARD_MARGIN.b;
 
         //arrange piles
         for (i = tableauPiles.length - 1; i >= 0; i--) {
             var tPile = tableauPiles[i];
-            x = SpiderBoard.boardMargin.l * scale; //board margin
+            x = SpiderBoard.BOARD_MARGIN.l * scale; //board margin
             x += availMargin.l * (i + 1); //all pile left margins
-            x += ((Card.cardDim.w * scale) + availMargin.r) * i; //all pile right margins and card widths
+            x += ((Card.CARD_DIM.w * scale) + availMargin.r) * i; //all pile right margins and card widths
             tPile.setX(x);
             tPile.setY(y);
             tPile.arrangeCards(w, h, animTime, delayFraction * i);
@@ -846,43 +846,43 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
 
         ////**STOCK PILE**\\\\
         availMargin = {
-            l: SpiderBoard.stockPileMargin.l,
-            r: SpiderBoard.stockPileMargin.r,
-            t: SpiderBoard.stockPileMargin.t,
-            b: SpiderBoard.stockPileMargin.b
+            l: SpiderBoard.STOCK_PILE_MARGIN.l,
+            r: SpiderBoard.STOCK_PILE_MARGIN.r,
+            t: SpiderBoard.STOCK_PILE_MARGIN.t,
+            b: SpiderBoard.STOCK_PILE_MARGIN.b
         };
 
         var stockPile = this.getStockPile();
         var nCardsInOriginalPile = this.getDeck().getSize() - 24 - 30;
 
         var stockExtraW = nCardsInOriginalPile / 10 * 1.5; //for showing how many stacks left
-        x = availWidth - (Card.cardDim.w + availMargin.r + stockExtraW) * scale;
-        y = availHeight - (Card.cardDim.h + availMargin.b) * scale;
-        w = Card.cardDim.w + stockExtraW;
-        h = Card.cardDim.h;
+        x = availWidth - (Card.CARD_DIM.w + availMargin.r + stockExtraW) * scale;
+        y = availHeight - (Card.CARD_DIM.h + availMargin.b) * scale;
+        w = Card.CARD_DIM.w + stockExtraW;
+        h = Card.CARD_DIM.h;
         stockPile.setX(x);
         stockPile.setY(y);
         stockPile.arrangeCards(w, h, animTime, delayFraction, delayFraction);
 
         ////**FOUNDATION PILES**\\\\
         availMargin = {
-            l: SpiderBoard.foundationPilesMargin.l,
-            r: SpiderBoard.foundationPilesMargin.r,
-            t: SpiderBoard.foundationPilesMargin.t,
-            b: SpiderBoard.foundationPilesMargin.b
+            l: SpiderBoard.FOUNDATION_PILES_MARGIN.l,
+            r: SpiderBoard.FOUNDATION_PILES_MARGIN.r,
+            t: SpiderBoard.FOUNDATION_PILES_MARGIN.t,
+            b: SpiderBoard.FOUNDATION_PILES_MARGIN.b
         };
 
         var foundationPiles = this.getFoundationPiles();
 
-        var startX = SpiderBoard.boardMargin.l + availMargin.l * scale;
-        y = availHeight - (availMargin.b + Card.cardDim.h) * scale;
-        w = Card.cardDim.w;
-        h = Card.cardDim.h;
+        var startX = SpiderBoard.BOARD_MARGIN.l + availMargin.l * scale;
+        y = availHeight - (availMargin.b + Card.CARD_DIM.h) * scale;
+        w = Card.CARD_DIM.w;
+        h = Card.CARD_DIM.h;
 
         //arrange piles
         for (i = 0; i < foundationPiles.length; i++) {
             var fPile = foundationPiles[i];
-            x = startX + (i * Card.cardDim.w / 3 * scale);
+            x = startX + (i * Card.CARD_DIM.w / 3 * scale);
             fPile.setX(x);
             fPile.setY(y);
             fPile.arrangeCards(w, h, animTime, delayFraction * i);
@@ -898,14 +898,14 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
 
     SpiderBoard.prototype.startNewGame = function (difficulty) {
         if (difficulty === undefined) {
-            difficulty = SpiderBoard.difficulties.OneSuit;
+            difficulty = SpiderBoard.DIFFICULTIES.OneSuit;
         }
 
         this.gameInProgress = false;
         this.recalculateGlobalScale();
 
         this.getHistory().clear();
-        this.setScore(SpiderBoard.startScore);
+        this.setScore(SpiderBoard.START_SCORE);
         this.setMoves(0);
         this.setTimeEllapsed(0);
 
@@ -935,8 +935,8 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
     };
 
     SpiderBoard.prototype.recalculateGlobalScale = function () {
-        var scaleX = this.getStage().getWidth() / SpiderBoard.originalDimensions.w;
-        var scaleY = this.getStage().getHeight() / SpiderBoard.originalDimensions.h;
+        var scaleX = this.getStage().getWidth() / SpiderBoard.ORIGINAL_DIMENSIONS.w;
+        var scaleY = this.getStage().getHeight() / SpiderBoard.ORIGINAL_DIMENSIONS.h;
         var scale = scaleY < scaleX ? scaleY : scaleX;
         this.setGlobalScale(scale);
     };
@@ -947,7 +947,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
 
     SpiderBoard.prototype.increaseMoves = function (amount) {
         if (amount === undefined) {
-            amount = SpiderBoard.movesIncrementBy;
+            amount = SpiderBoard.MOVES_INCREMENT_BY;
         }
         this.moves += amount;
         this._fireMovesChanged();
@@ -964,7 +964,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
 
     SpiderBoard.prototype.reduceScore = function (amount) {
         if (amount === undefined) {
-            amount = SpiderBoard.scoreDecrementBy;
+            amount = SpiderBoard.SCORE_DECREMENT_BY;
         }
         this.score -= amount;
         this._fireScoreChanged();
@@ -1000,29 +1000,29 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
     };
 
     //static fields
-    SpiderBoard.boardMargin = { l: 10, r: 10, t: 10, b: 10 };
-    SpiderBoard.tableauPileMargin = { l: 1, r: 1, t: 5, b: 0 };
-    SpiderBoard.stockPileMargin = { l: 0, r: 100, t: 0, b: 10 };
-    SpiderBoard.foundationPilesMargin = { l: 150, r: 0, t: 0, b: 10 };
-    SpiderBoard.originalDimensions = { w: 940, h: 580 };
-    SpiderBoard.playerActions = {
+    SpiderBoard.BOARD_MARGIN = { l: 10, r: 10, t: 10, b: 10 };
+    SpiderBoard.TABLEAU_PILE_MARGIN = { l: 1, r: 1, t: 5, b: 0 };
+    SpiderBoard.STOCK_PILE_MARGIN = { l: 0, r: 100, t: 0, b: 10 };
+    SpiderBoard.FOUNDATION_PILES_MARGIN = { l: 150, r: 0, t: 0, b: 10 };
+    SpiderBoard.ORIGINAL_DIMENSIONS = { w: 940, h: 580 };
+    SpiderBoard.PLAYER_ACTIONS = {
         'none': 0,
         'dragging': 1
     };
-    SpiderBoard.generalAnimTime = 200;
-    SpiderBoard.generalDelayFraction = 40;
-    SpiderBoard.stockAnimTime = 300;
-    SpiderBoard.stockDelayFraction = 50;
-    SpiderBoard.difficulties = {
+    SpiderBoard.GENERAL_ANIM_TIME = 200;
+    SpiderBoard.GENERAL_DELAY_FRACTION = 40;
+    SpiderBoard.STOCK_ANIM_TIME = 300;
+    SpiderBoard.STOCK_DELAY_FRACTION = 50;
+    SpiderBoard.DIFFICULTIES = {
         'OneSuit': 0,
         'TwoSuit': 1,
         'FourSuit': 2
     };
-    SpiderBoard.startScore = 500;
-    SpiderBoard.movesIncrementBy = 1;
-    SpiderBoard.scoreIncrementByAfterCompleteSequence = 100;
-    SpiderBoard.scoreDecrementBy = 1;
-    SpiderBoard.timeEllapsedInterval = 1000;
+    SpiderBoard.START_SCORE = 500;
+    SpiderBoard.MOVES_INCREMENT_BY = 1;
+    SpiderBoard.SCORE_INCREMENT_BY_AFTER_COMPLETE_SEQUENCE = 100;
+    SpiderBoard.SCORE_DECREMENT_BY = 1;
+    SpiderBoard.TIME_ELAPSED_INTERVAL = 1000;
 
     return SpiderBoard;
 })(fSpider.SpiderBoard || {}, window.Kinetic, window.jQuery);
