@@ -12,7 +12,7 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
     var Utils = fSpider.Utils;
 
     //constructor
-    function TableauPile(history) {
+    TableauPile = function (history) {
         this.history = history;
         this.cards = [];
         this.hovering = false;
@@ -29,7 +29,7 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
         });
 
         this.group.add(this._hoverBorder);
-    }
+    };
 
     //getters/setters
     TableauPile.prototype.getCards = function () {
@@ -376,11 +376,11 @@ fSpider.StockPile = (function (StockPile, undefined) {
     var Card = fSpider.Card;
 
     //constructor
-    function StockPile(cards, history) {
+    StockPile = function (cards, history) {
         this.cards = cards || [];
         this.history = history;
         this.group = new Kinetic.Group();
-    }
+    };
 
     //getters/setters
     StockPile.prototype.getCards = function () {
@@ -506,11 +506,11 @@ fSpider.FoundationPile = (function (FoundationPile, undefined) {
     'use strict';
 
     //constructor
-    function FoundationPile(cards, history) {
+    FoundationPile = function (cards, history) {
         this.cards = cards || [];
         this.history = history;
         this.group = new Kinetic.Group();
-    }
+    };
 
     //getters/setters
     FoundationPile.prototype.getCards = function () {

@@ -4,9 +4,9 @@ fSpider.Deck = (function (Deck, undefined) {
     'use strict';
 
     //constructor
-    function Deck() {
+    Deck = function () {
         this.cards = [];
-    }
+    };
 
     //getters/setters
     Deck.prototype.getCards = function () {

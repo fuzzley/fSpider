@@ -9,7 +9,7 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
     var Utils = fSpider.Utils;
 
     //constructor
-    function Card(type, suit) {
+    Card = function (type, suit) {
         this.cardType = type;
         this.cardSuit = suit;
         this.faceUp = false;
@@ -62,7 +62,7 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
         this._group.add(this._activeBorder);
         this._group.add(this._hoverBorder);
         this._group.add(this._border);
-    }
+    };
 
     //getters setters
     Card.prototype.getType = function () {

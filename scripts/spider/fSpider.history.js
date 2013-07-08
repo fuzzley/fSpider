@@ -4,59 +4,59 @@ fSpider.ActionSet = (function (ActionSet, undefined) {
     'use strict';
 
     //constructor
-	function ActionSet() {
-		this.actions = [];
-	}
+    ActionSet = function () {
+        this.actions = [];
+    };
 
-	ActionSet.prototype.addAction = function (action) {
-		this.actions.push(action);
-	};
+    ActionSet.prototype.addAction = function (action) {
+        this.actions.push(action);
+    };
 
-	ActionSet.prototype.addActions = function (actions) {
-		var self = this;
+    ActionSet.prototype.addActions = function (actions) {
+        var self = this;
 
-		actions.forEach(function (action) {
-			self.addAction(action);
-		});
-	};
+        actions.forEach(function (action) {
+            self.addAction(action);
+        });
+    };
 
-	ActionSet.prototype.undo = function () {
-		this.actions.reverse().forEach(function (action) {
-			if (action.undo !== undefined) {
-				action.undo();
-			}
-		});
-	};
+    ActionSet.prototype.undo = function () {
+        this.actions.reverse().forEach(function (action) {
+            if (action.undo !== undefined) {
+                action.undo();
+            }
+        });
+    };
 
-	ActionSet.prototype.redo = function () {
-		this.actions.reverse().forEach(function (action) {
-			if (action.redo !== undefined) {
-				action.redo();
-			}
-		});
-	};
+    ActionSet.prototype.redo = function () {
+        this.actions.reverse().forEach(function (action) {
+            if (action.redo !== undefined) {
+                action.redo();
+            }
+        });
+    };
 
-	ActionSet.prototype.findFirstTransferCardsAction = function () {
-		for (var i = 0; i < this.actions.length; i++) {
-			if (this.actions[i].actionType === "TransferCardsAction") {
-				return this.actions[i];
-			}
-		}
+    ActionSet.prototype.findFirstTransferCardsAction = function () {
+        for (var i = 0; i < this.actions.length; i++) {
+            if (this.actions[i].actionType === "TransferCardsAction") {
+                return this.actions[i];
+            }
+        }
         return null;
-	};
+    };
 
-	//static functions
-	ActionSet.mergeActionSets = function (actionSets) {
-		var merged = new ActionSet();
-		if (actionSets !== undefined) {
-			actionSets.forEach(function (actionSet) {
-				merged.addActions(actionSet.actions.slice(0));
-			});
-		}
-		return merged;
-	};
+    //static functions
+    ActionSet.mergeActionSets = function (actionSets) {
+        var merged = new ActionSet();
+        if (actionSets !== undefined) {
+            actionSets.forEach(function (actionSet) {
+                merged.addActions(actionSet.actions.slice(0));
+            });
+        }
+        return merged;
+    };
 
-	return ActionSet;
+    return ActionSet;
 })(fSpider.ActionSet || {});
 
 fSpider.History = (function (History, undefined) {
@@ -65,11 +65,11 @@ fSpider.History = (function (History, undefined) {
     var ActionSet = fSpider.ActionSet;
 
     //constructor
-    function History() {
+    History = function () {
         this._actionSets = [];
         this.cursor = 0;
         this._onHistoryChangedCallback = undefined;
-    }
+    };
 
     History.prototype.canUndo = function () {
         return this.cursor > 0;
@@ -156,73 +156,73 @@ fSpider.TransferCardsAction = (function (TransferCardsAction, undefined) {
     'use strict';
 
     //constructor
-	function TransferCardsAction(fromPile, toPile, cards, animTime, delay) {
-		this.fromPile = fromPile;
-		this.toPile = toPile;
-		this.cards = cards;
-		this.animTime = animTime;
-		this.delay = delay;
-		this.actionType = "TransferCardsAction";
-	}
+    TransferCardsAction = function (fromPile, toPile, cards, animTime, delay) {
+        this.fromPile = fromPile;
+        this.toPile = toPile;
+        this.cards = cards;
+        this.animTime = animTime;
+        this.delay = delay;
+        this.actionType = "TransferCardsAction";
+    };
 
-	TransferCardsAction.prototype.undo = function () {
-		this.fromPile.transferCards(this.cards);
-		this._refreshPiles();
-	};
+    TransferCardsAction.prototype.undo = function () {
+        this.fromPile.transferCards(this.cards);
+        this._refreshPiles();
+    };
 
-	TransferCardsAction.prototype.redo = function () {
-		this.toPile.transferCards(this.cards);
-		this._refreshPiles();
-	};
+    TransferCardsAction.prototype.redo = function () {
+        this.toPile.transferCards(this.cards);
+        this._refreshPiles();
+    };
 
-	TransferCardsAction.prototype._refreshPiles = function () {
-		this.fromPile.resetListening();
-		this.fromPile.resetDraggable();
-		this.toPile.resetListening();
-		this.toPile.resetDraggable();
-	};
+    TransferCardsAction.prototype._refreshPiles = function () {
+        this.fromPile.resetListening();
+        this.fromPile.resetDraggable();
+        this.toPile.resetListening();
+        this.toPile.resetDraggable();
+    };
 
-	return TransferCardsAction;
+    return TransferCardsAction;
 })(fSpider.TransferCardsAction || {});
 
 fSpider.FlipCardAction = (function (FlipCardAction, undefined) {
     'use strict';
 
     //constructor
-	function FlipCardAction(card, isFaceUp) {
-		this.card = card;
-		this.isFaceUp = isFaceUp;
-		this.actionType = "FlipCardAction";
-	}
+    FlipCardAction = function (card, isFaceUp) {
+        this.card = card;
+        this.isFaceUp = isFaceUp;
+        this.actionType = "FlipCardAction";
+    };
 
-	FlipCardAction.prototype.undo = function () {
-		this.card.setFaceUp(this.isFaceUp !== true);
-	};
+    FlipCardAction.prototype.undo = function () {
+        this.card.setFaceUp(this.isFaceUp !== true);
+    };
 
-	FlipCardAction.prototype.redo = function () {
-		this.card.setFaceUp(this.isFaceUp === true);
-	};
+    FlipCardAction.prototype.redo = function () {
+        this.card.setFaceUp(this.isFaceUp === true);
+    };
 
-	return FlipCardAction;
+    return FlipCardAction;
 })(fSpider.FlipCardAction || {});
 
 fSpider.ScoreChangeAction = (function (ScoreChangeAction, undefined) {
     'use strict';
 
     //constructor
-	function ScoreChangeAction(board, amount) {
-		this.board = board;
-		this.amount = amount;
+    ScoreChangeAction = function (board, amount) {
+        this.board = board;
+        this.amount = amount;
         this.actionType = "ScoreChangeAction";
-	}
+    };
 
-	ScoreChangeAction.prototype.undo = function () {
-		this.board.setScore(this.board.score - this.amount);
-	};
+    ScoreChangeAction.prototype.undo = function () {
+        this.board.setScore(this.board.score - this.amount);
+    };
 
-	ScoreChangeAction.prototype.redo = function () {
-		this.board.setScore(this.board.score + this.amount);
-	};
+    ScoreChangeAction.prototype.redo = function () {
+        this.board.setScore(this.board.score + this.amount);
+    };
 
-	return ScoreChangeAction;
+    return ScoreChangeAction;
 })(fSpider.ScoreChangeAction || {});
