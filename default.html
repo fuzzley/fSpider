@@ -11,26 +11,30 @@
     <div id="canvas-wrap">
     </div>
     <div id="statistics-container">
-        <div id="score-wrap" class="modal-wrap">
-            <div id="score-display">Score: 0</div>
+        <div style="display:inline-block;">
+            <div id="score-wrap" class="modal-wrap">
+                <div id="score-display">Score: 0</div>
+            </div>
+            <div id="moves-wrap" class="modal-wrap">
+                <div id="moves-display">Moves: 0</div>
+            </div>
+            <div id="time-elapsed-wrap" class="modal-wrap">
+                <div id="time-elapsed-display">Time: 00:00</div>
+            </div>
         </div>
-        <div id="moves-wrap" class="modal-wrap">
-            <div id="moves-display">Moves: 0</div>
+        <div style="display:inline-block;">
+            <div class="modal-wrap">
+                <button id="new-game-btn">New Game</button>
+                <label for="difficulty-select"></label>
+                <select id="difficulty-select" name="difficulty-select">
+                    <option>1 Suit</option>
+                    <option>2 Suits</option>
+                    <option>4 Suits</option>
+                </select>
+                <button id="undo-btn" disabled="disabled">Undo (Ctrl+Z)</button>
+                <button id="redo-btn" disabled="disabled">Redo (Ctrl+Y)</button>
+            </div>
         </div>
-        <div id="time-elapsed-wrap" class="modal-wrap">
-            <div id="time-elapsed-display">Time: 00:00</div>
-        </div>
-    </div>
-    <div id="controls-container" class="modal-wrap">
-        <button id="new-game-btn">New Game</button>
-        <label for="difficulty-select"></label>
-        <select id="difficulty-select" name="difficulty-select">
-            <option>1 Suit</option>
-            <option>2 Suits</option>
-            <option>4 Suits</option>
-        </select>
-        <button id="undo-btn" disabled="disabled">Undo (Ctrl+Z)</button>
-        <button id="redo-btn" disabled="disabled">Redo (Ctrl+Y)</button>
     </div>
     <div id="canvas-resources">
         <!-- cards-img-suitVal(clubs=0,hearts,spades,diamonds=3)-typeVal(ace=0..king=12) -->
