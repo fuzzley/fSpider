@@ -213,6 +213,7 @@ fSpider.ScoreChangeAction = (function (ScoreChangeAction, undefined) {
 	function ScoreChangeAction(board, amount) {
 		this.board = board;
 		this.amount = amount;
+        this.actionType = "ScoreChangeAction";
 	}
 
 	ScoreChangeAction.prototype.undo = function () {
