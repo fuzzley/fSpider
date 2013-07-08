@@ -488,8 +488,6 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
             actionSet.addAction(transferAction);
         }
 
-        this.reduceScore();
-        this.increaseMoves();
         this.arrangePiles(true, animTime, delayFraction); //arrange all piles
 
         if (actionSet.actions.length > 0) {
