@@ -155,7 +155,7 @@
             board.getHistory().onHistoryChanged(fSpider.onHistoryChanged);
             board.onScoreChanged(fSpider.onScoreChanged);
             board.onMovesChanged(fSpider.onMovesChanged);
-            board.onTimeEllapsedChanged(fSpider.onTimeEllapsedTick);
+            board.onTimeElapsedChanged(fSpider.onTimeElapsedTick);
             board.setBgImages(bgImages);
             board.setTableauPlaceHolderImage($('#card-img-ph1-v').get(0));
 
@@ -235,7 +235,7 @@
             $('#moves-display').text('Moves: ' + moves);
         };
 
-        fSpider.onTimeEllapsedTick = function (time) {
+        fSpider.onTimeElapsedTick = function (time) {
             $('#time-elapsed-display').text('Time: ' + fSpider.formatTime(time));
         };
 

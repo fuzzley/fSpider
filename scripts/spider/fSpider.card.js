@@ -252,6 +252,35 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
         return this.getGroup().getY();
     };
 
+    Card.prototype.getWidth = function (scale) {
+        if (scale === undefined) {
+            scale = 1;
+        }
+        return this.getGroup().getWidth() * scale;
+    };
+
+    Card.prototype.getHeight = function (scale) {
+        if (scale === undefined) {
+            scale = 1;
+        }
+        return this.getGroup().getHeight() * scale;
+    };
+
+    Card.prototype.getAbsolutePosition = function () {
+        return this.getGroup().getAbsolutePosition();
+    };
+
+    Card.prototype.getAbsoluteCenter = function (scale) {
+        if (scale === undefined) {
+            scale = 1;
+        }
+        var pos = this.getGroup().getAbsolutePosition();
+        return {
+            'x': pos.x + (this.getWidth(scale) / 2),
+            'y': pos.y + (this.getHeight(scale) / 2)
+        };
+    };
+
     Card.prototype.setListening = function (listening) {
         this.getGroup().setListening(listening);
     };
@@ -385,4 +414,4 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
     };
 
     return Card;
-})(fSpider.Card || {},window.Kinetic);
+})(fSpider.Card || {}, window.Kinetic);

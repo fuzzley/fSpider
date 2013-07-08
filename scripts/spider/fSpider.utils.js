@@ -9,13 +9,24 @@ fSpider.Utils = (function (Utils, Kinetic, undefined) {
         return xValid && yValid;
 	};
 
+    Utils.doRectsIntersect = function (rect1, rect2) {
+        return rect1.x < (rect2.x + rect2.width) && (rect1.x + rect1.width) > rect2.x
+            && rect1.y < (rect2.y + rect2.height) && (rect1.y + rect1.height) > rect2.y;
+    };
+
+    Utils.distance = function (pnt1, pnt2) {
+        var dX = pnt2.x - pnt1.x;
+        var dY = pnt2.y - pnt1.y;
+
+        return Math.sqrt((dX * dX) + (dY * dY));
+    };
+
 	Utils.loadKineticImage = function (imageObj, w, h) {
-	    var img = new Kinetic.Image({
+	    return new Kinetic.Image({
 	        image: imageObj,
 	        width: w,
 	        height: h
 	    });
-	    return img;
 	};
 
 	Utils.formatPointToLayer = function (point, layer, scale) {

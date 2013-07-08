@@ -42,14 +42,14 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
         this.globalScale = 1;
         this.score = 0;
         this.moves = 0;
-        this.timeEllapsed = 0;
+        this.timeElapsed = 0;
         this._onScoreChanged = undefined;
         this._onMovesChanged = undefined;
-        this._onTimeEllapsedChanged = undefined;
+        this._onTimeElapsedChanged = undefined;
         this._selectedCard = null;
         this._resourcesDiv = resourcesDiv;
         this._cardIdFormat = cardIdFormat;
-        this._timeEllapsedTimer = undefined;
+        this._timeElapsedTimer = undefined;
         this._bgImages = [];
         this._tableauPlaceHolderImage = undefined;
         this._stockPile = undefined;
@@ -264,8 +264,8 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
     SpiderBoard.prototype._attachStatisticsEventHandlers = function () {
         var self = this;
 
-        this._timeEllapsedTimer = setInterval(function () {
-            self._timeEllapsedTick(SpiderBoard.TIME_ELAPSED_INTERVAL);
+        this._timeElapsedTimer = setInterval(function () {
+            self._timeElapsedTick(SpiderBoard.TIME_ELAPSED_INTERVAL);
         }, SpiderBoard.TIME_ELAPSED_INTERVAL);
     };
 
@@ -341,8 +341,8 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
     };
 
     SpiderBoard.prototype._destroyStatisticsEventHandlers = function () {
-        if (this._timeEllapsedTimer !== undefined) {
-            clearInterval(this._timeEllapsedTimer);
+        if (this._timeElapsedTimer !== undefined) {
+            clearInterval(this._timeElapsedTimer);
         }
     };
 
@@ -375,7 +375,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
     //game logic
     SpiderBoard.prototype._checkForAndHandleCompleteSequenece = function (tPile) {
         var completeSequence = tPile.getCompleteSequence();
-        if (completeSequence !== undefined && completeSequence.length > 0) { //found one!
+        if (completeSequence != null && completeSequence.length > 0) { //found one!
             var originalPile = completeSequence[0].getPile();
             var fPiles = this.getFoundationPiles();
             for (var i = 0; i < fPiles.length; i++) {
@@ -495,13 +495,26 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
         }
     };
 
+    SpiderBoard.prototype._deselectCard = function (card) {
+        if (card === undefined) {
+            card = this._selectedCard;
+        }
+        if (card != null) {
+            card.setSelected(false);
+            card.setHovering(false);
+            this.arrangeTableauPile(card.getPile(), true);
+            card = null;
+        }
+    }
+
     SpiderBoard.prototype._stopDraggingCards = function (card, pos) {
         //capture original pile for later
         var originalPile = card.getPile();
 
         //make sure we can add card to pile
-        var tPile = this._findBoundingTableauPile(pos);
-        if (tPile !== undefined && tPile !== originalPile && tPile.canAddCard(card) === true) {
+        var scale = this.getGlobalScale();
+        var tPile = this._findOverlappedTableauPile(card, pos);
+        if (tPile != null && tPile !== originalPile && tPile.canAddCard(card) === true) {
             this._transferCardsFromTableauPile(originalPile, tPile, originalPile.getCardAndCardsAfter(card));
             if (this._checkForAndHandleCompleteSequenece(tPile) === true) {
                 card.setSelected(false);
@@ -512,6 +525,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
             } else {
                 this.arrangeTableauPile(tPile, true);
             }
+            this._deselectCard();
         }
         this.arrangeTableauPile(originalPile, true);
 
@@ -543,22 +557,47 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
         return suits;
     };
 
-    SpiderBoard.prototype._findBoundingTableauPile = function (point) {
+    SpiderBoard.prototype._findOverlappedTableauPile = function (card, touchPoint) {
+        var overlapPile = null;
+        var scale = this.getGlobalScale();
+
+        var cardRect = {
+            'x': card.getAbsolutePosition().x,
+            'y': card.getAbsolutePosition().y,
+            'width': card.getWidth(scale),
+            'height': card.getHeight(scale)
+        };
+
         var tPiles = this.getTableauPiles();
+        var tPile, bounds, lastCard, otherCenter, placeHolder, dist, tDist;
         for (var i = 0; i < tPiles.length; i++) {
-            var tPile = tPiles[i];
-            var bounds = {
+            tPile = tPiles[i];
+            bounds = {
                 'x': tPile.getX(),
                 'y': tPile.getY(),
                 'width': tPile.getWidth(),
                 'height': tPile.getHeight()
             };
-            if (Utils.isPointInBounds(point, bounds) === true) {
-                return tPile;
+            if (Utils.doRectsIntersect(cardRect, bounds) === true) {
+                lastCard = tPile.getLastCard();
+                if (lastCard !== null) {
+                    otherCenter = lastCard.getAbsoluteCenter(scale);
+                } else {
+                    placeHolder = tPile.getPlaceHolderKineticImg();
+                    otherCenter = {
+                        'x': placeHolder.getAbsolutePosition().x + (placeHolder.getWidth() / 2 * scale),
+                        'y': placeHolder.getAbsolutePosition().y + (placeHolder.getHeight() / 2 * scale)
+                    };
+                }
+                tDist = Utils.distance(touchPoint, otherCenter);
+                if (dist === undefined || dist > tDist) {
+                    dist = tDist;
+                    overlapPile = tPile;
+                }
             }
         }
 
-        return undefined;
+        return overlapPile;
     };
 
     SpiderBoard.prototype._fireScoreChanged = function () {
@@ -573,15 +612,15 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
         }
     };
 
-    SpiderBoard.prototype._fireTimeEllapsedChanged = function () {
-        if (this._onTimeEllapsedChanged !== undefined) {
-            this._onTimeEllapsedChanged(this.timeEllapsed);
+    SpiderBoard.prototype._fireTimeElapsedChanged = function () {
+        if (this._onTimeElapsedChanged !== undefined) {
+            this._onTimeElapsedChanged(this.timeElapsed);
         }
     };
 
     //event handlers
-    SpiderBoard.prototype._timeEllapsedTick = function (amount) {
-        this.incrementTimeEllapsed(amount);
+    SpiderBoard.prototype._timeElapsedTick = function (amount) {
+        this.incrementTimeElapsed(amount);
     };
 
     SpiderBoard.prototype._layerTouch = function (evt) {
@@ -727,10 +766,10 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
     SpiderBoard.prototype.undo = function () {
         if (this.getHistory().canUndo() === true) {
             var actionSet = this.getHistory().undo();
-            if (actionSet !== undefined) {
+            if (actionSet != null) {
                 var animTime, delayFraction;
                 var tAction = actionSet.findFirstTransferCardsAction();
-                if (tAction !== undefined) {
+                if (tAction != null) {
                     animTime = tAction.animTime;
                     delayFraction = tAction.delay;
                 }
@@ -748,10 +787,10 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
     SpiderBoard.prototype.redo = function () {
         if (this.getHistory().canRedo() === true) {
             var actionSet = this.getHistory().redo();
-            if (actionSet !== undefined) {
+            if (actionSet != null) {
                 var delayFraction;
                 var tAction = actionSet.findFirstTransferCardsAction();
-                if (tAction !== undefined) {
+                if (tAction != null) {
                     delayFraction = tAction.delay;
                 }
                 this.arrangePiles(true, undefined, delayFraction);
@@ -905,7 +944,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
         this.getHistory().clear();
         this.setScore(SpiderBoard.START_SCORE);
         this.setMoves(0);
-        this.setTimeEllapsed(0);
+        this.setTimeElapsed(0);
 
         this._destroyBoard();
         this._buildBoard(difficulty);
@@ -947,13 +986,17 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
         if (amount === undefined) {
             amount = SpiderBoard.MOVES_INCREMENT_BY;
         }
-        this.moves += amount;
-        this._fireMovesChanged();
+        if (amount !== 0) {
+            this.moves += amount;
+            this._fireMovesChanged();
+        }
     };
 
     SpiderBoard.prototype.setMoves = function (moves) {
-        this.moves = moves;
-        this._fireMovesChanged();
+        if (this.moves !== moves) {
+            this.moves = moves;
+            this._fireMovesChanged();
+        }
     };
 
     SpiderBoard.prototype.onScoreChanged = function (callback) {
@@ -964,32 +1007,45 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
         if (amount === undefined) {
             amount = SpiderBoard.SCORE_DECREMENT_BY;
         }
-        this.score -= amount;
-        this._fireScoreChanged();
+        if (amount !== 0) {
+            this.score -= amount;
+            this._fireScoreChanged();
+        }
     };
 
     SpiderBoard.prototype.increaseScore = function (amount) {
-        this.score += amount;
-        this._fireScoreChanged();
+        if (amount !== undefined && amount !== 0) {
+            this.score += amount;
+            this._fireScoreChanged();
+        }
     };
 
     SpiderBoard.prototype.setScore = function (score) {
-        this.score = score;
-        this._fireScoreChanged();
+        if (this.score !== score) {
+            this.score = score;
+            this._fireScoreChanged();
+        }
     };
 
-    SpiderBoard.prototype.onTimeEllapsedChanged = function (callback) {
-        this._onTimeEllapsedChanged = callback;
+    SpiderBoard.prototype.onTimeElapsedChanged = function (callback) {
+        this._onTimeElapsedChanged = callback;
     };
 
-    SpiderBoard.prototype.setTimeEllapsed = function (time) {
-        this.timeEllapsed = time;
-        this._fireTimeEllapsedChanged();
+    SpiderBoard.prototype.setTimeElapsed = function (time) {
+        if (this.timeElapsed !== time) {
+            this.timeElapsed = time;
+            this._fireTimeElapsedChanged();
+        }
     };
 
-    SpiderBoard.prototype.incrementTimeEllapsed = function (amount) {
-        this.timeEllapsed += amount;
-        this._fireTimeEllapsedChanged();
+    SpiderBoard.prototype.incrementTimeElapsed = function (amount) {
+        if (amount === undefined) {
+            amount = SpiderBoard.TIME_ELAPSED_INTERVAL;
+        }
+        if (amount !== 0) {
+            this.timeElapsed += amount;
+            this._fireTimeElapsedChanged();
+        }
     };
 
     SpiderBoard.prototype.win = function () {

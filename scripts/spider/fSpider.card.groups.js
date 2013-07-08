@@ -56,7 +56,7 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
     };
 
     TableauPile.prototype.getWidth = function () {
-        return this.group.getWidth() * this.group.getScaleX();
+        return this.group.getWidth() * this.getGroup().getScaleX();
     };
 
     TableauPile.prototype.setY = function (y) {
@@ -67,7 +67,7 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
     };
 
     TableauPile.prototype.getHeight = function () {
-        return this.group.getHeight() * this.group.getScaleY();
+        return this.group.getHeight() * this.getGroup().getScaleY();
     };
 
     TableauPile.prototype.getHoverBorder = function () {
@@ -157,6 +157,15 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
         }
 
         return changed;
+    };
+
+    TableauPile.prototype.getLastCard = function () {
+        var length = this.getCards().length;
+        if (length > 0) {
+            return this.getCards()[length - 1];
+        }
+        //else
+        return null;
     };
 
     TableauPile.prototype.getCardAndCardsAfter = function (card) {

@@ -42,7 +42,7 @@ fSpider.ActionSet = (function (ActionSet, undefined) {
 				return this.actions[i];
 			}
 		}
-        return undefined;
+        return null;
 	};
 
 	//static functions
