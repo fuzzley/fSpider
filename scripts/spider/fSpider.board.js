@@ -3,15 +3,21 @@
 ////dependencies\\\\
 //fSpider
 fSpider.Deck = fSpider.Deck || {};
+
+fSpider.Card = fSpider.Card || {};
+fSpider.PlayingCard = fSpider.PlayingCard || {};
+
+fSpider.Pile = fSpider.Pile || {};
 fSpider.TableauPile = fSpider.TableauPile || {};
 fSpider.StockPile = fSpider.StockPile || {};
 fSpider.FoundationPile = fSpider.FoundationPile || {};
-fSpider.Card = fSpider.Card || {};
+
 fSpider.History = fSpider.History || {};
 fSpider.ActionSet = fSpider.ActionSet || {};
 fSpider.TransferCardsAction = fSpider.TransferCardsAction || {};
 fSpider.FlipCardAction = fSpider.FlipCardAction || {};
 fSpider.ScoreChangeAction = fSpider.ScoreChangeAction || {};
+
 fSpider.Utils = fSpider.Utils || {};
 //externals
 ////Kinetic
@@ -25,7 +31,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
     var TableauPile = fSpider.TableauPile;
     var StockPile = fSpider.StockPile;
     var FoundationPile = fSpider.FoundationPile;
-    var Card = fSpider.Card;
+    var PlayingCard = fSpider.PlayingCard;
     var History = fSpider.History;
     var ActionSet = fSpider.ActionSet;
     var TransferCardsAction = fSpider.TransferCardsAction;
@@ -155,13 +161,13 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
         deck.setCards([]);
         for (var i = 0; i < numCards; i++) {
             //create new card
-            var card = new Card(i % 13, suits[Math.floor(i / 13)]);
+            var card = new PlayingCard(suits[Math.floor(i / 13)], i % 13);
             //load face image
             var cardId = cardIdFormat.replace("{0}", card.getSuit()).replace("{1}", card.getType());
             var faceImg = $(this.getResourcesDiv()).find(cardId)[0];
-            card.loadFaceImg(faceImg);
+            card.loadFaceImg(faceImg, PlayingCard.CARD_DIM.w, PlayingCard.CARD_DIM.h);
             //load back image
-            card.loadBackImg(this.getBgImages().verticalFull);
+            card.loadBackImg(this.getBgImages().verticalFull, PlayingCard.CARD_DIM.w, PlayingCard.CARD_DIM.h);
             //add to deck
             deck.getCards().push(card);
         }
@@ -535,10 +541,10 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
     SpiderBoard.prototype._getSuitsForDifficulty = function (difficulty) {
         var suits;
 
-        var spades = Card.CARD_SUITS.spades;
-        var clubs = Card.CARD_SUITS.clubs;
-        var hearts = Card.CARD_SUITS.hearts;
-        var diamonds = Card.CARD_SUITS.diamonds;
+        var spades = PlayingCard.CARD_SUITS.spades;
+        var clubs = PlayingCard.CARD_SUITS.clubs;
+        var hearts = PlayingCard.CARD_SUITS.hearts;
+        var diamonds = PlayingCard.CARD_SUITS.diamonds;
 
         switch (difficulty) {
             case SpiderBoard.DIFFICULTIES.OneSuit:
@@ -830,8 +836,8 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
             b: SpiderBoard.TABLEAU_PILE_MARGIN.b
         };
 
-        var w = Card.CARD_DIM.w;
-        var h = availHeight - availMargin.t - Card.CARD_DIM.h - availMargin.b - SpiderBoard.BOARD_MARGIN.b;
+        var w = PlayingCard.CARD_DIM.w;
+        var h = availHeight - availMargin.t - PlayingCard.CARD_DIM.h - availMargin.b - SpiderBoard.BOARD_MARGIN.b;
 
         pile.arrangeCards(w, h, animTime, delayFraction);
     };
@@ -863,7 +869,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
         var tableauPiles = this.getTableauPiles();
 
         //find available width if all tableau piles added
-        var emptyWidth = availWidth - (tableauPiles.length * Card.CARD_DIM.w * scale);
+        var emptyWidth = availWidth - (tableauPiles.length * PlayingCard.CARD_DIM.w * scale);
 
         //find amount of extra room that can be alloted to each pile
         var emptyWidthEach = emptyWidth / tableauPiles.length;
@@ -879,15 +885,15 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
         }
 
         y = (SpiderBoard.BOARD_MARGIN.t + availMargin.t) * scale;
-        w = Card.CARD_DIM.w;
-        h = availHeight - availMargin.t - Card.CARD_DIM.h - availMargin.b - SpiderBoard.BOARD_MARGIN.b;
+        w = PlayingCard.CARD_DIM.w;
+        h = availHeight - availMargin.t - PlayingCard.CARD_DIM.h - availMargin.b - SpiderBoard.BOARD_MARGIN.b;
 
         //arrange piles
         for (i = tableauPiles.length - 1; i >= 0; i--) {
             var tPile = tableauPiles[i];
             x = SpiderBoard.BOARD_MARGIN.l * scale; //board margin
             x += availMargin.l * (i + 1); //all pile left margins
-            x += ((Card.CARD_DIM.w * scale) + availMargin.r) * i; //all pile right margins and card widths
+            x += ((PlayingCard.CARD_DIM.w * scale) + availMargin.r) * i; //all pile right margins and card widths
             tPile.setX(x);
             tPile.setY(y);
             tPile.arrangeCards(w, h, animTime, delayFraction * i);
@@ -905,10 +911,10 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
         var nCardsInOriginalPile = this.getDeck().getSize() - 24 - 30;
 
         var stockExtraW = nCardsInOriginalPile / 10 * 1.5; //for showing how many stacks left
-        x = availWidth - (Card.CARD_DIM.w + availMargin.r + stockExtraW) * scale;
-        y = availHeight - (Card.CARD_DIM.h + availMargin.b) * scale;
-        w = Card.CARD_DIM.w + stockExtraW;
-        h = Card.CARD_DIM.h;
+        x = availWidth - (PlayingCard.CARD_DIM.w + availMargin.r + stockExtraW) * scale;
+        y = availHeight - (PlayingCard.CARD_DIM.h + availMargin.b) * scale;
+        w = PlayingCard.CARD_DIM.w + stockExtraW;
+        h = PlayingCard.CARD_DIM.h;
         stockPile.setX(x);
         stockPile.setY(y);
         stockPile.arrangeCards(w, h, animTime, delayFraction, delayFraction);
@@ -924,14 +930,14 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
         var foundationPiles = this.getFoundationPiles();
 
         var startX = SpiderBoard.BOARD_MARGIN.l + availMargin.l * scale;
-        y = availHeight - (availMargin.b + Card.CARD_DIM.h) * scale;
-        w = Card.CARD_DIM.w;
-        h = Card.CARD_DIM.h;
+        y = availHeight - (availMargin.b + PlayingCard.CARD_DIM.h) * scale;
+        w = PlayingCard.CARD_DIM.w;
+        h = PlayingCard.CARD_DIM.h;
 
         //arrange piles
         for (i = 0; i < foundationPiles.length; i++) {
             var fPile = foundationPiles[i];
-            x = startX + (i * Card.CARD_DIM.w / 3 * scale);
+            x = startX + (i * PlayingCard.CARD_DIM.w / 3 * scale);
             fPile.setX(x);
             fPile.setY(y);
             fPile.arrangeCards(w, h, animTime, delayFraction * i);
@@ -961,7 +967,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
         this._destroyBoard();
         this._buildBoard(difficulty);
 
-        this.getDeck().shuffle();
+//        this.getDeck().shuffle();
         this._buildPiles();
         this._attachPileEventHandlers();
         this._addPilesToLayer(this.getLayer());

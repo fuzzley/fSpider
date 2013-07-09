@@ -9,96 +9,54 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
     var Utils = fSpider.Utils;
 
     //constructor
-    Card = function (type, suit) {
-        this.cardType = type;
-        this.cardSuit = suit;
-        this.faceUp = false;
-        this.hovering = false;
-        this.selected = false;
-        this.pile = undefined;
-        this._faceImg = undefined; //Image
-        this._backImg = undefined; //Image
-        this._faceKineticImg = undefined; //Kinetic.Image
-        this._backKineticImg = undefined; //Kinetic.Image
-        this._xAnim = null;
-        this._yAnim = null;
-        this._group = new Kinetic.Group({
-            width: Card.CARD_DIM.w,
-            height: Card.CARD_DIM.h
-        });
-        this._border = new Kinetic.Rect({
-            x: 0 - Card.BORDER.padding,
-            y: 0 - Card.BORDER.padding,
-            visible: true,
-            opacity: Card.BORDER.opacity,
-            fill: Card.BORDER.fill,
-            stroke: Card.BORDER.stroke,
-            strokeWidth: Card.BORDER.strokeWidth,
-            cornerRadius: Card.BORDER.cornerRadius,
-            width: Card.CARD_DIM.w + Card.BORDER.padding,
-            height: Card.CARD_DIM.h + Card.BORDER.padding
-        });
-        this._activeBorder = new Kinetic.Rect({
-            visible: false,
-            opacity: Card.ACTIVE_BORDER.opacity,
-            fill: Card.ACTIVE_BORDER.fill,
-            stroke: Card.ACTIVE_BORDER.stroke,
-            strokeWidth: Card.ACTIVE_BORDER.strokeWidth,
-            cornerRadius: Card.ACTIVE_BORDER.cornerRadius,
-            width: Card.CARD_DIM.w,
-            height: Card.CARD_DIM.h
-        });
-        this._hoverBorder = new Kinetic.Rect({
-            visible: false,
-            opacity: Card.HOVER_BORDER.opacity,
-            fill: Card.HOVER_BORDER.fill,
-            stroke: Card.HOVER_BORDER.stroke,
-            strokeWidth: Card.HOVER_BORDER.strokeWidth,
-            cornerRadius: Card.HOVER_BORDER.cornerRadius,
-            width: Card.CARD_DIM.w,
-            height: Card.CARD_DIM.h
-        });
-
-        this._group.add(this._activeBorder);
-        this._group.add(this._hoverBorder);
-        this._group.add(this._border);
+    Card = function () {
     };
+
+    //fields
+    Card.prototype.faceUp = false;
+    Card.prototype.hovering = false;
+    Card.prototype.selected = false;
+    Card.prototype.pile = null;
+
+    Card.prototype.group = undefined;
+    Card.prototype.faceImg = undefined;
+    Card.prototype.faceKineticImg = undefined;
+    Card.prototype.backImg = undefined;
+    Card.prototype.backKineticImg = undefined;
+    Card.prototype.border = undefined;
+    Card.prototype.activeBorder = undefined;
+    Card.prototype.hoverBorder = undefined;
+
+    Card.prototype._xAnim = null;
+    Card.prototype._yAnim = null;
 
     //getters setters
-    Card.prototype.getType = function () {
-        return this.cardType;
-    };
-
-    Card.prototype.getSuit = function () {
-        return this.cardSuit;
-    };
-
     Card.prototype.getFaceImg = function () {
-        return this._faceImg;
+        return this.faceImg;
     };
     Card.prototype.setFaceImg = function (faceImg) {
-        this._faceImg = faceImg;
+        this.faceImg = faceImg;
     };
 
     Card.prototype.getFaceKineticImg = function () {
-        return this._faceKineticImg;
+        return this.faceKineticImg;
     };
     Card.prototype.setFaceKineticImg = function (faceKineticImg) {
-        this._faceKineticImg = faceKineticImg;
+        this.faceKineticImg = faceKineticImg;
     };
 
     Card.prototype.getBackImg = function () {
-        return this._backImg;
+        return this.backImg;
     };
     Card.prototype.setBackImg = function (backImg) {
-        this._backImg = backImg;
+        this.backImg = backImg;
     };
 
     Card.prototype.getBackKineticImg = function () {
-        return this._backKineticImg;
+        return this.backKineticImg;
     };
     Card.prototype.setBackKineticImg = function (backKineticImg) {
-        this._backKineticImg = backKineticImg;
+        this.backKineticImg = backKineticImg;
     };
 
     Card.prototype.isFaceUp = function () {
@@ -127,19 +85,19 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
     };
 
     Card.prototype.getGroup = function () {
-        return this._group;
+        return this.group;
     };
 
     Card.prototype.getBorder = function () {
-        return this._border;
+        return this.border;
     };
 
     Card.prototype.getActiveBorder = function () {
-        return this._activeBorder;
+        return this.activeBorder;
     };
 
     Card.prototype.getHoverBorder = function () {
-        return this._hoverBorder;
+        return this.hoverBorder;
     };
 
     Card.prototype.getPile = function () {
@@ -167,37 +125,37 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
 
             var self = this;
 
-            var layer = this.getGroup().getLayer();
-            var scale = this.getPile().getGroup().getScaleX();
-            var fromX = this.getGroup().getAbsolutePosition().x;
-            var toX = this.getGroup().getParent().getAbsolutePosition().x + x * scale;
+            var layer = this.group.getLayer();
+            var scale = this.pile.getGroup().getScaleX();
+            var fromX = this.group.getAbsolutePosition().x;
+            var toX = this.group.getParent().getAbsolutePosition().x + x * scale;
             var dX = toX - fromX;
             var msStep = dX / animTimeMS;
 
-            this.getGroup().getParent().moveToTop();
+            this.group.getParent().moveToTop();
 
             xAnim = new Kinetic.Animation(function (frame) {
                 if (frame.time >= animTimeMS + delay) {
                     xAnim.stop();
                     self._setXAnimation(null);
-                    self.getGroup().setX(x);
+                    self.group.setX(x);
                 } else if (frame.time > delay) {
                     var newX = fromX + (frame.time - delay) * msStep;
                     if ((msStep < 0 && newX < toX) || (msStep > 0 && newX > toX)) {
                         newX = toX;
                     }
-                    var newY = self.getGroup().getAbsolutePosition().y;
-                    self.getGroup().setAbsolutePosition(newX, newY);
+                    var newY = self.group.getAbsolutePosition().y;
+                    self.group.setAbsolutePosition(newX, newY);
                 }
             }, layer);
             this._setXAnimation(xAnim);
             xAnim.start();
         } else {
-            this.getGroup().setX(x);
+            this.group.setX(x);
         }
     };
     Card.prototype.getX = function () {
-        return this.getGroup().getX();
+        return this.group.getX();
     };
 
     Card.prototype.setY = function (y, animTimeMS, delay) {
@@ -218,63 +176,63 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
 
             var self = this;
 
-            var layer = this.getGroup().getLayer();
-            var scale = this.getPile().getGroup().getScaleY();
-            this.getGroup().setAbsolutePosition(this.getGroup().getAbsolutePosition());
-            var fromY = fSpider.Utils.formatPointToLayer({ y: this.getGroup().getAbsolutePosition().y }, layer).y;
-            var toY = fSpider.Utils.formatPointToLayer({ y: this.getPile().getGroup().getAbsolutePosition().y }, layer).y + y * scale;
+            var layer = this.group.getLayer();
+            var scale = this.pile.getGroup().getScaleY();
+            this.group.setAbsolutePosition(this.group.getAbsolutePosition());
+            var fromY = fSpider.Utils.formatPointToLayer({ y: this.group.getAbsolutePosition().y }, layer).y;
+            var toY = fSpider.Utils.formatPointToLayer({ y: this.pile.getGroup().getAbsolutePosition().y }, layer).y + y * scale;
             var dY = toY - fromY;
             var msStep = dY / animTimeMS;
 
-            this.getGroup().getParent().moveToTop();
+            this.group.getParent().moveToTop();
 
             yAnim = new Kinetic.Animation(function (frame) {
                 if (frame.time >= animTimeMS + delay) {
                     yAnim.stop();
                     self._setYAnimation(null);
-                    self.getGroup().setY(y);
+                    self.group.setY(y);
                 } else if (frame.time > delay) {
                     var newY = fromY + (frame.time - delay) * msStep;
                     if ((msStep < 0 && newY < toY) || (msStep > 0 && newY > toY)) {
                         newY = toY;
                     }
-                    var newX = self.getGroup().getAbsolutePosition().x;
-                    self.getGroup().setAbsolutePosition(newX, newY);
+                    var newX = self.group.getAbsolutePosition().x;
+                    self.group.setAbsolutePosition(newX, newY);
                 }
             }, layer);
             this._setYAnimation(yAnim);
             yAnim.start();
         } else {
-            this.getGroup().setY(y);
+            this.group.setY(y);
         }
     };
     Card.prototype.getY = function () {
-        return this.getGroup().getY();
+        return this.group.getY();
     };
 
     Card.prototype.getWidth = function (scale) {
         if (scale === undefined) {
             scale = 1;
         }
-        return this.getGroup().getWidth() * scale;
+        return this.group.getWidth() * scale;
     };
 
     Card.prototype.getHeight = function (scale) {
         if (scale === undefined) {
             scale = 1;
         }
-        return this.getGroup().getHeight() * scale;
+        return this.group.getHeight() * scale;
     };
 
     Card.prototype.getAbsolutePosition = function () {
-        return this.getGroup().getAbsolutePosition();
+        return this.group.getAbsolutePosition();
     };
 
     Card.prototype.getAbsoluteCenter = function (scale) {
         if (scale === undefined) {
             scale = 1;
         }
-        var pos = this.getGroup().getAbsolutePosition();
+        var pos = this.group.getAbsolutePosition();
         return {
             'x': pos.x + (this.getWidth(scale) / 2),
             'y': pos.y + (this.getHeight(scale) / 2)
@@ -282,11 +240,11 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
     };
 
     Card.prototype.setListening = function (listening) {
-        this.getGroup().setListening(listening);
+        this.group.setListening(listening);
     };
 
     Card.prototype.setDraggable = function (draggable) {
-        this.getGroup().setDraggable(draggable);
+        this.group.setDraggable(draggable);
     };
 
     Card.prototype.setVisible = function (visible) {
@@ -318,54 +276,126 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
     //public methods
     Card.prototype.refresh = function () {
         //card face/back visibility
-        if (this.getFaceKineticImg() !== undefined) {
-            this.getFaceKineticImg().setVisible(this.isFaceUp());
+        if (this.faceKineticImg != null) {
+            this.faceKineticImg.setVisible(this.faceUp === true);
         }
-        if (this.getBackKineticImg() !== undefined) {
-            this.getBackKineticImg().setVisible(!this.isFaceUp());
+        if (this.backKineticImg != null) {
+            this.backKineticImg.setVisible(this.faceUp !== true);
         }
 
         //active boarder
-        this.getActiveBorder().setVisible((this.isHovering() === true || this.isSelected() === true) && Card.ACTIVE_BORDER.visible);
+        this.activeBorder.setVisible(this.hovering === true || this.selected === true);
 
         //hover border
-        this.getHoverBorder().setVisible(this.isHovering() === true && Card.HOVER_BORDER.visible);
+        this.hoverBorder.setVisible(this.hovering === true);
     };
 
     Card.prototype.remove = function () {
-        this.getGroup().remove();
+        this.group.remove();
     };
 
-    Card.prototype.loadFaceImg = function (img) {
+    Card.prototype.loadFaceImg = function (img, w, h) {
         this.setFaceImg(img);
-        this.setFaceKineticImg(Utils.loadKineticImage(this.getFaceImg(), Card.CARD_DIM.w, Card.CARD_DIM.h));
-        this.getGroup().add(this.getFaceKineticImg());
-        this.getBorder().remove();
-        this.getGroup().add(this.getBorder()); //make sure it's on top
+        this.setFaceKineticImg(Utils.loadKineticImage(this.faceImg, w, h));
+        this.group.add(this.faceKineticImg);
+        this.border.remove();
+        this.group.add(this.border); //make sure it's on top
     };
 
-    Card.prototype.loadBackImg = function (img) {
+    Card.prototype.loadBackImg = function (img, w, h) {
         this.setBackImg(img);
-        this.setBackKineticImg(Utils.loadKineticImage(this.getBackImg(), Card.CARD_DIM.w, Card.CARD_DIM.h));
-        this.getGroup().add(this.getBackKineticImg());
-        this.getBorder().remove();
-        this.getGroup().add(this.getBorder()); //make sure it's on top
+        this.setBackKineticImg(Utils.loadKineticImage(this.backImg, w, h));
+        this.group.add(this.backKineticImg);
+        this.border.remove();
+        this.group.add(this.border); //make sure it's on top
     };
 
     Card.prototype.on = function (eventName, callback) {
-        this.getGroup().on(eventName, callback);
+        this.group.on(eventName, callback);
     };
 
     Card.prototype.off = function (eventName, callback) {
-        this.getGroup().off(eventName, callback);
+        this.group.off(eventName, callback);
     };
 
     Card.prototype.toString = function () {
-        return '[fSpider.Card]suit: ' + this.getSuit() + ', type: ' + this.getType() + ', faceup: ' + this.isFaceUp() + ';';
+        return '[fSpider.Card]faceup: ' + this.isFaceUp() + ';';
+    };
+
+    return Card;
+})(fSpider.Card || {}, window.Kinetic);
+
+fSpider.PlayingCard = (function (PlayingCard, Kinetic, undefined) {
+    'use strict';
+
+    var Card = fSpider.Card;
+    var Utils = fSpider.Utils;
+
+    PlayingCard = function (suit, type) {
+        this.cardSuit = suit;
+        this.cardType = type;
+
+        this.group = new Kinetic.Group({
+            width: PlayingCard.CARD_DIM.w,
+            height: PlayingCard.CARD_DIM.h
+        });
+        this.border = new Kinetic.Rect({
+            x: 0 - PlayingCard.BORDER.padding,
+            y: 0 - PlayingCard.BORDER.padding,
+            visible: true,
+            opacity: PlayingCard.BORDER.opacity,
+            fill: PlayingCard.BORDER.fill,
+            stroke: PlayingCard.BORDER.stroke,
+            strokeWidth: PlayingCard.BORDER.strokeWidth,
+            cornerRadius: PlayingCard.BORDER.cornerRadius,
+            width: PlayingCard.CARD_DIM.w + PlayingCard.BORDER.padding,
+            height: PlayingCard.CARD_DIM.h + PlayingCard.BORDER.padding
+        });
+        this.activeBorder = new Kinetic.Rect({
+            visible: false,
+            opacity: PlayingCard.ACTIVE_BORDER.opacity,
+            fill: PlayingCard.ACTIVE_BORDER.fill,
+            stroke: PlayingCard.ACTIVE_BORDER.stroke,
+            strokeWidth: PlayingCard.ACTIVE_BORDER.strokeWidth,
+            cornerRadius: PlayingCard.ACTIVE_BORDER.cornerRadius,
+            width: PlayingCard.CARD_DIM.w,
+            height: PlayingCard.CARD_DIM.h
+        });
+        this.hoverBorder = new Kinetic.Rect({
+            visible: false,
+            opacity: PlayingCard.HOVER_BORDER.opacity,
+            fill: PlayingCard.HOVER_BORDER.fill,
+            stroke: PlayingCard.HOVER_BORDER.stroke,
+            strokeWidth: PlayingCard.HOVER_BORDER.strokeWidth,
+            cornerRadius: PlayingCard.HOVER_BORDER.cornerRadius,
+            width: PlayingCard.CARD_DIM.w,
+            height: PlayingCard.CARD_DIM.h
+        });
+
+        this.group.add(this.activeBorder);
+        this.group.add(this.hoverBorder);
+        this.group.add(this.border);
+    };
+
+    Utils.extendObj(PlayingCard, Card);
+
+    //getters setters
+    PlayingCard.prototype.getType = function () {
+        return this.cardType;
+    };
+
+    PlayingCard.prototype.getSuit = function () {
+        return this.cardSuit;
+    };
+
+    //public functions
+    PlayingCard.prototype.toString = function () {
+        return '[fSpider.PlayingCard]suit: ' + this.getSuit() + ', type: ' + this.getType() + ', faceup: ' + this.isFaceUp() + ';';
     };
 
     //static fields
-    Card.CARD_TYPES = {
+    PlayingCard.CARD_DIM = { w: 90, h: 120 };
+    PlayingCard.CARD_TYPES = {
         ace: 0,
         two: 1,
         three: 2,
@@ -380,14 +410,13 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
         queen: 11,
         king: 12
     };
-    Card.CARD_SUITS = {
+    PlayingCard.CARD_SUITS = {
         clubs: 0,
         hearts: 1,
         spades: 2,
         diamonds: 3
     };
-    Card.CARD_DIM = { w: 90, h: 120 };
-    Card.BORDER = {
+    PlayingCard.BORDER = {
         'visible': true,
         'stroke': '#F0F0F0',
         'strokeWidth': 1.5,
@@ -396,7 +425,7 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
         'opacity': 1,
         'padding': -.5
     };
-    Card.ACTIVE_BORDER = {
+    PlayingCard.ACTIVE_BORDER = {
         'visible': true,
         'stroke': '#fff9b0',
         'strokeWidth': 6,
@@ -404,7 +433,7 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
         'fill': '',
         'opacity': .9
     };
-    Card.HOVER_BORDER = {
+    PlayingCard.HOVER_BORDER = {
         'visible': true,
         'stroke': '#a8a8a8',
         'strokeWidth': 1.5,
@@ -413,5 +442,5 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
         'opacity': 1
     };
 
-    return Card;
-})(fSpider.Card || {}, window.Kinetic);
+    return PlayingCard;
+})(fSpider.PlayingCard || {}, window.Kinetic);
