@@ -3,6 +3,14 @@
 fSpider.Utils = (function (Utils, Kinetic, undefined) {
     'use strict';
 
+    Utils.extendObj = function(childObj, parentObj) {
+        //http://davidshariff.com/blog/javascript-inheritance-patterns/
+        var tmpObj = function () {}
+        tmpObj.prototype = parentObj.prototype;
+        childObj.prototype = new tmpObj();
+        childObj.prototype.constructor = childObj;
+    };
+
     Utils.isPointInBounds = function (point, bounds) {
         var xValid = point.x >= bounds.x && point.x <= (bounds.x + bounds.width); // x in bounds
         var yValid = point.y >= bounds.y && point.y <= (bounds.y + bounds.height); //y in bounds

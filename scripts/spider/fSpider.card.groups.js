@@ -5,18 +5,167 @@
 fSpider.Card = fSpider.Card || {};
 fSpider.Utils = fSpider.Utils || {};
 
+fSpider.Pile = (function (Pile, undefined) {
+    'use strict';
+
+    Pile = function () {};
+
+    //public fields
+    Pile.prototype.cards = [];
+    Pile.prototype.group = undefined;
+
+    //getters/setters
+    Pile.prototype.getCards = function () {
+        return this.cards;
+    };
+
+    Pile.prototype.getCardAt = function (index) {
+        return this.getCards()[index];
+    };
+
+    Pile.prototype.getSize = function () {
+        return (this.getCards() || []).length;
+    };
+
+    Pile.prototype.getGroup = function () {
+        return this.group;
+    };
+
+    Pile.prototype.setX = function (x) {
+        this.getGroup().setX(x);
+    };
+    Pile.prototype.getX = function () {
+        return this.getGroup().getX();
+    };
+
+    Pile.prototype.getWidth = function () {
+        return this.group.getWidth() * this.getGroup().getScaleX();
+    };
+
+    Pile.prototype.setY = function (y) {
+        this.getGroup().setY(y);
+    };
+    Pile.prototype.getY = function () {
+        return this.getGroup().getY();
+    };
+
+    Pile.prototype.getHeight = function () {
+        return this.group.getHeight() * this.getGroup().getScaleY();
+    };
+
+    //public functions
+    Pile.prototype.transferCards = function (cards) {
+        var self = this;
+        cards.forEach(function (card) {
+            var absPos = { x: card.getGroup().getAbsolutePosition().x, y: card.getGroup().getAbsolutePosition().y };
+            var pile = card.getPile();
+            if (pile != null) {
+                pile.removeCard(card);
+                pile.resetListening();
+                pile.resetDraggable();
+            }
+            self.addCard(card, absPos);
+        });
+    };
+
+    Pile.prototype.addCard = function (card, absPos) {
+        card.setPile(this);
+        this.cards.push(card);
+        this.getGroup().add(card.getGroup());
+        if (absPos != null) {
+            card.getGroup().setAbsolutePosition(absPos);
+        }
+    };
+
+    Pile.prototype.addCards = function (cards) {
+        var self = this;
+        cards.forEach(function (card) {
+            self.addCard(card);
+        });
+    };
+
+    Pile.prototype.removeCard = function (card) {
+        var index = this.cards.indexOf(card);
+        if (index >= 0) {
+            this.cards.splice(index, 1);
+            card.setPile(undefined);
+            card.remove();
+        }
+        return card;
+    };
+
+    Pile.prototype.removeAllCards = function () {
+        while (this.cards.length > 0) {
+            this.removeCard(this.cards[0]);
+        }
+    };
+
+    Pile.prototype.arrangeCards = function (w, h, animTime, delay) {
+        //specific to pile type
+    };
+
+    Pile.prototype.resetCardFaces = function () {
+        //specific to pile type
+    };
+
+    Pile.prototype.resetListening = function () {
+        //specific to pile type
+    };
+
+    Pile.prototype.resetDraggable = function () {
+        //specific to pile type
+    };
+
+    Pile.prototype.reverseCards = function () {
+        var cards = this.cards.reverse();
+        cards.forEach(function (card) {
+            card.getGroup().moveToTop();
+        });
+    };
+
+    Pile.prototype.getLastCard = function () {
+        var length = this.getSize();
+        if (length > 0) {
+            return this.cards[length - 1];
+        }
+        //else
+        return null;
+    };
+
+    Pile.prototype.getCardAndCardsAfter = function (card) {
+        var cardsToGive = [];
+
+        var index = this.cards.indexOf(card);
+        if (index >= 0) {
+            for (var i = index; i < this.cards.length; i++) {
+                cardsToGive.push(this.cards[i]);
+            }
+        }
+
+        return cardsToGive;
+    };
+
+    Pile.prototype.destroy = function () {
+        this.removeAllCards();
+        this.group.remove();
+    };
+
+    return Pile;
+})(fSpider.Pile || {});
+
 fSpider.TableauPile = (function (TableauPile, undefined) {
     'use strict';
 
+    var Pile = fSpider.Pile;
     var Card = fSpider.Card;
     var Utils = fSpider.Utils;
 
     //constructor
-    TableauPile = function (history) {
-        this.history = history;
-        this.cards = [];
-        this.hovering = false;
+    TableauPile = function (cards) {
+        this.cards = cards || [];
         this.group = new Kinetic.Group();
+        this.hovering = false;
+
         this._hoverBorder = new Kinetic.Rect({
             visible: false,
             opacity: TableauPile.HOVER_BORDER.opacity,
@@ -27,48 +176,10 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
             width: Card.CARD_DIM.w,
             height: Card.CARD_DIM.h
         });
-
         this.group.add(this._hoverBorder);
     };
 
-    //getters/setters
-    TableauPile.prototype.getCards = function () {
-        return this.cards;
-    };
-
-    TableauPile.prototype.getCardAt = function (index) {
-        return this.getCards()[index];
-    };
-
-    TableauPile.prototype.getSize = function () {
-        return (this.getCards() || []).length;
-    };
-
-    TableauPile.prototype.getGroup = function () {
-        return this.group;
-    };
-
-    TableauPile.prototype.setX = function (x) {
-        this.getGroup().setX(x);
-    };
-    TableauPile.prototype.getX = function () {
-        return this.getGroup().getX();
-    };
-
-    TableauPile.prototype.getWidth = function () {
-        return this.group.getWidth() * this.getGroup().getScaleX();
-    };
-
-    TableauPile.prototype.setY = function (y) {
-        this.getGroup().setY(y);
-    };
-    TableauPile.prototype.getY = function () {
-        return this.getGroup().getY();
-    };
-
-    TableauPile.prototype.getHeight = function () {
-        return this.group.getHeight() * this.getGroup().getScaleY();
-    };
+    Utils.extendObj(TableauPile, Pile);
 
     TableauPile.prototype.getHoverBorder = function () {
         return this._hoverBorder;
@@ -159,30 +270,6 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
         return changed;
     };
 
-    TableauPile.prototype.getLastCard = function () {
-        var length = this.getCards().length;
-        if (length > 0) {
-            return this.getCards()[length - 1];
-        }
-        //else
-        return null;
-    };
-
-    TableauPile.prototype.getCardAndCardsAfter = function (card) {
-        var cardsToGive = [];
-
-        var cards = this.getCards();
-        var index = cards.indexOf(card);
-
-        if (index >= 0) {
-            for (var i = index; i < cards.length; i++) {
-                cardsToGive.push(cards[i]);
-            }
-        }
-
-        return cardsToGive;
-    };
-
     TableauPile.prototype.loadPlaceHolderImg = function (img) {
         this.setPlaceHolderImg(img);
         this.setPlaceHolderKineticImg(Utils.loadKineticImage(this.getPlaceHolderImg(), Card.CARD_DIM.w, Card.CARD_DIM.h));
@@ -214,52 +301,6 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
             index++;
         }
         return true;
-    };
-
-    TableauPile.prototype.transferCards = function (cards) {
-        var self = this;
-        cards.forEach(function (card) {
-            var absPos = { x: card.getGroup().getAbsolutePosition().x, y: card.getGroup().getAbsolutePosition().y };
-            var pile = card.getPile();
-            if (pile !== undefined) {
-                pile.removeCard(card);
-                pile.resetListening();
-                pile.resetDraggable();
-            }
-            self.addCard(card, absPos);
-        });
-    };
-
-    TableauPile.prototype.addCard = function (card, absPos) {
-        card.setPile(this);
-        this.cards.push(card);
-        this.getGroup().add(card.getGroup());
-        if (absPos !== undefined) {
-            card.getGroup().setAbsolutePosition(absPos);
-        }
-    };
-
-    TableauPile.prototype.addCards = function (cards) {
-        var self = this;
-        cards.forEach(function (card) {
-            self.addCard(card);
-        });
-    };
-
-    TableauPile.prototype.removeCard = function (card) {
-        var index = this.cards.indexOf(card);
-        if (index >= 0) {
-            this.cards.splice(index, 1);
-            card.setPile(undefined);
-            card.remove();
-        }
-        return card;
-    };
-
-    TableauPile.prototype.removeAllCards = function () {
-        while (this.getCards().length > 0) {
-            this.removeCard(this.getCards()[0]);
-        }
     };
 
     TableauPile.prototype.arrangeCards = function (w, h, animTime, delay) {
@@ -352,12 +393,6 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
         });
     };
 
-    TableauPile.prototype.destroy = function () {
-        this.removeAllCards();
-        this.getPlaceHolderKineticImg().remove();
-        this.getGroup().remove();
-    };
-
     TableauPile.HOVER_BORDER = {
         'visible': true,
         'stroke': '#FFFF99',
@@ -373,87 +408,21 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
 fSpider.StockPile = (function (StockPile, undefined) {
     'use strict';
 
+    var Pile = fSpider.Pile;
     var Card = fSpider.Card;
+    var Utils = fSpider.Utils;
 
     //constructor
-    StockPile = function (cards, history) {
+    StockPile = function (cards) {
         this.cards = cards || [];
-        this.history = history;
         this.group = new Kinetic.Group();
     };
 
+    Utils.extendObj(StockPile, Pile);
+
     //getters/setters
-    StockPile.prototype.getCards = function () {
-        return this.cards;
-    };
-
-    StockPile.prototype.getCardAt = function (index) {
-        return this.getCards()[index];
-    };
-
-    StockPile.prototype.getSize = function () {
-        return (this.getCards() || []).length;
-    };
-
-    StockPile.prototype.getGroup = function () {
-        return this.group;
-    };
-
-    StockPile.prototype.setX = function (x) {
-        this.getGroup().setX(x);
-    };
-
-    StockPile.prototype.setY = function (y) {
-        this.getGroup().setY(y);
-    };
 
     //public methods
-    StockPile.prototype.transferCards = function (cards) {
-        var self = this;
-        cards.forEach(function (card) {
-            var absPos = { x: card.getGroup().getAbsolutePosition().x, y: card.getGroup().getAbsolutePosition().y };
-            var pile = card.getPile();
-            if (pile !== undefined) {
-                pile.removeCard(card);
-                pile.resetListening();
-                pile.resetDraggable();
-            }
-            self.addCard(card, absPos);
-        });
-    };
-
-    StockPile.prototype.addCard = function (card, absPos) {
-        card.setPile(this);
-        this.cards.push(card);
-        this.getGroup().add(card.getGroup());
-        if (absPos !== undefined) {
-            card.getGroup().setAbsolutePosition(absPos);
-        }
-    };
-
-    StockPile.prototype.addCards = function (cards) {
-        var self = this;
-        cards.forEach(function (card) {
-            self.addCard(card);
-        });
-    };
-
-    StockPile.prototype.removeCard = function (card) {
-        var index = this.cards.indexOf(card);
-        if (index >= 0) {
-            this.cards.splice(index, 1);
-            card.setPile(undefined);
-            card.remove();
-        }
-        return card;
-    };
-
-    StockPile.prototype.removeAllCards = function () {
-        while (this.getCards().length > 0) {
-            this.removeCard(this.getCards()[0]);
-        }
-    };
-
     StockPile.prototype.arrangeCards = function (w, h, animTime, delay) {
         var tableauPiles = 10;
 
@@ -494,96 +463,26 @@ fSpider.StockPile = (function (StockPile, undefined) {
         });
     };
 
-    StockPile.prototype.destroy = function () {
-        this.removeAllCards();
-        this.getGroup().remove();
-    };
-
     return StockPile;
 })(fSpider.StockPile || {});
 
 fSpider.FoundationPile = (function (FoundationPile, undefined) {
     'use strict';
 
+    var Pile = fSpider.Pile;
+    var Utils = fSpider.Utils;
+
     //constructor
-    FoundationPile = function (cards, history) {
+    FoundationPile = function (cards) {
         this.cards = cards || [];
-        this.history = history;
         this.group = new Kinetic.Group();
     };
 
+    Utils.extendObj(FoundationPile, Pile);
+
     //getters/setters
-    FoundationPile.prototype.getCards = function () {
-        return this.cards;
-    };
-
-    FoundationPile.prototype.getCardAt = function (index) {
-        return this.getCards()[index];
-    };
-
-    FoundationPile.prototype.getSize = function () {
-        return (this.getCards() || []).length;
-    };
-
-    FoundationPile.prototype.getGroup = function () {
-        return this.group;
-    };
-
-    FoundationPile.prototype.setX = function (x) {
-        this.getGroup().setX(x);
-    };
-
-    FoundationPile.prototype.setY = function (y) {
-        this.getGroup().setY(y);
-    };
 
     //public methods
-    FoundationPile.prototype.transferCards = function (cards) {
-        var self = this;
-        cards.forEach(function (card) {
-            var absPos = { x: card.getGroup().getAbsolutePosition().x, y: card.getGroup().getAbsolutePosition().y };
-            var pile = card.getPile();
-            if (pile !== undefined) {
-                pile.removeCard(card);
-                pile.resetListening();
-                pile.resetDraggable();
-            }
-            self.addCard(card, absPos);
-        });
-    };
-
-    FoundationPile.prototype.addCard = function (card, absPos) {
-        card.setPile(this);
-        this.cards.push(card);
-        this.getGroup().add(card.getGroup());
-        if (absPos !== undefined) {
-            card.getGroup().setAbsolutePosition(absPos);
-        }
-    };
-
-    FoundationPile.prototype.addCards = function (cards) {
-        var self = this;
-        cards.forEach(function (card) {
-            self.addCard(card);
-        });
-    };
-
-    FoundationPile.prototype.removeCard = function (card) {
-        var index = this.cards.indexOf(card);
-        if (index >= 0) {
-            this.cards.splice(index, 1);
-            card.setPile(undefined);
-            card.remove();
-        }
-        return card;
-    };
-
-    FoundationPile.prototype.removeAllCards = function () {
-        while (this.getCards().length > 0) {
-            this.removeCard(this.getCards()[0]);
-        }
-    };
-
     FoundationPile.prototype.arrangeCards = function (w, h, animTime, delay) {
         this.getCards().forEach(function (card) {
             card.setX(0, animTime, delay);
@@ -607,17 +506,6 @@ fSpider.FoundationPile = (function (FoundationPile, undefined) {
         this.getCards().forEach(function (card) {
             card.setDraggable(false);
         });
-    };
-
-    FoundationPile.prototype.reverseCards = function () {
-        var cards = this.cards.slice(0);
-        this.removeAllCards();
-        this.addCards(cards.reverse());
-    };
-
-    FoundationPile.prototype.destroy = function () {
-        this.removeAllCards();
-        this.getGroup().remove();
     };
 
     return FoundationPile;
