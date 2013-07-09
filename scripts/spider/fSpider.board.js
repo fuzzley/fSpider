@@ -495,13 +495,15 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
         }
     };
 
-    SpiderBoard.prototype._deselectCard = function (card) {
+    SpiderBoard.prototype._deselectCard = function (card, arrangePile) {
         if (card === undefined) {
             card = this._selectedCard;
         }
         if (card != null) {
             card.setSelected(false);
-            this.arrangeTableauPile(card.getPile(), true);
+            if (arrangePile === true) {
+                this.arrangeTableauPile(card.getPile(), true);
+            }
             if (this._selectedCard === card) {
                 this._selectedCard = null;
             }
@@ -521,7 +523,6 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
         var originalPile = card.getPile();
 
         //make sure we can add card to pile
-        var scale = this.getGlobalScale();
         var tPile = this._findOverlappedTableauPile(card, pos);
         if (tPile != null) {
             this._transferCardsFromTableauPile(originalPile, tPile, originalPile.getCardAndCardsAfter(card));
@@ -534,7 +535,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
             } else {
                 this.arrangeTableauPile(tPile, true);
             }
-            this._deselectCard();
+            this._deselectCard(this._selectedCard, true);
         }
         this.arrangeTableauPile(originalPile, true);
 
@@ -649,7 +650,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
             if (this._playerAction === SpiderBoard.PLAYER_ACTIONS.dragging) {
                 this._stopDraggingCards(this._selectedCard, { 'x': evt.layerX, 'y': evt.layerY });
             } else {
-                this._deselectCard();
+                this._deselectCard(this._selectedCard, true);
                 this.redraw();
             }
         }
@@ -657,6 +658,9 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
 
     SpiderBoard.prototype._cardDragStart = function (evt, card) {
         this._playerAction = SpiderBoard.PLAYER_ACTIONS.dragging;
+        if (this._selectedCard != null) {
+            this._deselectCard(this._selectedCard, this._selectedCard.getPile() !== card.getPile());
+        }
         this._selectCard(card, false);
         card.getPile().getGroup().moveToTop();
     };
@@ -683,7 +687,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
             if (sCard === card) {
                 //just deselect it
                 if (this._playerAction !== SpiderBoard.PLAYER_ACTIONS.dragging) {
-                    this._deselectCard(sCard);
+                    this._deselectCard(sCard, true);
                 }
             } else if (sCard !== null) {
                 var cardIndex = card.getPile().getCards().indexOf(card);
@@ -697,7 +701,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
                         }
                     }
                 }
-                this._deselectCard(sCard);
+                this._deselectCard(sCard, true);
             } else if (card.getPile().canRemoveCard(card) === true) {
                 this._selectCard(card, true);
             }
@@ -747,7 +751,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
                 }
             }
 
-            this._deselectCard(card);
+            this._deselectCard(card, true);
             this.redraw();
         }
     };
@@ -964,7 +968,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
 
         this._resetCardFaces();
         this.rescalePiles();
-        this.arrangePiles();
+        this.arrangePiles(false);
         this.getPiles().forEach(function (pile) {
             pile.resetListening();
             pile.resetDraggable();
@@ -1063,10 +1067,10 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
 
     //static fields
     SpiderBoard.BOARD_MARGIN = { l: 10, r: 10, t: 10, b: 10 };
-    SpiderBoard.TABLEAU_PILE_MARGIN = { l: 1, r: 1, t: 5, b: 0 };
+    SpiderBoard.TABLEAU_PILE_MARGIN = { l: 2, r: 2, t: 5, b: 0 };
     SpiderBoard.STOCK_PILE_MARGIN = { l: 0, r: 100, t: 0, b: 10 };
     SpiderBoard.FOUNDATION_PILES_MARGIN = { l: 150, r: 0, t: 0, b: 10 };
-    SpiderBoard.ORIGINAL_DIMENSIONS = { w: 940, h: 580 };
+    SpiderBoard.ORIGINAL_DIMENSIONS = { w: 956, h: 580 };
     SpiderBoard.PLAYER_ACTIONS = {
         'none': 0,
         'dragging': 1
