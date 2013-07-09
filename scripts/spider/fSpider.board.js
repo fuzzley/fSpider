@@ -508,10 +508,12 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
         }
     };
 
-    SpiderBoard.prototype._selectCard = function (card) {
+    SpiderBoard.prototype._selectCard = function (card, arrangePile) {
         card.setSelected(true);
-        this.arrangeTableauPile(card.getPile(), true);
         this._selectedCard = card;
+        if (arrangePile === true) {
+            this.arrangeTableauPile(card.getPile(), true);
+        }
     };
 
     SpiderBoard.prototype._stopDraggingCards = function (card, pos) {
@@ -655,6 +657,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
 
     SpiderBoard.prototype._cardDragStart = function (evt, card) {
         this._playerAction = SpiderBoard.PLAYER_ACTIONS.dragging;
+        this._selectCard(card, false);
         card.getPile().getGroup().moveToTop();
     };
 
@@ -679,7 +682,9 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
         if (card.isFaceUp() === true) {
             if (sCard === card) {
                 //just deselect it
-                this._deselectCard(sCard);
+                if (this._playerAction !== SpiderBoard.PLAYER_ACTIONS.dragging) {
+                    this._deselectCard(sCard);
+                }
             } else if (sCard !== null) {
                 var cardIndex = card.getPile().getCards().indexOf(card);
                 //if touched card is the last card in its pile and selected card is allowed to be added
@@ -694,7 +699,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
                 }
                 this._deselectCard(sCard);
             } else if (card.getPile().canRemoveCard(card) === true) {
-                this._selectCard(card);
+                this._selectCard(card, true);
             }
 
             evt.handledByCardTouch = true; //prevent bubbled event to trigger "deselect card"
