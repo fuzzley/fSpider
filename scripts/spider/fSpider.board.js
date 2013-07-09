@@ -383,7 +383,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
                 if (fPile.getSize() === 0) {
                     this.increaseScore(SpiderBoard.SCORE_INCREMENT_BY_AFTER_COMPLETE_SEQUENCE);
                     var scoreChangeAction = new ScoreChangeAction(this, SpiderBoard.SCORE_INCREMENT_BY_AFTER_COMPLETE_SEQUENCE);
-                    this._transferCardsFromTableauPile(originalPile, fPile, completeSequence, [scoreChangeAction]);
+                    this._transferCardsFromTableauPile(originalPile, fPile, completeSequence, false, [scoreChangeAction]);
                     fPile.reverseCards();
                     this.getHistory().mergeActionSets(this.getHistory().cursor - 2, 2);
                     this.arrangePiles(true, SpiderBoard.STOCK_ANIM_TIME, SpiderBoard.GENERAL_ANIM_TIME);
@@ -428,7 +428,11 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
         return true;
     };
 
-    SpiderBoard.prototype._transferCardsFromTableauPile = function (fromPile, toPile, cards, otherActions) {
+    SpiderBoard.prototype._transferCardsFromTableauPile = function (fromPile, toPile, cards, checkSequence, otherActions) {
+        if (cards == null || cards.length <= 0) {
+            return;
+        }
+
         //move cards to new pile
         toPile.transferCards(cards);
 
@@ -441,10 +445,27 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
         toPile.resetListening();
         toPile.resetDraggable();
 
+        //modify statistics
         this.reduceScore();
         this.increaseMoves();
 
+        //record transfer in history
         this._registerTransferInHistory(fromPile, toPile, cards, flipped, otherActions);
+        if (checkSequence === true) {
+            //check for a complete sequence
+            if (this._checkForAndHandleCompleteSequenece(toPile) === true) {
+                if (this._checkForWin() === true) {
+                    this.win();
+                }
+            } else {
+                this.arrangeTableauPile(toPile, true);
+            }
+        }
+
+        //deselect card
+        if (this._selectedCard != null) {
+            this._deselectCard(this._selectedCard, true);
+        }
     };
 
     SpiderBoard.prototype._registerTransferInHistory = function (fromPile, toPile, cards, cardFlipped, otherActions) {
@@ -495,47 +516,14 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
         }
     };
 
-    SpiderBoard.prototype._deselectCard = function (card, arrangePile) {
-        if (card === undefined) {
-            card = this._selectedCard;
-        }
-        if (card != null) {
-            card.setSelected(false);
-            if (arrangePile === true) {
-                this.arrangeTableauPile(card.getPile(), true);
-            }
-            if (this._selectedCard === card) {
-                this._selectedCard = null;
-            }
-        }
-    };
-
-    SpiderBoard.prototype._selectCard = function (card, arrangePile) {
-        card.setSelected(true);
-        this._selectedCard = card;
-        if (arrangePile === true) {
-            this.arrangeTableauPile(card.getPile(), true);
-        }
-    };
-
     SpiderBoard.prototype._stopDraggingCards = function (card, pos) {
         //capture original pile for later
         var originalPile = card.getPile();
 
         //make sure we can add card to pile
-        var tPile = this._findOverlappedTableauPile(card, pos);
+        var tPile = this._findOverlappingTableauPile(card, pos);
         if (tPile != null) {
-            this._transferCardsFromTableauPile(originalPile, tPile, originalPile.getCardAndCardsAfter(card));
-            if (this._checkForAndHandleCompleteSequenece(tPile) === true) {
-                card.setSelected(false);
-                card.setHovering(false);
-                if (this._checkForWin() === true) {
-                    this.win();
-                }
-            } else {
-                this.arrangeTableauPile(tPile, true);
-            }
-            this._deselectCard(this._selectedCard, true);
+            this._transferCardsFromTableauPile(originalPile, tPile, originalPile.getCardAndCardsAfter(card), true);
         }
         this.arrangeTableauPile(originalPile, true);
 
@@ -567,7 +555,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
         return suits;
     };
 
-    SpiderBoard.prototype._findOverlappedTableauPile = function (card, touchPoint) {
+    SpiderBoard.prototype._findOverlappingTableauPile = function (card, touchPoint) {
         var overlapPile = null;
         var scale = this.getGlobalScale();
 
@@ -618,6 +606,29 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
         return overlapPile;
     };
 
+    SpiderBoard.prototype._deselectCard = function (card, arrangePile) {
+        if (card === undefined) {
+            card = this._selectedCard;
+        }
+        if (card != null) {
+            card.setSelected(false);
+            if (arrangePile === true) {
+                this.arrangeTableauPile(card.getPile(), true);
+            }
+            if (this._selectedCard === card) {
+                this._selectedCard = null;
+            }
+        }
+    };
+
+    SpiderBoard.prototype._selectCard = function (card, arrangePile) {
+        card.setSelected(true);
+        this._selectedCard = card;
+        if (arrangePile === true) {
+            this.arrangeTableauPile(card.getPile(), true);
+        }
+    };
+
     SpiderBoard.prototype._fireScoreChanged = function () {
         if (this._onScoreChanged !== undefined) {
             this._onScoreChanged(this.score);
@@ -646,7 +657,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
             return;
         }
 
-        if (this._selectedCard !== null) {
+        if (this._selectedCard != null) {
             if (this._playerAction === SpiderBoard.PLAYER_ACTIONS.dragging) {
                 this._stopDraggingCards(this._selectedCard, { 'x': evt.layerX, 'y': evt.layerY });
             } else {
@@ -689,19 +700,15 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
                 if (this._playerAction !== SpiderBoard.PLAYER_ACTIONS.dragging) {
                     this._deselectCard(sCard, true);
                 }
-            } else if (sCard !== null) {
+            } else if (sCard != null) {
                 var cardIndex = card.getPile().getCards().indexOf(card);
                 //if touched card is the last card in its pile and selected card is allowed to be added
                 if (cardIndex === card.getPile().getSize() - 1 && card.getPile().canAddCard(sCard) === true) {
-                    this._transferCardsFromTableauPile(sCard.getPile(), card.getPile(), sCard.getPile().getCardAndCardsAfter(sCard));
-                    if (this._checkForAndHandleCompleteSequenece(card.getPile()) === true) {
-                        card.setHovering(false);
-                        if (this._checkForWin() === true) {
-                            this.win();
-                        }
-                    }
+                    this._transferCardsFromTableauPile(sCard.getPile(), card.getPile(),
+                        sCard.getPile().getCardAndCardsAfter(sCard), true);
+                } else {
+                    this._deselectCard(sCard, true);
                 }
-                this._deselectCard(sCard, true);
             } else if (card.getPile().canRemoveCard(card) === true) {
                 this._selectCard(card, true);
             }
@@ -715,10 +722,10 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
             } else {
                 card.setFaceUp(true);
                 var pile = card.getPile();
-                if (pile !== undefined) {
+                if (pile != null) {
                     pile.resetDraggable();
                     pile.resetListening();
-                    this.arrangeTableauPile(pile, true); //arrange pile
+                    this.arrangeTableauPile(pile, true);
                 }
             }
         }
@@ -741,17 +748,10 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
         if (card !== null) {
             //if selected card is allowed to be added
             if (tPile.canAddCard(card) === true) {
-                this._transferCardsFromTableauPile(card.getPile(), tPile, card.getPile().getCardAndCardsAfter(card));
-                this.arrangeTableauPile(tPile, true);
-                if (this._checkForAndHandleCompleteSequenece(tPile) === true) {
-                    card.setHovering(false);
-                    if (this._checkForWin() === true) {
-                        this.win();
-                    }
-                }
+                this._transferCardsFromTableauPile(card.getPile(), tPile, card.getPile().getCardAndCardsAfter(card), true);
+            } else {
+                this._deselectCard(card, true);
             }
-
-            this._deselectCard(card, true);
             this.redraw();
         }
     };
