@@ -457,14 +457,13 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
 
         //record transfer in history
         this._registerTransferInHistory(fromPile, toPile, cards, flipped, otherActions);
+        this.arrangeTableauPile(toPile, true);
         if (checkSequence === true) {
             //check for a complete sequence
             if (this._checkForAndHandleCompleteSequenece(toPile) === true) {
                 if (this._checkForWin() === true) {
                     this.win();
                 }
-            } else {
-                this.arrangeTableauPile(toPile, true);
             }
         }
 
