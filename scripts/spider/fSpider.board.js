@@ -967,7 +967,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, $, undefined) {
         this._destroyBoard();
         this._buildBoard(difficulty);
 
-//        this.getDeck().shuffle();
+        this.getDeck().shuffle();
         this._buildPiles();
         this._attachPileEventHandlers();
         this._addPilesToLayer(this.getLayer());

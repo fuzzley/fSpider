@@ -9,7 +9,8 @@ fSpider.Utils = fSpider.Utils || {};
 fSpider.Pile = (function (Pile, undefined) {
     'use strict';
 
-    Pile = function () {};
+    Pile = function () {
+    };
 
     //public fields
     Pile.prototype.cards = [];
@@ -55,17 +56,23 @@ fSpider.Pile = (function (Pile, undefined) {
     };
 
     //public functions
-    Pile.prototype.transferCards = function (cards) {
+    Pile.prototype.transferCards = function (cards, animate) {
         var self = this;
+        var piles = [];
         cards.forEach(function (card) {
             var absPos = { x: card.getGroup().getAbsolutePosition().x, y: card.getGroup().getAbsolutePosition().y };
             var pile = card.getPile();
             if (pile != null) {
                 pile.removeCard(card);
-                pile.resetListening();
-                pile.resetDraggable();
+                if (piles.indexOf(pile) < 0) {
+                    piles.push(pile);
+                }
             }
             self.addCard(card, absPos);
+        });
+        piles.forEach(function (pile) {
+            pile.resetListening();
+            pile.resetDraggable();
         });
     };
 
