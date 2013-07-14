@@ -793,13 +793,13 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
 
         this.setupPiles();
         this.rescalePiles();
-        this.arrangePiles(false);
         piles.forEach(function (pile) {
             pile.setVisible(true);
             pile.resetCardFaces();
             pile.resetListening();
             pile.resetDraggable();
         });
+        this.arrangePiles(false);
 
         this.redraw();
         this.gameInProgress = true;
