@@ -354,21 +354,29 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
     };
 
     //game logic
-    SpiderBoard.prototype.checkForAndHandleCompleteSequence = function (tPile) {
+    SpiderBoard.prototype.tryHandleCompleteSequence = function (tPile) {
         var completeSequence = tPile.getCompleteSequence();
-        if (completeSequence != null && completeSequence.length > 0) { //found one!
+        if (completeSequence != null && completeSequence.length > 0) {
             var fPiles = this.foundationPiles;
             var fLen = fPiles.length;
             var fPile;
             for (var i = 0; i < fLen; i++) {
                 fPile = fPiles[i];
                 if (fPile.getSize() === 0) {
+                    //increase score
                     this.increaseScore(SpiderBoard.SCORE_INCREMENT_BY_AFTER_COMPLETE_SEQUENCE);
                     var scoreChangeAction = new ScoreChangeAction(this, SpiderBoard.SCORE_INCREMENT_BY_AFTER_COMPLETE_SEQUENCE);
-                    this.transferCardsFromTableauPile(tPile, fPile, completeSequence, false, [scoreChangeAction]);
+                    this.history.registerAction(scoreChangeAction);
+
+                    //transfer cards
+                    this.transferCardsFromTableauToFoundation(completeSequence, tPile, fPile);
                     fPile.reverseCards();
-                    this.history.mergeActionSets(this.history.cursor - 2, 2);
-                    this.arrangePiles(true, SpiderBoard.STOCK_ANIM_TIME, SpiderBoard.GENERAL_ANIM_TIME);
+
+                    //merge last 3 actionsets in history (move to tableau, score increase, move to foundation)
+                    this.history.mergeActionSets(this.history.cursor - 3, 3);
+
+//                    this.arrangePiles(true, SpiderBoard.STOCK_ANIM_TIME, SpiderBoard.GENERAL_ANIM_TIME);
+
                     return true;
                 }
             }
@@ -390,7 +398,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         return true;
     };
 
-    SpiderBoard.prototype.transferCardsFromTableauPile = function (fromPile, toPile, cards, checkSequence, otherActions) {
+    SpiderBoard.prototype.transferCardsFromTableau = function (cards, fromPile, toPile, updateStats) {
         if (cards == null || cards.length <= 0) {
             return;
         }
@@ -407,29 +415,42 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         toPile.resetListening();
         toPile.resetDraggable();
 
-        //modify statistics
-        this.reduceScore();
-        this.increaseMoves();
-
-        //record transfer in history
-        this.registerTransferInHistory(fromPile, toPile, cards, flipped, otherActions);
-        this.arrangeTableauPile(toPile, true);
-        if (checkSequence === true) {
-            //check for a complete sequence
-            if (this.checkForAndHandleCompleteSequence(toPile) === true) {
-                if (this.checkForWin() === true) {
-                    this.win();
-                }
-            }
+        if (updateStats === true) {
+            //modify statistics
+            this.reduceScore();
+            this.increaseMoves();
         }
 
-        //deselect card
-        if (this.selectedCard != null) {
-            this.deselectCard(this.selectedCard, true);
+        this.registerTransferInHistory(cards, fromPile, toPile, flipped);
+        this.arrangeTableauPile(toPile, true);
+    };
+
+    SpiderBoard.prototype.transferCardsFromTableauToTableau = function (cards, fromPile, toPile) {
+        if (cards == null || cards.length <= 0) {
+            return;
+        }
+
+        //transfer cards
+        this.transferCardsFromTableau(cards, fromPile, toPile, true);
+
+        //check for a complete sequence
+        if (this.tryHandleCompleteSequence(toPile) === true) {
+            if (this.checkForWin() === true) {
+                this.win();
+            }
         }
     };
 
-    SpiderBoard.prototype.registerTransferInHistory = function (fromPile, toPile, cards, cardFlipped, otherActions) {
+    SpiderBoard.prototype.transferCardsFromTableauToFoundation = function (cards, fromPile, toPile) {
+        if (cards == null || cards.length <= 0) {
+            return;
+        }
+
+        //transfer cards
+        this.transferCardsFromTableau(cards, fromPile, toPile, true);
+    };
+
+    SpiderBoard.prototype.registerTransferInHistory = function (cards, fromPile, toPile, cardFlipped) {
         var actionSet = new ActionSet();
         var fromLen = fromPile.getSize();
         if (cardFlipped === true && fromLen > 0) {
@@ -438,11 +459,6 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         }
         var transferAction = new TransferCardsAction(fromPile, toPile, cards);
         actionSet.addAction(transferAction);
-        if (otherActions != null) {
-            otherActions.forEach(function (action) {
-                actionSet.addAction(action);
-            });
-        }
         this.history.registerActionSet(actionSet);
     };
 
@@ -487,7 +503,8 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         //make sure we can add card to pile
         var tPile = this.findOverlappingTableauPile(card, pos);
         if (tPile != null) {
-            this.transferCardsFromTableauPile(originalPile, tPile, originalPile.getCardAndCardsAfter(card), true);
+            this.transferCardsFromTableauToTableau(originalPile.getCardAndCardsAfter(card), originalPile, tPile);
+            this.deselectCard(this.selectedCard, true);
         }
         this.arrangeTableauPile(originalPile, true);
 
@@ -703,7 +720,8 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
                 var cardIndex = pile.getCards().indexOf(card);
                 //if touched card is the last card in its pile and selected card is allowed to be added
                 if (cardIndex === pile.getSize() - 1 && pile.canAddCard(sCard) === true) {
-                    this.transferCardsFromTableauPile(sPile, pile, sPile.getCardAndCardsAfter(sCard), true);
+                    this.transferCardsFromTableauToTableau(sPile.getCardAndCardsAfter(sCard), sPile, pile);
+                    this.deselectCard(this.selectedCard, true);
                 } else {
                     this.deselectCard(sCard, true);
                 }
@@ -746,7 +764,8 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
             //if selected card is allowed to be added
             if (tPile.canAddCard(card) === true) {
                 var pile = card.getPile();
-                this.transferCardsFromTableauPile(pile, tPile, pile.getCardAndCardsAfter(card), true);
+                this.transferCardsFromTableauToTableau(pile.getCardAndCardsAfter(card), pile, tPile);
+                this.deselectCard(this.selectedCard, true);
             } else {
                 this.deselectCard(card, true);
             }
@@ -789,7 +808,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         this.history.clear();
 
         this.setupDeck(this.getSuitsForDifficulty(difficulty));
-        this.deck.shuffle();
+//        this.deck.shuffle();
 
         this.setupPiles();
         this.rescalePiles();
