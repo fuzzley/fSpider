@@ -72,16 +72,19 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         this.tableauPiles = [];
         for (var i = 0; i < 10; i++) {
             pile = new TableauPile();
+            pile.setVisible(false);
             this.tableauPiles.push(pile);
             this.layer.add(pile.getGroup());
         }
         this.foundationPiles = [];
         for (var i = 0; i < 8; i++) {
             pile = new FoundationPile();
+            pile.setVisible(false);
             this.foundationPiles.push(pile);
             this.layer.add(pile.getGroup());
         }
         this.stockPile = new StockPile();
+        this.stockPile.setVisible(false);
         this.layer.add(this.stockPile.getGroup());
         this.attachPileEventHandlers();
     };
@@ -792,6 +795,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         this.rescalePiles();
         this.arrangePiles(false);
         piles.forEach(function (pile) {
+            pile.setVisible(true);
             pile.resetCardFaces();
             pile.resetListening();
             pile.resetDraggable();

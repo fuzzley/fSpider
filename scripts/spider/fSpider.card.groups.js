@@ -65,6 +65,10 @@ fSpider.Pile = (function (Pile, undefined) {
         return this.group.getHeight() * scale;
     };
 
+    Pile.prototype.setVisible = function (visible) {
+        this.group.setVisible(visible);
+    };
+
     //public functions
     Pile.prototype.moveToTop = function () {
         this.group.moveToTop();
