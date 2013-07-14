@@ -808,7 +808,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         this.history.clear();
 
         this.setupDeck(this.getSuitsForDifficulty(difficulty));
-//        this.deck.shuffle();
+        this.deck.shuffle();
 
         this.setupPiles();
         this.rescalePiles();
