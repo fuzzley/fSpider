@@ -416,7 +416,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         this.arrangeTableauPile(toPile, true);
         if (checkSequence === true) {
             //check for a complete sequence
-            if (this.checkForAndHandleCompleteSequence(fromPile, toPile) === true) {
+            if (this.checkForAndHandleCompleteSequence(toPile) === true) {
                 if (this.checkForWin() === true) {
                     this.win();
                 }
