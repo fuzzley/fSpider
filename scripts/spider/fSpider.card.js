@@ -13,50 +13,56 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
     };
 
     //fields
-    Card.prototype.faceUp = false;
-    Card.prototype.hovering = false;
-    Card.prototype.selected = false;
+    Card.prototype.hovering = null;
+    Card.prototype.selected = null;
+    Card.prototype.faceUp = null;
     Card.prototype.pile = null;
 
-    Card.prototype.group = undefined;
-    Card.prototype.faceImg = undefined;
-    Card.prototype.faceKineticImg = undefined;
-    Card.prototype.backImg = undefined;
-    Card.prototype.backKineticImg = undefined;
-    Card.prototype.border = undefined;
-    Card.prototype.activeBorder = undefined;
-    Card.prototype.hoverBorder = undefined;
+    Card.prototype.group = null;
+    Card.prototype.faceImg = null;
+    Card.prototype.backImg = null;
+    Card.prototype.border = null;
+    Card.prototype.activeBorder = null;
+    Card.prototype.hoverBorder = null;
 
     Card.prototype._xAnim = null;
     Card.prototype._yAnim = null;
+
+    Card.prototype.borderProps = {
+        'visible': true,
+        'stroke': '#F5F5F5',
+        'strokeWidth': 1.85,
+        'cornerRadius': 3.5,
+        'fill': '',
+        'opacity': 1,
+        'padding': -.5
+    };
+    Card.prototype.activeBorderProps = {
+        'visible': true,
+        'stroke': '#fff9b0',
+        'strokeWidth': 4,
+        'cornerRadius': 6,
+        'fill': '',
+        'opacity': .9,
+        'padding': 2
+    };
+    Card.prototype.hoverBorderProps = {
+        'visible': true,
+        'stroke': '#a8a8a8',
+        'strokeWidth': 1.25,
+        'cornerRadius': 4,
+        'fill': '',
+        'opacity': 1,
+        'padding': 0
+    };
 
     //getters setters
     Card.prototype.getFaceImg = function () {
         return this.faceImg;
     };
-    Card.prototype.setFaceImg = function (faceImg) {
-        this.faceImg = faceImg;
-    };
-
-    Card.prototype.getFaceKineticImg = function () {
-        return this.faceKineticImg;
-    };
-    Card.prototype.setFaceKineticImg = function (faceKineticImg) {
-        this.faceKineticImg = faceKineticImg;
-    };
 
     Card.prototype.getBackImg = function () {
         return this.backImg;
-    };
-    Card.prototype.setBackImg = function (backImg) {
-        this.backImg = backImg;
-    };
-
-    Card.prototype.getBackKineticImg = function () {
-        return this.backKineticImg;
-    };
-    Card.prototype.setBackKineticImg = function (backKineticImg) {
-        this.backKineticImg = backKineticImg;
     };
 
     Card.prototype.isFaceUp = function () {
@@ -211,21 +217,64 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
     };
 
     Card.prototype.getWidth = function (scale) {
-        if (scale === undefined) {
-            scale = 1;
+        if (scale == null) {
+            scale = this.group.getScaleX();
         }
         return this.group.getWidth() * scale;
     };
+    Card.prototype.setWidth = function (width) {
+        if (this.group != null) {
+            this.group.setWidth(width);
+        }
+        if (this.border != null) {
+            this.border.setWidth(width + this.borderProps.padding * 2);
+        }
+        if (this.activeBorder != null) {
+            this.activeBorder.setWidth(width + this.activeBorderProps.padding * 2);
+        }
+        if (this.hoverBorder != null) {
+            this.hoverBorder.setWidth(width + this.hoverBorderProps.padding * 2);
+        }
+        if (this.backImg != null) {
+            this.backImg.setWidth(width);
+        }
+        if (this.faceImg != null) {
+            this.faceImg.setWidth(width);
+        }
+    };
 
     Card.prototype.getHeight = function (scale) {
-        if (scale === undefined) {
-            scale = 1;
+        if (scale == null) {
+            scale = this.group.getScaleY();
         }
         return this.group.getHeight() * scale;
+    };
+    Card.prototype.setHeight = function (height) {
+        if (this.group != null) {
+            this.group.setHeight(height);
+        }
+        if (this.border != null) {
+            this.border.setHeight(height + this.borderProps.padding * 2);
+        }
+        if (this.activeBorder != null) {
+            this.activeBorder.setHeight(height + this.activeBorderProps.padding * 2);
+        }
+        if (this.hoverBorder != null) {
+            this.hoverBorder.setHeight(height + this.hoverBorderProps.padding * 2);
+        }
+        if (this.backImg != null) {
+            this.backImg.setHeight(height);
+        }
+        if (this.faceImg != null) {
+            this.faceImg.setHeight(height);
+        }
     };
 
     Card.prototype.getAbsolutePosition = function () {
         return this.group.getAbsolutePosition();
+    };
+    Card.prototype.setAbsolutePosition = function (absPos) {
+        return this.group.setAbsolutePosition(absPos);
     };
 
     Card.prototype.getAbsoluteCenter = function (scale) {
@@ -276,11 +325,11 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
     //public methods
     Card.prototype.refresh = function () {
         //card face/back visibility
-        if (this.faceKineticImg != null) {
-            this.faceKineticImg.setVisible(this.faceUp === true);
+        if (this.faceImg != null) {
+            this.faceImg.setVisible(this.faceUp === true);
         }
-        if (this.backKineticImg != null) {
-            this.backKineticImg.setVisible(this.faceUp !== true);
+        if (this.backImg != null) {
+            this.backImg.setVisible(this.faceUp !== true);
         }
 
         //active boarder
@@ -294,20 +343,44 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
         this.group.remove();
     };
 
-    Card.prototype.loadFaceImg = function (img, w, h) {
-        this.setFaceImg(img);
-        this.setFaceKineticImg(Utils.loadKineticImage(this.faceImg, w, h));
-        this.group.add(this.faceKineticImg);
-        this.border.remove();
-        this.group.add(this.border); //make sure it's on top
+    Card.prototype.loadFaceImg = function (img, cropSqr, w, h) {
+        if (this.faceImg == null) {
+            this.faceImg = new Kinetic.Image();
+            if (this.group != null) {
+                this.group.add(this.faceImg);
+            }
+        }
+        this.faceImg.setImage(img);
+        this.faceImg.moveToBottom();
+        if (cropSqr != null) {
+            this.faceImg.setCrop(cropSqr);
+        }
+        if (w != null) {
+            this.setWidth(w);
+        }
+        if (h != null) {
+            this.setHeight(h);
+        }
     };
 
-    Card.prototype.loadBackImg = function (img, w, h) {
-        this.setBackImg(img);
-        this.setBackKineticImg(Utils.loadKineticImage(this.backImg, w, h));
-        this.group.add(this.backKineticImg);
-        this.border.remove();
-        this.group.add(this.border); //make sure it's on top
+    Card.prototype.loadBackImg = function (img, cropSqr, w, h) {
+        if (this.backImg == null) {
+            this.backImg = new Kinetic.Image();
+            if (this.group != null) {
+                this.group.add(this.backImg);
+            }
+        }
+        this.backImg.setImage(img);
+        this.backImg.moveToBottom();
+        if (cropSqr != null) {
+            this.backImg.setCrop(cropSqr);
+        }
+        if (w != null) {
+            this.setWidth(w);
+        }
+        if (h != null) {
+            this.setHeight(h);
+        }
     };
 
     Card.prototype.on = function (eventName, callback) {
@@ -317,11 +390,6 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
     Card.prototype.off = function (eventName, callback) {
         this.group.off(eventName, callback);
     };
-
-    Card.prototype.toString = function () {
-        return '[fSpider.Card]faceup: ' + this.isFaceUp() + ';';
-    };
-
     return Card;
 })(fSpider.Card || {}, window.Kinetic);
 
@@ -332,66 +400,71 @@ fSpider.PlayingCard = (function (PlayingCard, Kinetic, undefined) {
     var Utils = fSpider.Utils;
 
     PlayingCard = function (suit, type) {
-        this.cardSuit = suit;
-        this.cardType = type;
+        this.suit = suit;
+        this.type = type;
 
         this.group = new Kinetic.Group({
             width: PlayingCard.CARD_DIM.w,
             height: PlayingCard.CARD_DIM.h
         });
         this.border = new Kinetic.Rect({
-            x: 0 - PlayingCard.BORDER.padding,
-            y: 0 - PlayingCard.BORDER.padding,
-            visible: true,
-            opacity: PlayingCard.BORDER.opacity,
-            fill: PlayingCard.BORDER.fill,
-            stroke: PlayingCard.BORDER.stroke,
-            strokeWidth: PlayingCard.BORDER.strokeWidth,
-            cornerRadius: PlayingCard.BORDER.cornerRadius,
-            width: PlayingCard.CARD_DIM.w + PlayingCard.BORDER.padding,
-            height: PlayingCard.CARD_DIM.h + PlayingCard.BORDER.padding
+            visible: this.borderProps.visible,
+            x: 0 - this.borderProps.padding,
+            y: 0 - this.borderProps.padding,
+            opacity: this.borderProps.opacity,
+            fill: this.borderProps.fill,
+            stroke: this.borderProps.stroke,
+            strokeWidth: this.borderProps.strokeWidth,
+            cornerRadius: this.borderProps.cornerRadius
         });
         this.activeBorder = new Kinetic.Rect({
             visible: false,
-            opacity: PlayingCard.ACTIVE_BORDER.opacity,
-            fill: PlayingCard.ACTIVE_BORDER.fill,
-            stroke: PlayingCard.ACTIVE_BORDER.stroke,
-            strokeWidth: PlayingCard.ACTIVE_BORDER.strokeWidth,
-            cornerRadius: PlayingCard.ACTIVE_BORDER.cornerRadius,
-            width: PlayingCard.CARD_DIM.w,
-            height: PlayingCard.CARD_DIM.h
+            x: 0 - this.activeBorderProps.padding,
+            y: 0 - this.activeBorderProps.padding,
+            opacity: this.activeBorderProps.opacity,
+            fill: this.activeBorderProps.fill,
+            stroke: this.activeBorderProps.stroke,
+            strokeWidth: this.activeBorderProps.strokeWidth,
+            cornerRadius: this.activeBorderProps.cornerRadius
         });
         this.hoverBorder = new Kinetic.Rect({
             visible: false,
-            opacity: PlayingCard.HOVER_BORDER.opacity,
-            fill: PlayingCard.HOVER_BORDER.fill,
-            stroke: PlayingCard.HOVER_BORDER.stroke,
-            strokeWidth: PlayingCard.HOVER_BORDER.strokeWidth,
-            cornerRadius: PlayingCard.HOVER_BORDER.cornerRadius,
-            width: PlayingCard.CARD_DIM.w,
-            height: PlayingCard.CARD_DIM.h
+            x: 0 - this.hoverBorderProps.padding,
+            y: 0 - this.hoverBorderProps.padding,
+            opacity: this.hoverBorderProps.opacity,
+            fill: this.hoverBorderProps.fill,
+            stroke: this.hoverBorderProps.stroke,
+            strokeWidth: this.hoverBorderProps.strokeWidth,
+            cornerRadius: this.hoverBorderProps.cornerRadius
         });
 
+        this.group.add(this.border);
         this.group.add(this.activeBorder);
         this.group.add(this.hoverBorder);
-        this.group.add(this.border);
     };
 
     Utils.extendObj(PlayingCard, Card);
 
+    //fields
+    PlayingCard.prototype.suit = 0;
+    PlayingCard.prototype.type = 0;
+
     //getters setters
-    PlayingCard.prototype.getType = function () {
-        return this.cardType;
+    PlayingCard.prototype.getSuit = function () {
+        return this.suit;
+    };
+    PlayingCard.prototype.setSuit = function (suit) {
+        this.suit = suit;
     };
 
-    PlayingCard.prototype.getSuit = function () {
-        return this.cardSuit;
+    PlayingCard.prototype.getType = function () {
+        return this.type;
+    };
+    PlayingCard.prototype.setType = function (type) {
+        this.type = type;
     };
 
     //public functions
-    PlayingCard.prototype.toString = function () {
-        return '[fSpider.PlayingCard]suit: ' + this.getSuit() + ', type: ' + this.getType() + ', faceup: ' + this.isFaceUp() + ';';
-    };
 
     //static fields
     PlayingCard.CARD_DIM = { w: 90, h: 120 };
@@ -415,31 +488,6 @@ fSpider.PlayingCard = (function (PlayingCard, Kinetic, undefined) {
         hearts: 1,
         spades: 2,
         diamonds: 3
-    };
-    PlayingCard.BORDER = {
-        'visible': true,
-        'stroke': '#F0F0F0',
-        'strokeWidth': 1.5,
-        'cornerRadius': 4.25,
-        'fill': '',
-        'opacity': 1,
-        'padding': -.5
-    };
-    PlayingCard.ACTIVE_BORDER = {
-        'visible': true,
-        'stroke': '#fff9b0',
-        'strokeWidth': 6,
-        'cornerRadius': 4,
-        'fill': '',
-        'opacity': .9
-    };
-    PlayingCard.HOVER_BORDER = {
-        'visible': true,
-        'stroke': '#a8a8a8',
-        'strokeWidth': 1.5,
-        'cornerRadius': 4,
-        'fill': '',
-        'opacity': 1
     };
 
     return PlayingCard;

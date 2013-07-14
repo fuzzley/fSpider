@@ -1,11 +1,11 @@
 ﻿var fSpider = fSpider || {};
 
-fSpider.Utils = (function (Utils, Kinetic, undefined) {
+fSpider.Utils = (function (Utils, undefined) {
     'use strict';
 
     Utils.extendObj = function(childObj, parentObj) {
         //http://davidshariff.com/blog/javascript-inheritance-patterns/
-        var tmpObj = function () {}
+        var tmpObj = function () {};
         tmpObj.prototype = parentObj.prototype;
         childObj.prototype = new tmpObj();
         childObj.prototype.constructor = childObj;
@@ -29,25 +29,17 @@ fSpider.Utils = (function (Utils, Kinetic, undefined) {
         return Math.sqrt((dX * dX) + (dY * dY));
     };
 
-    Utils.loadKineticImage = function (imageObj, w, h) {
-        return new Kinetic.Image({
-            image: imageObj,
-            width: w,
-            height: h
-        });
-    };
-
     Utils.formatPointToLayer = function (point, layer, scale) {
-        if (point.x !== undefined) {
+        if (point.x != null) {
             point.x -= layer.getAbsolutePosition().x;
-            if (scale !== undefined && scale !== 0) {
+            if (scale != null && scale !== 0) {
                 point.x /= scale;
             }
         }
 
-        if (point.y !== undefined) {
+        if (point.y != null) {
             point.y -= layer.getAbsolutePosition().y;
-            if (scale !== undefined && scale !== 0) {
+            if (scale != null && scale !== 0) {
                 point.y /= scale;
             }
         }
@@ -55,5 +47,45 @@ fSpider.Utils = (function (Utils, Kinetic, undefined) {
         return point;
     };
 
+    Utils.formatTime = function (timeMS) {
+        var timeStr = '';
+
+        var remaining = timeMS;
+        var hours = Math.floor(remaining / 3600000);
+        remaining %= 3600000;
+        var mins = Math.floor(remaining / 60000);
+        remaining %= 60000;
+        var secs = Math.floor(remaining / 1000);
+
+        if (hours > 0) {
+            if (hours < 10) {
+                timeStr += '0';
+            }
+            timeStr += String(hours);
+            timeStr += ':';
+        }
+
+        if (mins <= 0) {
+            timeStr += '00:';
+        } else {
+            if (mins < 10) {
+                timeStr += '0';
+            }
+            timeStr += String(mins);
+            timeStr += ':';
+        }
+
+        if (secs <= 0) {
+            timeStr += '00';
+        } else {
+            if (secs < 10) {
+                timeStr += '0';
+            }
+            timeStr += String(secs);
+        }
+
+        return timeStr;
+    };
+
     return Utils;
-})(fSpider.Utils || {}, window.Kinetic);
+})(fSpider.Utils || {});

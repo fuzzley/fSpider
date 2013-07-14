@@ -5,8 +5,10 @@ fSpider.Deck = (function (Deck, undefined) {
 
     //constructor
     Deck = function () {
-        this.cards = [];
     };
+
+    //fields
+    Deck.prototype.cards = [];
 
     //getters/setters
     Deck.prototype.getCards = function () {
@@ -18,12 +20,14 @@ fSpider.Deck = (function (Deck, undefined) {
 
     //methods
     Deck.prototype.shuffle = function () {
+        var newIndex, temp;
+
         var length = this.getSize();
         for (var i = 0; i < length; i++) {
-            var newIndex = Math.round(Math.random() * (length - 1));
+            newIndex = Math.round(Math.random() * (length - 1));
 
-            var temp = this.getCardAt(newIndex);
-            this.setCardAt(newIndex, this.getCardAt(i));
+            temp = this.getCardAt(newIndex);
+            this.setCardAt(newIndex, this.cards[i]);
             this.setCardAt(i, temp);
         }
     };
@@ -37,7 +41,7 @@ fSpider.Deck = (function (Deck, undefined) {
     };
 
     Deck.prototype.getSize = function () {
-        return (this.getCards() || []).length;
+        return (this.cards || []).length;
     };
 
     return Deck;

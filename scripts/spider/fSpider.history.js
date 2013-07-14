@@ -8,6 +8,10 @@ fSpider.ActionSet = (function (ActionSet, undefined) {
         this.actions = [];
     };
 
+    //fields
+    ActionSet.prototype.actions = null;
+
+    //public functions
     ActionSet.prototype.addAction = function (action) {
         this.actions.push(action);
     };
@@ -21,23 +25,26 @@ fSpider.ActionSet = (function (ActionSet, undefined) {
     };
 
     ActionSet.prototype.undo = function () {
-        this.actions.reverse().forEach(function (action) {
-            if (action.undo !== undefined) {
+        var revActions = this.actions.reverse();
+        revActions.forEach(function (action) {
+            if (action.undo != null) {
                 action.undo();
             }
         });
     };
 
     ActionSet.prototype.redo = function () {
-        this.actions.reverse().forEach(function (action) {
-            if (action.redo !== undefined) {
+        var revActions = this.actions.reverse();
+        revActions.forEach(function (action) {
+            if (action.redo != null) {
                 action.redo();
             }
         });
     };
 
     ActionSet.prototype.findFirstTransferCardsAction = function () {
-        for (var i = 0; i < this.actions.length; i++) {
+        var length = this.actions.length;
+        for (var i = 0; i < length; i++) {
             if (this.actions[i].actionType === "TransferCardsAction") {
                 return this.actions[i];
             }
@@ -45,10 +52,14 @@ fSpider.ActionSet = (function (ActionSet, undefined) {
         return null;
     };
 
+    ActionSet.prototype.getSize = function () {
+        return (this.actions || []).length;
+    };
+
     //static functions
     ActionSet.mergeActionSets = function (actionSets) {
         var merged = new ActionSet();
-        if (actionSets !== undefined) {
+        if (actionSets != null) {
             actionSets.forEach(function (actionSet) {
                 merged.addActions(actionSet.actions.slice(0));
             });
@@ -66,11 +77,15 @@ fSpider.History = (function (History, undefined) {
 
     //constructor
     History = function () {
-        this._actionSets = [];
-        this.cursor = 0;
-        this._onHistoryChangedCallback = undefined;
+        this.actionSets = [];
     };
 
+    //fields
+    History.prototype.actionSets = null;
+    History.prototype.cursor = 0;
+    History.prototype._onHistoryChangedCallback = null;
+
+    //public functions
     History.prototype.canUndo = function () {
         return this.cursor > 0;
     };
@@ -79,7 +94,7 @@ fSpider.History = (function (History, undefined) {
         var actionSet;
         if (this.canUndo() === true) {
             this.cursor--;
-            actionSet = this._actionSets[this.cursor];
+            actionSet = this.actionSets[this.cursor];
             actionSet.undo();
             this._fireOnHistoryChanged();
         }
@@ -87,13 +102,13 @@ fSpider.History = (function (History, undefined) {
     };
 
     History.prototype.canRedo = function () {
-        return this.cursor < this._actionSets.length;
+        return this.cursor < this.actionSets.length;
     };
 
     History.prototype.redo = function () {
         var actionSet;
         if (this.canRedo() === true) {
-            actionSet = this._actionSets[this.cursor];
+            actionSet = this.actionSets[this.cursor];
             actionSet.redo();
             this.cursor++;
             this._fireOnHistoryChanged();
@@ -106,27 +121,28 @@ fSpider.History = (function (History, undefined) {
     };
 
     History.prototype.registerActionSet = function (actionSet) {
-        if (this.cursor < this._actionSets.length) {
+        if (this.cursor < this.actionSets.length) {
             //cut off everything after cursor
-            this._actionSets = this._actionSets.splice(0, this.cursor);
+            this.actionSets = this.actionSets.splice(0, this.cursor);
         }
-        this._actionSets.push(actionSet);
+        this.actionSets.push(actionSet);
         this.cursor++;
         this._fireOnHistoryChanged();
     };
 
     History.prototype.mergeActionSets = function (start, amount) {
-        if (start < 0 || start > this._actionSets.length - 2) {
+        var length = this.actionSets.length;
+        if (start < 0 || start > length - 2) {
             return;
         }
-        if (amount === undefined) {
-            amount = this._actionSets.length - start;
+        if (amount == null) {
+            amount = length - start;
         }
-        if (start + amount < 0 || start + amount > this._actionSets.length) {
+        if (start + amount < 0 || start + amount > length) {
             return;
         }
-        var newActionSet = ActionSet.mergeActionSets(this._actionSets.slice(start, start + amount));
-        this._actionSets.splice(start, amount, newActionSet);
+        var newActionSet = ActionSet.mergeActionSets(this.actionSets.slice(start, start + amount));
+        this.actionSets.splice(start, amount, newActionSet);
         if (this.cursor > start) {
             this.cursor -= amount;
             this.cursor++;
@@ -134,7 +150,7 @@ fSpider.History = (function (History, undefined) {
     };
 
     History.prototype.clear = function () {
-        this._actionSets = [];
+        this.actionSets = [];
         this.cursor = 0;
         this._fireOnHistoryChanged();
     };
@@ -144,7 +160,7 @@ fSpider.History = (function (History, undefined) {
     };
 
     History.prototype._fireOnHistoryChanged = function () {
-        if (this._onHistoryChangedCallback !== undefined) {
+        if (this._onHistoryChangedCallback != null) {
             this._onHistoryChangedCallback(this);
         }
     };
@@ -162,9 +178,17 @@ fSpider.TransferCardsAction = (function (TransferCardsAction, undefined) {
         this.cards = cards;
         this.animTime = animTime;
         this.delay = delay;
-        this.actionType = "TransferCardsAction";
     };
 
+    //fields
+    TransferCardsAction.prototype.fromPile = null;
+    TransferCardsAction.prototype.toPile = null;
+    TransferCardsAction.prototype.cards = null;
+    TransferCardsAction.prototype.animTime = 0;
+    TransferCardsAction.prototype.delay = 0;
+    TransferCardsAction.prototype.actionType = "TransferCardsAction";
+
+    //public functions
     TransferCardsAction.prototype.undo = function () {
         this.fromPile.transferCards(this.cards);
         this._refreshPiles();
@@ -192,9 +216,14 @@ fSpider.FlipCardAction = (function (FlipCardAction, undefined) {
     FlipCardAction = function (card, isFaceUp) {
         this.card = card;
         this.isFaceUp = isFaceUp;
-        this.actionType = "FlipCardAction";
     };
 
+    //fields
+    FlipCardAction.prototype.card = null;
+    FlipCardAction.prototype.isFaceUp = false;
+    FlipCardAction.prototype.actionType = "FlipCardAction";
+
+    //public functions
     FlipCardAction.prototype.undo = function () {
         this.card.setFaceUp(this.isFaceUp !== true);
     };
@@ -213,9 +242,14 @@ fSpider.ScoreChangeAction = (function (ScoreChangeAction, undefined) {
     ScoreChangeAction = function (board, amount) {
         this.board = board;
         this.amount = amount;
-        this.actionType = "ScoreChangeAction";
     };
 
+    //fields
+    ScoreChangeAction.prototype.board = null;
+    ScoreChangeAction.prototype.amount = 0;
+    ScoreChangeAction.prototype.actionType = "ScoreChangeAction";
+
+    //public functions
     ScoreChangeAction.prototype.undo = function () {
         this.board.setScore(this.board.score - this.amount);
     };
