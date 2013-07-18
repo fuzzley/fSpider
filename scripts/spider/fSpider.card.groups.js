@@ -13,8 +13,10 @@ fSpider.Pile = (function (Pile, undefined) {
     };
 
     //public fields
-    Pile.prototype.cards = [];
+    Pile.prototype.cards = null;
     Pile.prototype.group = null;
+    Pile.prototype.availHeight = 0;
+    Pile.prototype.availWidth = 0;
 
     //getters/setters
     Pile.prototype.getCards = function () {
@@ -44,9 +46,12 @@ fSpider.Pile = (function (Pile, undefined) {
         return this.group.getX();
     };
 
+    Pile.prototype.setWidth = function (width) {
+        this.group.setWidth(width);
+    };
     Pile.prototype.getWidth = function (scale) {
         if (scale == null) {
-            scale = this.group.getScaleX();
+            scale = 1;
         }
         return this.group.getHeight() * scale;
     };
@@ -58,9 +63,13 @@ fSpider.Pile = (function (Pile, undefined) {
         return this.group.getY();
     };
 
+
+    Pile.prototype.setHeight = function (height) {
+        this.group.setHeight(height);
+    };
     Pile.prototype.getHeight = function (scale) {
         if (scale == null) {
-            scale = this.group.getScaleY();
+            scale = 1;
         }
         return this.group.getHeight() * scale;
     };
@@ -69,12 +78,28 @@ fSpider.Pile = (function (Pile, undefined) {
         this.group.setVisible(visible);
     };
 
+    Pile.prototype.setAvailableWidth = function (width) {
+        this.availWidth = width;
+    };
+
+    Pile.prototype.setAvailableHeight = function (height) {
+        this.availHeight = height;
+    };
+
     //public functions
     Pile.prototype.moveToTop = function () {
         this.group.moveToTop();
     };
 
-    Pile.prototype.transferCards = function (cards, animate) {
+    Pile.prototype.transferCards = function (cards, settings) {
+        if (settings == null) {
+            settings = {};
+        }
+
+        if (cards == null || cards.length <= 0) {
+            return;
+        }
+
         var self = this;
         var piles = [];
         cards.forEach(function (card) {
@@ -92,6 +117,8 @@ fSpider.Pile = (function (Pile, undefined) {
             pile.resetListening();
             pile.resetDraggable();
         });
+
+        this.arrangeCards(null, null, settings);
     };
 
     Pile.prototype.addCard = function (card, absPos) {
@@ -130,7 +157,7 @@ fSpider.Pile = (function (Pile, undefined) {
         }
     };
 
-    Pile.prototype.arrangeCards = function (w, h, animTime, delay) {
+    Pile.prototype.arrangeCards = function (w, h, settings) {
         //specific to pile type
     };
 
@@ -209,6 +236,8 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
         });
         this.group.add(this.hoverBorder);
         this.group.add(this.placeHolderImg);
+
+        this.setWidth(PlayingCard.CARD_DIM.w);
     };
 
     Utils.extendObj(TableauPile, Pile);
@@ -306,14 +335,18 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
         return sequence;
     };
 
-    TableauPile.prototype.setLastCardFaceUp = function (faceUp) {
+    TableauPile.prototype.setLastCardFaceUp = function (faceUp, settings) {
+        if (settings == null) {
+            settings = {};
+        }
+
         var changed = false;
 
         var length = this.getSize();
         if (length > 0) {
             var card = this.cards[length - 1];
             changed = card.isFaceUp() !== faceUp;
-            card.setFaceUp(faceUp);
+            card.setFaceUp(faceUp, settings);
         }
 
         return changed;
@@ -367,27 +400,60 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
         return true;
     };
 
-    TableauPile.prototype.arrangeCards = function (w, h, animTime, delay) {
+    TableauPile.prototype.arrangeCards = function (w, h, settings) {
+        if (w != null) {
+            this.availWidth = w;
+        }
+        if (w != null) {
+            this.availHeight = h;
+        }
+        if (settings == null) {
+            settings = {};
+        }
+        var animate = settings.animate === true;
+        var animTime = 0;
+        var delay = 0;
+        if (animate === true) {
+            if (settings.animTime == null) {
+                animTime = 150;
+            } else {
+                animTime = settings.animTime;
+            }
+            if (settings.animTime == null) {
+                delay = settings.delay;
+            }
+        }
+        var sound = settings.volume != null && settings.volume > 0;
+
         var card;
-        var length = this.getSize();
+        var cards = this.cards;
+        var length = cards.length;
 
         //count all face up cards (for padding amount)
         var faceUpCount = 0;
-        var faceDownCount = length - faceUpCount;
+        var faceDownCount = 0;
+        for (var i = 0; i < length; i++) {
+            if (cards[i].isFaceUp() === true) {
+                faceUpCount++;
+            } else {
+                faceDownCount++;
+            }
+        }
+
+        //calculate padding
         var padTopFaceDown = 7;
-        if (h - (padTopFaceDown * faceDownCount) < 0) {
-            padTopFaceDown = 0;
+        if (this.availHeight - (padTopFaceDown * faceDownCount) < 2) {
+            padTopFaceDown = 2;
         }
         var faceDownTotalPad = faceDownCount * padTopFaceDown;
 
-        //find amount of padding to add to face up cards
         var maxPadTopFaceUp = 20;
-        var padTopFaceUp = (h - PlayingCard.CARD_DIM.h - faceDownTotalPad) / faceUpCount;
+        var padTopFaceUp = (this.availHeight - PlayingCard.CARD_DIM.h - faceDownTotalPad) / faceUpCount;
         if (faceUpCount > 12) {
             padTopFaceUp /= 1.5;
         }
-        if (padTopFaceUp < 0) {
-            padTopFaceUp = 0;
+        if (padTopFaceUp < 14) {
+            padTopFaceUp = 14;
         }
         if (padTopFaceUp > maxPadTopFaceUp) {
             padTopFaceUp = maxPadTopFaceUp;
@@ -397,7 +463,7 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
         //distribute height
         for (var i = 0; i < length; i++) {
             card = this.cards[i];
-            card.setX(0, animTime, delay);
+            card.setX(0, settings);
             if (i > 0) {
                 var prevCard = this.cards[i - 1];
                 if (prevCard.isFaceUp() === true) {
@@ -409,12 +475,11 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
                     y += padTopFaceDown;
                 }
             }
-            card.setY(y, animTime, delay);
+            card.setY(y, settings);
         }
-        var actualHeight = y + PlayingCard.CARD_DIM.h;
+        var height = y + PlayingCard.CARD_DIM.h;
 
-        this.group.setWidth(w);
-        this.group.setHeight(actualHeight);
+        this.group.setHeight(height);
     };
 
     TableauPile.prototype.resetCardFaces = function () {
@@ -474,6 +539,7 @@ fSpider.StockPile = (function (StockPile, undefined) {
     StockPile = function (cards) {
         this.cards = cards || [];
         this.group = new Kinetic.Group();
+        this.setHeight(PlayingCard.CARD_DIM.h);
     };
 
     Utils.extendObj(StockPile, Pile);
@@ -481,21 +547,37 @@ fSpider.StockPile = (function (StockPile, undefined) {
     //getters/setters
 
     //public methods
-    StockPile.prototype.arrangeCards = function (w, h, animTime, delay) {
+    StockPile.prototype.arrangeCards = function (w, h, settings) {
+        if (w != null) {
+            this.availWidth = w;
+        }
+        if (w != null) {
+            this.availHeight = h;
+        }
+        if (settings == null) {
+            settings = {};
+        }
+
         var tableauPiles = 10;
+        var length = this.getSize();
         var card;
 
-        var paddingRight = w - PlayingCard.CARD_DIM.w;
+        var nSets = Math.floor(length / tableauPiles);
+        if (nSets == 0) {
+            nSets = .00000001;
+        }
+        var paddingRight = (this.availWidth - PlayingCard.CARD_DIM.w) / nSets;
         if (paddingRight < 0) {
             paddingRight = 0;
         }
 
-        var length = this.getSize();
         for (var i = 0; i < length; i++) {
             card = this.cards[i];
-            card.setX(Math.floor(i / tableauPiles) * paddingRight, animTime, delay);
-            card.setY(0, animTime, delay);
+            card.setX(Math.floor((length - i - 1) / tableauPiles) * paddingRight, settings);
+            card.setY(0, settings);
         }
+
+        this.setWidth(paddingRight * nSets + PlayingCard.CARD_DIM.w);
     };
 
     StockPile.prototype.resetCardFaces = function () {
@@ -527,12 +609,15 @@ fSpider.FoundationPile = (function (FoundationPile, undefined) {
     'use strict';
 
     var Pile = fSpider.Pile;
+    var PlayingCard = fSpider.PlayingCard;
     var Utils = fSpider.Utils;
 
     //constructor
     FoundationPile = function (cards) {
         this.cards = cards || [];
         this.group = new Kinetic.Group();
+        this.setWidth(PlayingCard.CARD_DIM.w);
+        this.setHeight(PlayingCard.CARD_DIM.h);
     };
 
     Utils.extendObj(FoundationPile, Pile);
@@ -540,10 +625,20 @@ fSpider.FoundationPile = (function (FoundationPile, undefined) {
     //getters/setters
 
     //public methods
-    FoundationPile.prototype.arrangeCards = function (w, h, animTime, delay) {
+    FoundationPile.prototype.arrangeCards = function (w, h, settings) {
+        if (w != null) {
+            this.availWidth = w;
+        }
+        if (w != null) {
+            this.availHeight = h;
+        }
+        if (settings == null) {
+            settings = {};
+        }
+
         this.cards.forEach(function (card) {
-            card.setX(0, animTime, delay);
-            card.setY(0, animTime, delay);
+            card.setX(0, settings);
+            card.setY(0, settings);
         });
     };
 

@@ -18,6 +18,8 @@ fSpider.TransferCardsAction = fSpider.TransferCardsAction || {};
 fSpider.FlipCardAction = fSpider.FlipCardAction || {};
 fSpider.ScoreChangeAction = fSpider.ScoreChangeAction || {};
 
+fSpider.SpiderSettings = fSpider.SpiderSettings || {};
+
 fSpider.Utils = fSpider.Utils || {};
 //externals
 ////Kinetic
@@ -36,6 +38,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
     var TransferCardsAction = fSpider.TransferCardsAction;
     var FlipCardAction = fSpider.FlipCardAction;
     var ScoreChangeAction = fSpider.ScoreChangeAction;
+    var SpiderSettings = fSpider.SpiderSettings;
     var Utils = fSpider.Utils;
 
     //constructor
@@ -43,7 +46,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         this.stage = stage;
         this.deck = new Deck();
         this.history = new History();
-        this.scale = 1;
+        this.settings = new SpiderSettings();
         this.cardAssetsImage = cardAssetsImage;
         this.cardImgDim = cardImgDim;
 
@@ -70,14 +73,14 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         //build piles
         var pile;
         this.tableauPiles = [];
-        for (var i = 0; i < 10; i++) {
+        for (i = 0; i < 10; i++) {
             pile = new TableauPile();
             pile.setVisible(false);
             this.tableauPiles.push(pile);
             this.layer.add(pile.getGroup());
         }
         this.foundationPiles = [];
-        for (var i = 0; i < 8; i++) {
+        for (i = 0; i < 8; i++) {
             pile = new FoundationPile();
             pile.setVisible(false);
             this.foundationPiles.push(pile);
@@ -90,10 +93,10 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
     };
 
     //static fields
-    SpiderBoard.BOARD_MARGIN = { l: 10, r: 10, t: 10, b: 10 };
-    SpiderBoard.TABLEAU_PILE_MARGIN = { l: 2, r: 2, t: 5, b: 0 };
-    SpiderBoard.STOCK_PILE_MARGIN = { l: 0, r: 100, t: 0, b: 10 };
-    SpiderBoard.FOUNDATION_PILES_MARGIN = { l: 150, r: 0, t: 0, b: 10 };
+    SpiderBoard.BOARD_MARGIN = { l: 5, r: 5, t: 5, b: 5 };
+    SpiderBoard.TABLEAU_PILE_MARGIN = { l: 3, r: 3, t: 0, b: 0 };
+    SpiderBoard.STOCK_PILE_MARGIN = { l: 0, r: 100, t: 0, b: 0 };
+    SpiderBoard.FOUNDATION_PILES_MARGIN = { l: 150, r: 0, t: 0, b: 0 };
     SpiderBoard.ORIGINAL_DIMENSIONS = { w: 956, h: 580 };
     SpiderBoard.PLAYER_ACTIONS = {
         'none': 0,
@@ -117,6 +120,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
     //fields
     SpiderBoard.prototype.stage = null;
     SpiderBoard.prototype.deck = null;
+    SpiderBoard.prototype.settings = null;
     SpiderBoard.prototype.history = null;
     SpiderBoard.prototype.gameInProgress = false;
     SpiderBoard.prototype.scale = 1;
@@ -138,6 +142,10 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
     //getters/setters
     SpiderBoard.prototype.getDeck = function () {
         return this.deck;
+    };
+
+    SpiderBoard.prototype.getSettings = function () {
+        return this.settings;
     };
 
     SpiderBoard.prototype.getHistory = function () {
@@ -404,10 +412,10 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         }
 
         //move cards to new pile
-        toPile.transferCards(cards);
+        toPile.transferCards(cards, this.settings);
 
         //flip over last card of original pile and refresh
-        var flipped = fromPile.setLastCardFaceUp(true);
+        var flipped = fromPile.setLastCardFaceUp(true, this.settings);
         fromPile.resetListening();
         fromPile.resetDraggable();
 
@@ -422,7 +430,6 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         }
 
         this.registerTransferInHistory(cards, fromPile, toPile, flipped);
-        this.arrangeTableauPile(toPile, true);
     };
 
     SpiderBoard.prototype.transferCardsFromTableauToTableau = function (cards, fromPile, toPile) {
@@ -452,44 +459,44 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
 
     SpiderBoard.prototype.registerTransferInHistory = function (cards, fromPile, toPile, cardFlipped) {
         var actionSet = new ActionSet();
+        var transferAction = new TransferCardsAction(cards, fromPile, toPile);
+        actionSet.addAction(transferAction);
         var fromLen = fromPile.getSize();
         if (cardFlipped === true && fromLen > 0) {
             var flipAction = new FlipCardAction(fromPile.getCardAt(fromLen - 1), true);
             actionSet.addAction(flipAction);
         }
-        var transferAction = new TransferCardsAction(fromPile, toPile, cards);
-        actionSet.addAction(transferAction);
         this.history.registerActionSet(actionSet);
     };
 
     SpiderBoard.prototype.drawFromStockPile = function () {
         var actionSet = new ActionSet();
 
-        var animTime = SpiderBoard.STOCK_ANIM_TIME;
         var delayFraction = SpiderBoard.STOCK_DELAY_FRACTION;
 
         var sPile = this.stockPile;
         var tPiles = this.tableauPiles;
         var tPilesLen = tPiles.length;
         var cards = sPile.getCards();
-        var i = tPiles.length;
+        var i = 0;
         var cardToTransfer, tPile, flipAction, transferAction;
-        while (i > 0 && cards.length > 0) {
+        while (i < tPilesLen && cards.length > 0) {
             cardToTransfer = cards[cards.length - 1];
-            cardToTransfer.setFaceUp(true);
-            tPile = tPiles[tPilesLen - i];
-            tPile.transferCards([cardToTransfer]);
+            cardToTransfer.setFaceUp(true, this.settings);
+            tPile = tPiles[tPilesLen - 1 - i];
+            tPile.transferCards([cardToTransfer], Utils.extendProps({
+                'animTime': SpiderBoard.STOCK_ANIM_TIME,
+                'animDelay': delayFraction * (tPilesLen - i)
+            }, this.settings));
             tPile.resetDraggable();
             tPile.resetListening();
-            i--;
+            i++;
 
             flipAction = new FlipCardAction(cardToTransfer, true);
-            transferAction = new TransferCardsAction(sPile, tPile, [cardToTransfer], animTime, delayFraction);
+            transferAction = new TransferCardsAction([cardToTransfer], sPile, tPile);
             actionSet.addAction(flipAction);
             actionSet.addAction(transferAction);
         }
-
-        this.arrangePiles(true, animTime, delayFraction); //arrange all piles
 
         if (actionSet.actions.length > 0) {
             this.history.registerActionSet(actionSet);
@@ -504,9 +511,9 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         var tPile = this.findOverlappingTableauPile(card, pos);
         if (tPile != null) {
             this.transferCardsFromTableauToTableau(originalPile.getCardAndCardsAfter(card), originalPile, tPile);
-            this.deselectCard(this.selectedCard, true);
+            this.deselectCard(this.selectedCard);
         }
-        this.arrangeTableauPile(originalPile, true);
+        this.arrangeTableauPile(card.getPile());
 
         this.playerAction = SpiderBoard.PLAYER_ACTIONS.none;
         this.redraw();
@@ -567,7 +574,6 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
 
     SpiderBoard.prototype.findOverlappingTableauPile = function (card, touchPoint) {
         var overlapPile = null;
-        var scale = this.globalScale;
 
         //get the card boundaries
         var cardRect = {
@@ -590,8 +596,8 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
             bounds = {
                 'x': tPile.getX(),
                 'y': tPile.getY(),
-                'width': tPile.getWidth(),
-                'height': tPile.getHeight()
+                'width': tPile.getWidth(this.scale),
+                'height': tPile.getHeight(this.scale)
             };
             //check if card/pile intersect
             if (Utils.doRectsIntersect(cardRect, bounds) === true) {
@@ -602,8 +608,8 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
                 } else { //otherwise get center point of place holder image
                     placeHolder = tPile.getPlaceHolderImg();
                     otherCenter = {
-                        'x': placeHolder.getAbsolutePosition().x + (placeHolder.getWidth() / 2 * scale),
-                        'y': placeHolder.getAbsolutePosition().y + (placeHolder.getHeight() / 2 * scale)
+                        'x': placeHolder.getAbsolutePosition().x + (placeHolder.getWidth() / 2 * this.scale),
+                        'y': placeHolder.getAbsolutePosition().y + (placeHolder.getHeight() / 2 * this.scale)
                     };
                 }
                 //find distance between touch point and center
@@ -618,27 +624,29 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         return overlapPile;
     };
 
-    SpiderBoard.prototype.deselectCard = function (card, arrangePile) {
+    SpiderBoard.prototype.deselectCard = function (card, settings) {
+        if (settings == null) {
+            settings = this.settings;
+        }
+
         if (card == null) {
             card = this.selectedCard;
         }
         if (card != null) {
-            card.setSelected(false);
-            if (arrangePile === true) {
-                this.arrangeTableauPile(card.getPile(), true);
-            }
+            card.setSelected(false, settings);
             if (this.selectedCard === card) {
                 this.selectedCard = null;
             }
         }
     };
 
-    SpiderBoard.prototype.selectCard = function (card, arrangePile) {
-        card.setSelected(true);
-        this.selectedCard = card;
-        if (arrangePile === true) {
-            this.arrangeTableauPile(card.getPile(), true);
+    SpiderBoard.prototype.selectCard = function (card, settings) {
+        if (settings == null) {
+            settings = this.settings;
         }
+
+        card.setSelected(true, settings);
+        this.selectedCard = card;
     };
 
     SpiderBoard.prototype._fireScoreChanged = function () {
@@ -673,7 +681,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
             if (this.playerAction === SpiderBoard.PLAYER_ACTIONS.dragging) {
                 this.stopDraggingCard(this.selectedCard, { 'x': evt.layerX, 'y': evt.layerY });
             } else {
-                this.deselectCard(this.selectedCard, true);
+                this.deselectCard(this.selectedCard);
                 this.redraw();
             }
         }
@@ -681,10 +689,13 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
 
     SpiderBoard.prototype._cardDragStart = function (evt, card) {
         this.playerAction = SpiderBoard.PLAYER_ACTIONS.dragging;
+        var animate;
         if (this.selectedCard != null) {
-            this.deselectCard(this.selectedCard, this.selectedCard.getPile() !== card.getPile());
+            animate = this.settings.animate === true && this.selectedCard.getPile() !== card.getPile();
+            this.deselectCard(this.selectedCard, Utils.extendProps({ 'animate': animate }, this.settings));
         }
-        this.selectCard(card, false);
+        animate = false;
+        this.selectCard(card, Utils.extendProps({ 'animate': animate }, this.settings));
         card.getPile().moveToTop();
     };
 
@@ -713,20 +724,20 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
             if (sCard === card) {
                 //just deselect it
                 if (this.playerAction !== SpiderBoard.PLAYER_ACTIONS.dragging) {
-                    this.deselectCard(sCard, true);
+                    this.deselectCard(sCard);
                 }
             } else if (sCard != null) {
                 sPile = sCard.getPile();
                 var cardIndex = pile.getCards().indexOf(card);
                 //if touched card is the last card in its pile and selected card is allowed to be added
                 if (cardIndex === pile.getSize() - 1 && pile.canAddCard(sCard) === true) {
+                    this.deselectCard(this.selectedCard, Utils.extendProps({ 'animate': false }, this.settings));
                     this.transferCardsFromTableauToTableau(sPile.getCardAndCardsAfter(sCard), sPile, pile);
-                    this.deselectCard(this.selectedCard, true);
                 } else {
-                    this.deselectCard(sCard, true);
+                    this.deselectCard(sCard);
                 }
             } else if (pile.canRemoveCard(card) === true) {
-                this.selectCard(card, true);
+                this.selectCard(card);
             }
 
             evt.handledByCardTouch = true; //prevent bubbled event to trigger "deselect card"
@@ -736,11 +747,10 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
                     this.drawFromStockPile();
                 }
             } else {
-                card.setFaceUp(true);
+                card.setFaceUp(true, this.settings);
                 if (pile != null) {
                     pile.resetDraggable();
                     pile.resetListening();
-                    this.arrangeTableauPile(pile, true);
                 }
             }
         }
@@ -765,9 +775,9 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
             if (tPile.canAddCard(card) === true) {
                 var pile = card.getPile();
                 this.transferCardsFromTableauToTableau(pile.getCardAndCardsAfter(card), pile, tPile);
-                this.deselectCard(this.selectedCard, true);
+                this.deselectCard(this.selectedCard);
             } else {
-                this.deselectCard(card, true);
+                this.deselectCard(card);
             }
             this.redraw();
         }
@@ -830,15 +840,8 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
 
     SpiderBoard.prototype.undo = function () {
         if (this.history.canUndo() === true) {
-            var actionSet = this.history.undo();
+            var actionSet = this.history.undo(this.settings);
             if (actionSet != null) {
-                var animTime, delayFraction;
-                var tAction = actionSet.findFirstTransferCardsAction();
-                if (tAction != null) {
-                    animTime = tAction.animTime;
-                    delayFraction = tAction.delay;
-                }
-                this.arrangePiles(true, animTime, delayFraction);
                 this.reduceScore();
                 this.increaseMoves();
             }
@@ -851,126 +854,130 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
 
     SpiderBoard.prototype.redo = function () {
         if (this.history.canRedo() === true) {
-            var actionSet = this.history.redo();
+            var actionSet = this.history.redo(this.settings);
             if (actionSet != null) {
-                var delayFraction;
-                var tAction = actionSet.findFirstTransferCardsAction();
-                if (tAction != null) {
-                    delayFraction = tAction.delay;
-                }
-                this.arrangePiles(true, undefined, delayFraction);
                 this.reduceScore();
                 this.increaseMoves();
             }
         }
     };
 
-    SpiderBoard.prototype.arrangeTableauPile = function (pile, animate, animTime, delayFraction) {
-        if (animate === true && animTime == null) {
-            animTime = SpiderBoard.GENERAL_ANIM_TIME;
-        }
-        if (delayFraction == null) {
-            delayFraction = SpiderBoard.GENERAL_DELAY_FRACTION;
+    SpiderBoard.prototype.arrangeTableauPile = function (pile, settings) {
+        if (settings == null) {
+            settings = this.settings;
         }
 
-        var availHeight = this.stage.getHeight() - (SpiderBoard.BOARD_MARGIN.t + SpiderBoard.BOARD_MARGIN.b) * this.scale;
+        var boardMargin = {
+            l: SpiderBoard.BOARD_MARGIN.l * this.scale,
+            r: SpiderBoard.BOARD_MARGIN.r * this.scale,
+            t: SpiderBoard.BOARD_MARGIN.t * this.scale,
+            b: SpiderBoard.BOARD_MARGIN.b * this.scale
+        };
+
+        var cardDim = {
+            w: PlayingCard.CARD_DIM.w * this.scale,
+            h: PlayingCard.CARD_DIM.h * this.scale
+        }
+
+        var availHeight = this.stage.getHeight() - (boardMargin.t + boardMargin.b);
         var availMargin = {
             l: SpiderBoard.TABLEAU_PILE_MARGIN.l * this.scale,
             r: SpiderBoard.TABLEAU_PILE_MARGIN.r * this.scale,
-            t: SpiderBoard.TABLEAU_PILE_MARGIN.t,
-            b: SpiderBoard.TABLEAU_PILE_MARGIN.b
+            t: SpiderBoard.TABLEAU_PILE_MARGIN.t * this.scale,
+            b: SpiderBoard.TABLEAU_PILE_MARGIN.b * this.scale
         };
 
         var w = PlayingCard.CARD_DIM.w;
-        var h = availHeight - availMargin.t - PlayingCard.CARD_DIM.h - availMargin.b - SpiderBoard.BOARD_MARGIN.b;
+        var h = availHeight - (availMargin.t - cardDim.h - availMargin.b - boardMargin.b) / this.scale;
 
-        pile.arrangeCards(w, h, animTime, delayFraction);
+        pile.arrangeCards(w, h, settings);
     };
 
-    SpiderBoard.prototype.arrangePiles = function (animate, animTime, delayFraction) {
+    SpiderBoard.prototype.arrangePiles = function (animate, settings) {
+        if (settings == null) {
+            settings = this.settings;
+        }
+
         var i, x, y, w, h, availMargin, pile;
 
-        if (animate === true && animTime == null) {
-            animTime = SpiderBoard.GENERAL_ANIM_TIME;
-        }
-        if (delayFraction == null) {
-            delayFraction = SpiderBoard.GENERAL_DELAY_FRACTION;
+        var boardMargin = {
+            l: SpiderBoard.BOARD_MARGIN.l * this.scale,
+            r: SpiderBoard.BOARD_MARGIN.r * this.scale,
+            t: SpiderBoard.BOARD_MARGIN.t * this.scale,
+            b: SpiderBoard.BOARD_MARGIN.b * this.scale
+        };
+
+        var cardDim = {
+            w: PlayingCard.CARD_DIM.w * this.scale,
+            h: PlayingCard.CARD_DIM.h * this.scale
         }
 
         //find available height/width, given board margin
-        var availWidth = this.stage.getWidth() - (SpiderBoard.BOARD_MARGIN.l + SpiderBoard.BOARD_MARGIN.r) * this.scale;
-        var availHeight = this.stage.getHeight() - (SpiderBoard.BOARD_MARGIN.t + SpiderBoard.BOARD_MARGIN.b) * this.scale;
+        var availWidth = this.stage.getWidth() - (boardMargin.l + boardMargin.r);
+        var availHeight = this.stage.getHeight() - (boardMargin.t + boardMargin.b);
 
         ////**TABLEAU PILES**\\\\
         availMargin = {
             l: SpiderBoard.TABLEAU_PILE_MARGIN.l * this.scale,
             r: SpiderBoard.TABLEAU_PILE_MARGIN.r * this.scale,
-            t: SpiderBoard.TABLEAU_PILE_MARGIN.t,
-            b: SpiderBoard.TABLEAU_PILE_MARGIN.b
+            t: SpiderBoard.TABLEAU_PILE_MARGIN.t * this.scale,
+            b: SpiderBoard.TABLEAU_PILE_MARGIN.b * this.scale
         };
 
         var tSize = this.tableauPiles.length;
 
         //find available width if all tableau piles added
-        var emptyWidth = availWidth - (tSize * PlayingCard.CARD_DIM.w * this.scale);
+        var emptyWidth = availWidth - (tSize * (cardDim.w + availMargin.l + availMargin.r));
 
         //find amount of extra room that can be allotted to each pile
-        var emptyWidthEach = emptyWidth / tSize;
+        var emptyMargin = emptyWidth / 2;
 
-        //divide this number by two to find value for left/right margin
-        var emptyMarginEach = emptyWidthEach / 2;
-
-        //we are going to assume margin is symmetrical (for now?)
-        //if margin we calculated is > one provided, use it instead
-        if (emptyMarginEach > Math.max(availMargin.l, availMargin.r)) {
-            availMargin.l = emptyMarginEach;
-            availMargin.r = emptyMarginEach;
-        }
-
-        y = (SpiderBoard.BOARD_MARGIN.t + availMargin.t) * this.scale;
-        w = PlayingCard.CARD_DIM.w;
-        h = availHeight - availMargin.t - PlayingCard.CARD_DIM.h - availMargin.b - SpiderBoard.BOARD_MARGIN.b;
+        y = (boardMargin.t + availMargin.t);
+        w = cardDim.w / this.scale;
+        h = availHeight - (availMargin.t - cardDim.h - availMargin.b - boardMargin.b) / this.scale;
 
         //arrange piles
         for (i = tSize - 1; i >= 0; i--) {
             pile = this.tableauPiles[i];
-            x = SpiderBoard.BOARD_MARGIN.l * this.scale; //board margin
-            x += availMargin.l * (i + 1); //all pile left margins
-            x += ((PlayingCard.CARD_DIM.w * this.scale) + availMargin.r) * i; //all pile right margins and card widths
+            x = boardMargin.l + emptyMargin;
+            x += (cardDim.w + availMargin.r) * i;
+            x += availMargin.l * i + 1;
             pile.setX(x);
             pile.setY(y);
-            pile.arrangeCards(w, h, animTime, delayFraction * i);
+            pile.arrangeCards(w, h, settings);
         }
 
         ////**STOCK PILE**\\\\
         availMargin = {
-            l: SpiderBoard.STOCK_PILE_MARGIN.l,
-            r: SpiderBoard.STOCK_PILE_MARGIN.r,
-            t: SpiderBoard.STOCK_PILE_MARGIN.t,
-            b: SpiderBoard.STOCK_PILE_MARGIN.b
+            l: SpiderBoard.STOCK_PILE_MARGIN.l * this.scale,
+            r: SpiderBoard.STOCK_PILE_MARGIN.r * this.scale,
+            t: SpiderBoard.STOCK_PILE_MARGIN.t * this.scale,
+            b: SpiderBoard.STOCK_PILE_MARGIN.b * this.scale
         };
 
-        var nCardsInOriginalPile = this.deck.getSize() - 24 - 30;
-
-        var stockExtraW = nCardsInOriginalPile / 10 * 1.5; //for showing how many stacks left
-        x = availWidth - (PlayingCard.CARD_DIM.w + availMargin.r + stockExtraW) * this.scale;
-        y = availHeight - (PlayingCard.CARD_DIM.h + availMargin.b) * this.scale;
+        var stacks = this.stockPile.getSize() / this.tableauPiles.length;
+        var stockExtraW = stacks; //for showing how many stacks left
+        if (stockExtraW < stacks * 6) {
+            stockExtraW = stacks * 6;
+        }
+        x = availWidth - (cardDim.w + availMargin.r + stockExtraW);
+        y = availHeight - (cardDim.h + availMargin.b);
         w = PlayingCard.CARD_DIM.w + stockExtraW;
         h = PlayingCard.CARD_DIM.h;
         this.stockPile.setX(x);
         this.stockPile.setY(y);
-        this.stockPile.arrangeCards(w, h, animTime, delayFraction, delayFraction);
+        this.stockPile.arrangeCards(w, h, settings);
 
         ////**FOUNDATION PILES**\\\\
         availMargin = {
-            l: SpiderBoard.FOUNDATION_PILES_MARGIN.l,
-            r: SpiderBoard.FOUNDATION_PILES_MARGIN.r,
-            t: SpiderBoard.FOUNDATION_PILES_MARGIN.t,
-            b: SpiderBoard.FOUNDATION_PILES_MARGIN.b
+            l: SpiderBoard.FOUNDATION_PILES_MARGIN.l * this.scale,
+            r: SpiderBoard.FOUNDATION_PILES_MARGIN.r * this.scale,
+            t: SpiderBoard.FOUNDATION_PILES_MARGIN.t * this.scale,
+            b: SpiderBoard.FOUNDATION_PILES_MARGIN.b * this.scale
         };
 
-        var startX = SpiderBoard.BOARD_MARGIN.l + availMargin.l * this.scale;
-        y = availHeight - (availMargin.b + PlayingCard.CARD_DIM.h) * this.scale;
+        var startX = boardMargin.l + availMargin.l;
+        y = availHeight - (availMargin.b + cardDim.h);
         w = PlayingCard.CARD_DIM.w;
         h = PlayingCard.CARD_DIM.h;
 
@@ -978,10 +985,10 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         var fSize = this.foundationPiles.length;
         for (i = 0; i < fSize; i++) {
             pile = this.foundationPiles[i];
-            x = startX + (i * PlayingCard.CARD_DIM.w / 3 * this.scale);
+            x = startX + (i * cardDim.w / 3);
             pile.setX(x);
             pile.setY(y);
-            pile.arrangeCards(w, h, animTime, delayFraction * i);
+            pile.arrangeCards(w, h, settings);
         }
     };
 

@@ -24,32 +24,30 @@ fSpider.ActionSet = (function (ActionSet, undefined) {
         });
     };
 
-    ActionSet.prototype.undo = function () {
+    ActionSet.prototype.undo = function (settings) {
+        if (settings == null) {
+            settings = {};
+        }
+
         var revActions = this.actions.reverse();
         revActions.forEach(function (action) {
             if (action.undo != null) {
-                action.undo();
+                action.undo(settings);
             }
         });
     };
 
-    ActionSet.prototype.redo = function () {
+    ActionSet.prototype.redo = function (settings) {
+        if (settings == null) {
+            settings = {};
+        }
+
         var revActions = this.actions.reverse();
         revActions.forEach(function (action) {
             if (action.redo != null) {
-                action.redo();
+                action.redo(settings);
             }
         });
-    };
-
-    ActionSet.prototype.findFirstTransferCardsAction = function () {
-        var length = this.actions.length;
-        for (var i = 0; i < length; i++) {
-            if (this.actions[i].actionType === "TransferCardsAction") {
-                return this.actions[i];
-            }
-        }
-        return null;
     };
 
     ActionSet.prototype.getSize = function () {
@@ -90,12 +88,16 @@ fSpider.History = (function (History, undefined) {
         return this.cursor > 0;
     };
 
-    History.prototype.undo = function () {
+    History.prototype.undo = function (settings) {
+        if (settings == null) {
+            settings = {};
+        }
+
         var actionSet;
         if (this.canUndo() === true) {
             this.cursor--;
             actionSet = this.actionSets[this.cursor];
-            actionSet.undo();
+            actionSet.undo(settings);
             this._fireOnHistoryChanged();
         }
         return actionSet;
@@ -105,11 +107,15 @@ fSpider.History = (function (History, undefined) {
         return this.cursor < this.actionSets.length;
     };
 
-    History.prototype.redo = function () {
+    History.prototype.redo = function (settings) {
+        if (settings == null) {
+            settings = {};
+        }
+
         var actionSet;
         if (this.canRedo() === true) {
             actionSet = this.actionSets[this.cursor];
-            actionSet.redo();
+            actionSet.redo(settings);
             this.cursor++;
             this._fireOnHistoryChanged();
         }
@@ -172,30 +178,33 @@ fSpider.TransferCardsAction = (function (TransferCardsAction, undefined) {
     'use strict';
 
     //constructor
-    TransferCardsAction = function (fromPile, toPile, cards, animTime, delay) {
+    TransferCardsAction = function (cards, fromPile, toPile) {
+        this.cards = cards;
         this.fromPile = fromPile;
         this.toPile = toPile;
-        this.cards = cards;
-        this.animTime = animTime;
-        this.delay = delay;
     };
 
     //fields
+    TransferCardsAction.prototype.cards = null;
     TransferCardsAction.prototype.fromPile = null;
     TransferCardsAction.prototype.toPile = null;
-    TransferCardsAction.prototype.cards = null;
-    TransferCardsAction.prototype.animTime = 0;
-    TransferCardsAction.prototype.delay = 0;
-    TransferCardsAction.prototype.actionType = "TransferCardsAction";
 
     //public functions
-    TransferCardsAction.prototype.undo = function () {
-        this.fromPile.transferCards(this.cards);
+    TransferCardsAction.prototype.undo = function (settings) {
+        if (settings == null) {
+            settings = {};
+        }
+
+        this.fromPile.transferCards(this.cards, settings);
         this._refreshPiles();
     };
 
-    TransferCardsAction.prototype.redo = function () {
-        this.toPile.transferCards(this.cards);
+    TransferCardsAction.prototype.redo = function (settings) {
+        if (settings == null) {
+            settings = {};
+        }
+
+        this.toPile.transferCards(this.cards, settings);
         this._refreshPiles();
     };
 
@@ -221,15 +230,22 @@ fSpider.FlipCardAction = (function (FlipCardAction, undefined) {
     //fields
     FlipCardAction.prototype.card = null;
     FlipCardAction.prototype.isFaceUp = false;
-    FlipCardAction.prototype.actionType = "FlipCardAction";
 
     //public functions
-    FlipCardAction.prototype.undo = function () {
-        this.card.setFaceUp(this.isFaceUp !== true);
+    FlipCardAction.prototype.undo = function (settings) {
+        if (settings == null) {
+            settings = {};
+        }
+
+        this.card.setFaceUp(this.isFaceUp !== true, settings);
     };
 
-    FlipCardAction.prototype.redo = function () {
-        this.card.setFaceUp(this.isFaceUp === true);
+    FlipCardAction.prototype.redo = function (settings) {
+        if (settings == null) {
+            settings = {};
+        }
+
+        this.card.setFaceUp(this.isFaceUp === true, settings);
     };
 
     return FlipCardAction;
@@ -247,7 +263,6 @@ fSpider.ScoreChangeAction = (function (ScoreChangeAction, undefined) {
     //fields
     ScoreChangeAction.prototype.board = null;
     ScoreChangeAction.prototype.amount = 0;
-    ScoreChangeAction.prototype.actionType = "ScoreChangeAction";
 
     //public functions
     ScoreChangeAction.prototype.undo = function () {

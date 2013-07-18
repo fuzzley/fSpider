@@ -11,6 +11,20 @@ fSpider.Utils = (function (Utils, undefined) {
         childObj.prototype.constructor = childObj;
     };
 
+    Utils.extendProps = function (childObj, parentObj) {
+        if (childObj == null) {
+            childObj = {};
+        }
+
+        var key;
+        for (key in parentObj) {
+            if (childObj[key] == null) {
+                childObj[key] = parentObj[key];
+            }
+        }
+        return childObj;
+    };
+
     Utils.isPointInBounds = function (point, bounds) {
         var xValid = point.x >= bounds.x && point.x <= (bounds.x + bounds.width); // x in bounds
         var yValid = point.y >= bounds.y && point.y <= (bounds.y + bounds.height); //y in bounds

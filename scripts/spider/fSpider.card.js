@@ -68,7 +68,11 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
     Card.prototype.isFaceUp = function () {
         return this.faceUp;
     };
-    Card.prototype.setFaceUp = function (faceUp) {
+    Card.prototype.setFaceUp = function (faceUp, settings) {
+        if (settings == null) {
+            settings = {};
+        }
+
         if (this.faceUp === faceUp) {
             return;
         }
@@ -113,7 +117,11 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
         this.pile = pile;
     };
 
-    Card.prototype.setX = function (x, animTimeMS, delay) {
+    Card.prototype.setX = function (x, settings) {
+        if (settings == null) {
+            settings = {};
+        }
+
         var xAnim = this.getXAnimation();
         if (xAnim !== null) {
             xAnim.stop();
@@ -124,11 +132,19 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
             return;
         }
 
-        if (animTimeMS !== undefined && animTimeMS > 0) {
-            if (delay === undefined) {
-                delay = 0;
+        var animTime = 0;
+        var delay = 0;
+        if (settings.animate === true) {
+            if (settings.animTime != null) {
+                animTime = settings.animTime;
             }
+            if (settings.animDelay != null) {
+                delay = settings.animDelay;
+            }
+        }
+        var sound = settings.volume != null && settings.volume > 0;
 
+        if (animTime > 0) {
             var self = this;
 
             var layer = this.group.getLayer();
@@ -136,17 +152,16 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
             var fromX = this.group.getAbsolutePosition().x;
             var toX = this.group.getParent().getAbsolutePosition().x + x * scale;
             var dX = toX - fromX;
-            var msStep = dX / animTimeMS;
-
-            this.group.getParent().moveToTop();
+            var msStep = dX / animTime;
+            self.pile.getGroup().moveToTop();
 
             xAnim = new Kinetic.Animation(function (frame) {
-                if (frame.time >= animTimeMS + delay) {
+                if (frame.time >= animTime) {
                     xAnim.stop();
                     self._setXAnimation(null);
                     self.group.setX(x);
-                } else if (frame.time > delay) {
-                    var newX = fromX + (frame.time - delay) * msStep;
+                } else {
+                    var newX = fromX + frame.time * msStep;
                     if ((msStep < 0 && newX < toX) || (msStep > 0 && newX > toX)) {
                         newX = toX;
                     }
@@ -155,7 +170,12 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
                 }
             }, layer);
             this._setXAnimation(xAnim);
-            xAnim.start();
+
+            setTimeout(function () {
+                if (xAnim != null) {
+                    xAnim.start();
+                }
+            }, delay);
         } else {
             this.group.setX(x);
         }
@@ -164,7 +184,11 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
         return this.group.getX();
     };
 
-    Card.prototype.setY = function (y, animTimeMS, delay) {
+    Card.prototype.setY = function (y, settings) {
+        if (settings == null) {
+            settings = {};
+        }
+
         var yAnim = this.getYAnimation();
         if (yAnim !== null) {
             yAnim.stop();
@@ -175,11 +199,19 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
             return;
         }
 
-        if (animTimeMS !== undefined && animTimeMS > 0) {
-            if (delay === undefined) {
-                delay = 0;
+        var animTime = 0;
+        var delay = 0;
+        if (settings.animate === true) {
+            if (settings.animTime != null) {
+                animTime = settings.animTime;
             }
+            if (settings.animDelay != null) {
+                delay = settings.animDelay;
+            }
+        }
+        var sound = settings.volume != null && settings.volume > 0;
 
+        if (animTime > 0) {
             var self = this;
 
             var layer = this.group.getLayer();
@@ -188,17 +220,16 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
             var fromY = fSpider.Utils.formatPointToLayer({ y: this.group.getAbsolutePosition().y }, layer).y;
             var toY = fSpider.Utils.formatPointToLayer({ y: this.pile.getGroup().getAbsolutePosition().y }, layer).y + y * scale;
             var dY = toY - fromY;
-            var msStep = dY / animTimeMS;
-
-            this.group.getParent().moveToTop();
+            var msStep = dY / animTime;
+            self.pile.getGroup().moveToTop();
 
             yAnim = new Kinetic.Animation(function (frame) {
-                if (frame.time >= animTimeMS + delay) {
+                if (frame.time >= animTime) {
                     yAnim.stop();
                     self._setYAnimation(null);
                     self.group.setY(y);
-                } else if (frame.time > delay) {
-                    var newY = fromY + (frame.time - delay) * msStep;
+                } else {
+                    var newY = fromY + frame.time * msStep;
                     if ((msStep < 0 && newY < toY) || (msStep > 0 && newY > toY)) {
                         newY = toY;
                     }
@@ -206,8 +237,13 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
                     self.group.setAbsolutePosition(newX, newY);
                 }
             }, layer);
+
             this._setYAnimation(yAnim);
-            yAnim.start();
+            setTimeout(function () {
+                if (yAnim != null) {
+                    yAnim.start();
+                }
+            }, delay);
         } else {
             this.group.setY(y);
         }
@@ -311,12 +347,19 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
         return this.hovering;
     };
 
-    Card.prototype.setSelected = function (selected) {
+    Card.prototype.setSelected = function (selected, settings) {
+        if (settings == null) {
+            settings = {};
+        }
+
         if (this.selected === selected) {
             return;
         }
         this.selected = selected;
         this.refresh();
+        if (this.pile != null) {
+            this.pile.arrangeCards(null, null, settings);
+        }
     };
     Card.prototype.isSelected = function () {
         return this.selected;
