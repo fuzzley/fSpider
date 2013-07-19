@@ -845,6 +845,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
                 this.reduceScore();
                 this.increaseMoves();
             }
+            this.redraw();
         }
     };
 
@@ -859,6 +860,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
                 this.reduceScore();
                 this.increaseMoves();
             }
+            this.redraw();
         }
     };
 
