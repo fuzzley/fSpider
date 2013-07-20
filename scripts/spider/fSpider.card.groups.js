@@ -17,6 +17,7 @@ fSpider.Pile = (function (Pile, undefined) {
     Pile.prototype.group = null;
     Pile.prototype.availHeight = 0;
     Pile.prototype.availWidth = 0;
+    Pile.prototype.baseZIndex = 0;
 
     //getters/setters
     Pile.prototype.getCards = function () {
@@ -125,6 +126,7 @@ fSpider.Pile = (function (Pile, undefined) {
         card.setPile(this);
         this.cards.push(card);
         this.group.add(card.getGroup());
+        card.getGroup().setZIndex(this.baseZIndex + this.cards.indexOf(card));
         if (absPos != null) {
             card.setAbsolutePosition(absPos);
         }
@@ -161,7 +163,7 @@ fSpider.Pile = (function (Pile, undefined) {
         //specific to pile type
     };
 
-    Pile.prototype.resetCardFaces = function () {
+    Pile.prototype.resetCardFaces = function (settings) {
         //specific to pile type
     };
 
@@ -172,6 +174,14 @@ fSpider.Pile = (function (Pile, undefined) {
     Pile.prototype.resetDraggable = function () {
         //specific to pile type
     };
+
+    Pile.prototype.resetCardZOrder = function () {
+        var base = this.baseZIndex;
+        this.cards.forEach(function (card, i) {
+            card.setZIndex(base + i);
+        });
+    };
+
 
     Pile.prototype.reverseCards = function () {
         var cards = this.cards.reverse();
@@ -222,6 +232,8 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
     TableauPile = function (cards) {
         this.cards = cards || [];
         this.group = new Kinetic.Group();
+        this.baseZIndex = 1;
+
         this.placeHolderImg = new Kinetic.Image();
 
         this.hoverBorder = new Kinetic.Rect({
@@ -360,6 +372,7 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
             }
         }
         this.placeHolderImg.setImage(img);
+        this.placeHolderImg.moveToBottom();
         if (cropSqr != null) {
             this.placeHolderImg.setCrop(cropSqr);
         }
@@ -460,12 +473,12 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
         }
 
         var y = 0;
+        var prevCard;
         //distribute height
-        for (var i = 0; i < length; i++) {
+        for (i = 0; i < length; i++) {
             card = this.cards[i];
-            card.setX(0, settings);
             if (i > 0) {
-                var prevCard = this.cards[i - 1];
+                prevCard = this.cards[i - 1];
                 if (prevCard.isFaceUp() === true) {
                     y += padTopFaceUp;
                     if (prevCard.isSelected() === true) {
@@ -475,22 +488,26 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
                     y += padTopFaceDown;
                 }
             }
-            card.setY(y, settings);
+            card.setPosition(0, y, settings);
         }
         var height = y + PlayingCard.CARD_DIM.h;
 
         this.group.setHeight(height);
     };
 
-    TableauPile.prototype.resetCardFaces = function () {
+    TableauPile.prototype.resetCardFaces = function (settings) {
+        if (settings == null) {
+            settings = {};
+        }
+
         var card;
         var length = this.getSize();
         for (var i = 0; i < length; i++) {
             card = this.cards[i];
             if (i === length - 1) { //if last card
-                card.setFaceUp(true);
+                card.setFaceUp(true, settings);
             } else { //otherwise
-                card.setFaceUp(false);
+                card.setFaceUp(false, settings);
             }
         }
     };
@@ -573,16 +590,19 @@ fSpider.StockPile = (function (StockPile, undefined) {
 
         for (var i = 0; i < length; i++) {
             card = this.cards[i];
-            card.setX(Math.floor((length - i - 1) / tableauPiles) * paddingRight, settings);
-            card.setY(0, settings);
+            card.setPosition(Math.floor((length - i - 1) / tableauPiles) * paddingRight, 0, settings);
         }
 
         this.setWidth(paddingRight * nSets + PlayingCard.CARD_DIM.w);
     };
 
-    StockPile.prototype.resetCardFaces = function () {
+    StockPile.prototype.resetCardFaces = function (settings) {
+        if (settings == null) {
+            settings = {};
+        }
+
         this.cards.forEach(function (card) {
-            card.setFaceUp(false);
+            card.setFaceUp(false, settings);
         });
     };
 
@@ -637,14 +657,17 @@ fSpider.FoundationPile = (function (FoundationPile, undefined) {
         }
 
         this.cards.forEach(function (card) {
-            card.setX(0, settings);
-            card.setY(0, settings);
+            card.setPosition(0, 0, settings);
         });
     };
 
-    FoundationPile.prototype.resetCardFaces = function () {
+    FoundationPile.prototype.resetCardFaces = function (settings) {
+        if (settings == null) {
+            settings = {};
+        }
+
         this.cards.forEach(function (card) {
-            card.setFaceUp(true);
+            card.setFaceUp(true, settings);
         });
     };
 

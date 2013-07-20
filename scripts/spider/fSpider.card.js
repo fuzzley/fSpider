@@ -25,8 +25,10 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
     Card.prototype.activeBorder = null;
     Card.prototype.hoverBorder = null;
 
-    Card.prototype._xAnim = null;
-    Card.prototype._yAnim = null;
+    Card.prototype.animationLayer = null;
+    Card.prototype.positionAnimator = null;
+    Card.prototype.positionAnimatorContext = null;
+    Card.prototype.changePositionTimeout = null;
 
     Card.prototype.borderProps = {
         'visible': true,
@@ -80,20 +82,6 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
         this.refresh();
     };
 
-    Card.prototype.getXAnimation = function () {
-        return this._xAnim;
-    };
-    Card.prototype._setXAnimation = function (xAnim) {
-        this._xAnim = xAnim;
-    };
-
-    Card.prototype.getYAnimation = function () {
-        return this._yAnim;
-    };
-    Card.prototype._setYAnimation = function (yAnim) {
-        this._yAnim = yAnim;
-    };
-
     Card.prototype.getGroup = function () {
         return this.group;
     };
@@ -110,6 +98,13 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
         return this.hoverBorder;
     };
 
+    Card.prototype.setAnimationLayer = function (layer) {
+        this.animationLayer = layer;
+    };
+    Card.prototype.getAnimationLayer = function () {
+        return this.animationLayer;
+    };
+
     Card.prototype.getPile = function () {
         return this.pile;
     };
@@ -117,18 +112,19 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
         this.pile = pile;
     };
 
-    Card.prototype.setX = function (x, settings) {
+    Card.prototype.setPosition = function (x, y, settings) {
         if (settings == null) {
             settings = {};
         }
 
-        var xAnim = this.getXAnimation();
-        if (xAnim !== null) {
-            xAnim.stop();
-            this._setXAnimation(null);
+        //stop any existing position animation
+
+        if (this.changePositionTimeout != null
+            || (this.positionAnimator != null && this.positionAnimator.isRunning() === true)) {
+            this.stopPositionAnimation(false);
         }
 
-        if (Math.abs(this.getX() - x) < .1) {
+        if (Math.abs(this.group.getX() - x) < .001 && Math.abs(this.group.getY() - y) < .001) {
             return;
         }
 
@@ -144,110 +140,37 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
         }
         var sound = settings.volume != null && settings.volume > 0;
 
-        if (animTime > 0) {
-            var self = this;
+        this.positionAnimatorContext = {};
+        this.positionAnimatorContext.intendedPos = { x: x, y: y };
+        var self = this;
+        var setPos = function () {
+            if (animTime > 0) {
+                self.startPositionAnimation(x, y, animTime);
+            } else {
+                self.group.setPosition(x, y);
+            }
+        };
 
-            var layer = this.group.getLayer();
-            var scale = this.pile.getGroup().getScaleX();
-            var fromX = this.group.getAbsolutePosition().x;
-            var toX = this.group.getParent().getAbsolutePosition().x + x * scale;
-            var dX = toX - fromX;
-            var msStep = dX / animTime;
-            self.pile.getGroup().moveToTop();
-
-            xAnim = new Kinetic.Animation(function (frame) {
-                if (frame.time >= animTime) {
-                    xAnim.stop();
-                    self._setXAnimation(null);
-                    self.group.setX(x);
-                } else {
-                    var newX = fromX + frame.time * msStep;
-                    if ((msStep < 0 && newX < toX) || (msStep > 0 && newX > toX)) {
-                        newX = toX;
-                    }
-                    var newY = self.group.getAbsolutePosition().y;
-                    self.group.setAbsolutePosition(newX, newY);
-                }
-            }, layer);
-            this._setXAnimation(xAnim);
-
-            setTimeout(function () {
-                if (xAnim != null) {
-                    xAnim.start();
-                }
+        if (delay > 0) {
+            this.changePositionTimeout = setTimeout(function () {
+                setPos();
+                self.group.getLayer().draw();
+                //stop any existing position change delay
+                clearTimeout(self.changePositionTimeout);
+                self.changePositionTimeout = null;
             }, delay);
         } else {
-            this.group.setX(x);
+            setPos();
         }
     };
+    Card.prototype.getPosition = function () {
+        return this.group.getPosition();
+    };
+
     Card.prototype.getX = function () {
         return this.group.getX();
     };
 
-    Card.prototype.setY = function (y, settings) {
-        if (settings == null) {
-            settings = {};
-        }
-
-        var yAnim = this.getYAnimation();
-        if (yAnim !== null) {
-            yAnim.stop();
-            this._setYAnimation(null);
-        }
-
-        if (Math.abs(this.getY() - y) < .1) {
-            return;
-        }
-
-        var animTime = 0;
-        var delay = 0;
-        if (settings.animate === true) {
-            if (settings.animTime != null) {
-                animTime = settings.animTime;
-            }
-            if (settings.animDelay != null) {
-                delay = settings.animDelay;
-            }
-        }
-        var sound = settings.volume != null && settings.volume > 0;
-
-        if (animTime > 0) {
-            var self = this;
-
-            var layer = this.group.getLayer();
-            var scale = this.pile.getGroup().getScaleY();
-            this.group.setAbsolutePosition(this.group.getAbsolutePosition());
-            var fromY = fSpider.Utils.formatPointToLayer({ y: this.group.getAbsolutePosition().y }, layer).y;
-            var toY = fSpider.Utils.formatPointToLayer({ y: this.pile.getGroup().getAbsolutePosition().y }, layer).y + y * scale;
-            var dY = toY - fromY;
-            var msStep = dY / animTime;
-            self.pile.getGroup().moveToTop();
-
-            yAnim = new Kinetic.Animation(function (frame) {
-                if (frame.time >= animTime) {
-                    yAnim.stop();
-                    self._setYAnimation(null);
-                    self.group.setY(y);
-                } else {
-                    var newY = fromY + frame.time * msStep;
-                    if ((msStep < 0 && newY < toY) || (msStep > 0 && newY > toY)) {
-                        newY = toY;
-                    }
-                    var newX = self.group.getAbsolutePosition().x;
-                    self.group.setAbsolutePosition(newX, newY);
-                }
-            }, layer);
-
-            this._setYAnimation(yAnim);
-            setTimeout(function () {
-                if (yAnim != null) {
-                    yAnim.start();
-                }
-            }, delay);
-        } else {
-            this.group.setY(y);
-        }
-    };
     Card.prototype.getY = function () {
         return this.group.getY();
     };
@@ -311,6 +234,10 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
     };
     Card.prototype.setAbsolutePosition = function (absPos) {
         return this.group.setAbsolutePosition(absPos);
+    };
+
+    Card.prototype.setZIndex = function (zIndex) {
+        this.group.setZIndex(zIndex);
     };
 
     Card.prototype.getAbsoluteCenter = function (scale) {
@@ -426,6 +353,128 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
         }
     };
 
+    Card.prototype.stopPositionAnimation = function (moveToIntendedPos) {
+        var context = this.positionAnimatorContext;
+
+        if (this.changePositionTimeout != null) {
+            //stop any existing position change delay
+            clearTimeout(this.changePositionTimeout);
+            this.changePositionTimeout = null;
+        }
+
+        if (this.positionAnimator != null && this.positionAnimator.isRunning() === true) {
+            this.positionAnimator.stop();
+        }
+        var layer = this.group.getLayer();
+        //if we don't belong to our pile's group, move there
+        this.tryMoveToPileGroup();
+        //make sure the final position is exactly what was intended
+        if (moveToIntendedPos === true) {
+            this.group.setPosition(context.intendedPos);
+        }
+        if (context.originalLayer != null && context.originalLayer !== layer) {
+            context.originalLayer.draw();
+        }
+        //cleanup
+        this.positionAnimator = null;
+        this.positionAnimatorContext = null;
+    };
+
+    Card.prototype.stepPositionAnimation = function (frame) {
+        var context = this.positionAnimatorContext;
+        if (frame.time >= context.animTime) { //done with animation
+            this.stopPositionAnimation(true);
+        } else {  //animation delta
+            var absPos = this.group.getAbsolutePosition();
+            var newAbsPos = { x: absPos.x + frame.timeDiff * context.msStep.x, y: absPos.y + frame.timeDiff * context.msStep.y };
+            this.group.setAbsolutePosition(newAbsPos);
+        }
+    };
+
+    Card.prototype.startPositionAnimation = function (x, y, animTime) {
+        if (this.positionAnimatorContext == null) {
+            this.positionAnimatorContext = {};
+            this.positionAnimatorContext.intendedPos = { x: x, y: y };
+        }
+
+        //find absolute positions for ourselves and our parent
+        var scale = this.group.getScaleX();
+        var absPos = this.group.getAbsolutePosition();
+        var layer = this.group.getLayer();
+        var ownerAbsPos, ownerLayer;
+        if (this.pile != null && this.pile.getGroup() != null) {
+            ownerAbsPos = this.pile.getGroup().getAbsolutePosition();
+            scale = this.pile.getGroup().getScaleX();
+            ownerLayer = this.pile.getGroup().getLayer();
+        } else {
+            ownerAbsPos = { x: absPos.x, y: absPos.y };
+            ownerLayer = this.group.getLayer();
+        }
+
+        //if animation layer isn't current layer, move to animation layer
+        if (this.tryMoveToAnimationLayer() === true) {
+            this.group.moveToTop();
+        } else if (this.pile != null && this.pile.getGroup() != null && this.group.getLayer() != null) {
+            this.pile.moveToTop();
+        }
+
+        //figure out our delta
+        var from = fSpider.Utils.formatPointToLayer(absPos, this.animationLayer || layer);
+        var to = fSpider.Utils.formatPointToLayer(ownerAbsPos, ownerLayer);
+        to.y += y * scale;
+        to.x += x * scale;
+        var delta = { x: to.x - from.x, y: to.y - from.y };
+
+        //prepare some information for our animator to use
+        this.positionAnimatorContext.originalAbsPos = absPos;
+        this.positionAnimatorContext.msStep = { x: delta.x / animTime, y: delta.y / animTime };
+        this.positionAnimatorContext.animTime = animTime;
+        this.positionAnimatorContext.originalLayer = layer;
+
+        if (this.positionAnimator == null) {
+            var self = this;
+            this.positionAnimator = new Kinetic.Animation(function (frame) {
+                self.stepPositionAnimation(frame);
+            }, this.animationLayer || layer);
+        }
+
+        if (this.animationLayer != null && layer !== this.animationLayer) {
+            layer.draw();
+        }
+
+        this.positionAnimator.start();
+    };
+
+    Card.prototype.tryMoveToAnimationLayer = function () {
+        if (this.animationLayer == null || this.group.getLayer() === this.animationLayer) {
+            return false;
+        }
+
+        var absPos = this.getAbsolutePosition();
+        this.group.moveTo(this.animationLayer);
+        this.setAbsolutePosition(absPos);
+        return true;
+    };
+
+    Card.prototype.tryMoveToPileGroup = function () {
+        if (this.pile == null || this.pile.getGroup() == null || this.group.getParent() == this.pile.getGroup()) {
+            return false;
+        }
+
+        var absPos = this.getAbsolutePosition();
+        this.group.moveTo(this.pile.getGroup());
+        this.setAbsolutePosition(absPos);
+        this.pile.resetCardZOrder();
+        return true;
+    };
+
+    Card.prototype.stopAllAnimations = function () {
+        if (this.changePositionTimeout != null
+            || (this.positionAnimator != null && this.positionAnimator.isRunning() === true)) {
+            this.stopPositionAnimation(true);
+        }
+    };
+
     Card.prototype.on = function (eventName, callback) {
         this.group.on(eventName, callback);
     };
@@ -443,6 +492,8 @@ fSpider.PlayingCard = (function (PlayingCard, Kinetic, undefined) {
     var Utils = fSpider.Utils;
 
     PlayingCard = function (suit, type) {
+        var self = this;
+
         this.suit = suit;
         this.type = type;
 
@@ -508,6 +559,9 @@ fSpider.PlayingCard = (function (PlayingCard, Kinetic, undefined) {
     };
 
     //public functions
+    PlayingCard.prototype.toString = function () {
+        return '[PlayingCard]suit: ' + this.suit + ', type: ' + this.type + ';';
+    };
 
     //static fields
     PlayingCard.CARD_DIM = { w: 90, h: 120 };

@@ -44,21 +44,23 @@ fSpider.Utils = (function (Utils, undefined) {
     };
 
     Utils.formatPointToLayer = function (point, layer, scale) {
-        if (point.x != null) {
-            point.x -= layer.getAbsolutePosition().x;
+        var frmtedPoint = { x: point.x, y: point.y };
+
+        if (frmtedPoint.x != null) {
+            frmtedPoint.x -= layer.getAbsolutePosition().x;
             if (scale != null && scale !== 0) {
-                point.x /= scale;
+                frmtedPoint.x /= scale;
             }
         }
 
-        if (point.y != null) {
-            point.y -= layer.getAbsolutePosition().y;
+        if (frmtedPoint.y != null) {
+            frmtedPoint.y -= layer.getAbsolutePosition().y;
             if (scale != null && scale !== 0) {
-                point.y /= scale;
+                frmtedPoint.y /= scale;
             }
         }
 
-        return point;
+        return frmtedPoint;
     };
 
     Utils.formatTime = function (timeMS) {
