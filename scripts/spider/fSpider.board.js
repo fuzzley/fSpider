@@ -512,6 +512,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         var pile = card.getPile();
 
         card.setSelected(true);
+        this.selectedCard = card;
         var canMoveToAnimationLayer = card.tryMoveToAnimationLayer();
         if (canMoveToAnimationLayer !== true && pile != null) {
             pile.moveToTop();
