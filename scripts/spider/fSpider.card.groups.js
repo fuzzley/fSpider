@@ -222,7 +222,7 @@ fSpider.Pile = (function (Pile, undefined) {
         var animating = 0;
         var length = this.cards.length;
         for (var i = 0; i < length; i++) {
-            if (this.cards[i].isPositionAnimationRunning() === true) {
+            if (this.cards[i].areAnyAnimationsRunning() === true) {
                 animating++;
             }
         }
