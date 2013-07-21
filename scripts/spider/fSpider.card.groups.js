@@ -87,6 +87,11 @@ fSpider.Pile = (function (Pile, undefined) {
         this.availHeight = height;
     };
 
+    Pile.prototype.setAvailableDimensions = function (width, height) {
+        this.availWidth = width;
+        this.availHeight = height;
+    };
+
     //public functions
     Pile.prototype.moveToTop = function () {
         this.group.moveToTop();
@@ -119,7 +124,7 @@ fSpider.Pile = (function (Pile, undefined) {
             pile.resetDraggable();
         });
 
-        this.arrangeCards(null, null, settings);
+        this.arrangeCards(settings);
     };
 
     Pile.prototype.addCard = function (card, absPos) {
@@ -159,7 +164,7 @@ fSpider.Pile = (function (Pile, undefined) {
         }
     };
 
-    Pile.prototype.arrangeCards = function (w, h, settings) {
+    Pile.prototype.arrangeCards = function (settings) {
         //specific to pile type
     };
 
@@ -267,11 +272,11 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
 
         this.hoverBorder = new Kinetic.Rect({
             visible: false,
-            opacity: TableauPile.HOVER_BORDER.opacity,
-            fill: TableauPile.HOVER_BORDER.fill,
-            stroke: TableauPile.HOVER_BORDER.stroke,
-            strokeWidth: TableauPile.HOVER_BORDER.strokeWidth,
-            cornerRadius: TableauPile.HOVER_BORDER.cornerRadius,
+            opacity: this.HOVER_BORDER.opacity,
+            fill: this.HOVER_BORDER.fill,
+            stroke: this.HOVER_BORDER.stroke,
+            strokeWidth: this.HOVER_BORDER.strokeWidth,
+            cornerRadius: this.HOVER_BORDER.cornerRadius,
             width: PlayingCard.CARD_DIM.w,
             height: PlayingCard.CARD_DIM.h
         });
@@ -286,6 +291,15 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
     //fields
     TableauPile.prototype.hovering = false;
     TableauPile.prototype.hoverBorder = null;
+
+    TableauPile.prototype.HOVER_BORDER = {
+        'visible': true,
+        'stroke': '#FFFF99',
+        'strokeWidth': 5,
+        'cornerRadius': 4,
+        'fill': '#FFFF99',
+        'opacity': 0.25
+    };
 
     //getters/setters
     TableauPile.prototype.getPlaceHolderImg = function () {
@@ -442,13 +456,7 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
         return true;
     };
 
-    TableauPile.prototype.arrangeCards = function (w, h, settings) {
-        if (w != null) {
-            this.availWidth = w;
-        }
-        if (w != null) {
-            this.availHeight = h;
-        }
+    TableauPile.prototype.arrangeCards = function (settings) {
         if (settings == null) {
             settings = {};
         }
@@ -546,15 +554,6 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
         });
     };
 
-    TableauPile.HOVER_BORDER = {
-        'visible': true,
-        'stroke': '#FFFF99',
-        'strokeWidth': 5,
-        'cornerRadius': 4,
-        'fill': '#FFFF99',
-        'opacity': 0.25
-    };
-
     return TableauPile;
 })(fSpider.TableauPile || {});
 
@@ -577,13 +576,7 @@ fSpider.StockPile = (function (StockPile, undefined) {
     //getters/setters
 
     //public methods
-    StockPile.prototype.arrangeCards = function (w, h, settings) {
-        if (w != null) {
-            this.availWidth = w;
-        }
-        if (w != null) {
-            this.availHeight = h;
-        }
+    StockPile.prototype.arrangeCards = function (settings) {
         if (settings == null) {
             settings = {};
         }
@@ -658,13 +651,7 @@ fSpider.FoundationPile = (function (FoundationPile, undefined) {
     //getters/setters
 
     //public methods
-    FoundationPile.prototype.arrangeCards = function (w, h, settings) {
-        if (w != null) {
-            this.availWidth = w;
-        }
-        if (w != null) {
-            this.availHeight = h;
-        }
+    FoundationPile.prototype.arrangeCards = function (settings) {
         if (settings == null) {
             settings = {};
         }

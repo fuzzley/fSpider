@@ -282,7 +282,7 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
         this.selected = selected;
         this.refresh();
         if (this.pile != null) {
-            this.pile.arrangeCards(null, null, settings);
+            this.pile.arrangeCards(settings);
         }
     };
     Card.prototype.isSelected = function () {

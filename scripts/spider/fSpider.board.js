@@ -938,7 +938,8 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         var w = PlayingCard.CARD_DIM.w;
         var h = availHeight - (availMargin.t - cardDim.h - availMargin.b - boardMargin.b) / this.scale;
 
-        pile.arrangeCards(w, h, settings);
+        pile.setAvailableDimensions(w, h);
+        pile.arrangeCards(settings);
     };
 
     SpiderBoard.prototype.arrangePiles = function (settings) {
@@ -992,7 +993,8 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
             x += availMargin.l * (i + 1);
             pile.setX(x);
             pile.setY(y);
-            pile.arrangeCards(w, h, settings);
+            pile.setAvailableDimensions(w, h);
+            pile.arrangeCards(settings);
         }
 
         ////**STOCK PILE**\\\\
@@ -1014,7 +1016,8 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         h = PlayingCard.CARD_DIM.h;
         this.stockPile.setX(x);
         this.stockPile.setY(y);
-        this.stockPile.arrangeCards(w, h, settings);
+        this.stockPile.setAvailableDimensions(w, h);
+        this.stockPile.arrangeCards(settings);
 
         ////**FOUNDATION PILES**\\\\
         availMargin = {
@@ -1036,7 +1039,8 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
             x = startX + (i * cardDim.w / 3);
             pile.setX(x);
             pile.setY(y);
-            pile.arrangeCards(w, h, settings);
+            pile.setAvailableDimensions(w, h);
+            pile.arrangeCards(settings);
         }
     };
 
