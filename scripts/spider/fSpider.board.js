@@ -70,7 +70,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         var card;
         for (var i = 0; i < 104; i++) {
             card = new PlayingCard(0, 0);
-            card.setAnimationLayer(this.pileLayer);
+            card.setAnimationLayer(this.animLayer);
             cards.push(card);
         }
         this.deck.setCards(cards);

@@ -28,7 +28,7 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
     Card.prototype.animationLayer = null;
     Card.prototype.positionAnimator = null;
     Card.prototype.positionAnimatorContext = null;
-    Card.prototype.changePositionTimeout = null;
+    Card.prototype.positionAnimationTimeout = null;
 
     Card.prototype.borderProps = {
         'visible': true,
@@ -118,8 +118,7 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
         }
 
         //stop any existing position animation
-        if (this.changePositionTimeout != null
-            || (this.positionAnimator != null && this.positionAnimator.isRunning() === true)) {
+        if (this.isPositionAnimationRunning() === true) {
             this.stopPositionAnimation(false);
         }
 
@@ -136,27 +135,26 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
             if (settings.animDelay != null) {
                 delay = settings.animDelay;
             }
+            this.positionAnimatorContext = this.preparePositionAnimationContext(x, y, animTime);
         }
         var sound = settings.volume != null && settings.volume > 0;
 
-        this.positionAnimatorContext = {};
-        this.positionAnimatorContext.intendedPos = { x: x, y: y };
         var self = this;
         var setPos = function () {
             if (animTime > 0) {
-                self.startPositionAnimation(x, y, animTime);
+                self.group.getLayer().draw();
+                self.startPositionAnimation();
             } else {
                 self.group.setPosition(x, y);
             }
         };
 
         if (delay > 0) {
-            this.changePositionTimeout = setTimeout(function () {
+            this.positionAnimationTimeout = setTimeout(function () {
                 setPos();
-                self.group.getLayer().draw();
-                //stop any existing position change delay
-                clearTimeout(self.changePositionTimeout);
-                self.changePositionTimeout = null;
+
+                clearTimeout(self.positionAnimationTimeout);
+                self.positionAnimationTimeout = null;
             }, delay);
         } else {
             setPos();
@@ -352,28 +350,42 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
         }
     };
 
+    Card.prototype.isPositionAnimationRunning = function () {
+        return this.positionAnimationTimeout != null || (this.positionAnimator != null && this.positionAnimator.isRunning() === true);
+    };
+
     Card.prototype.stopPositionAnimation = function (moveToIntendedPos) {
         var context = this.positionAnimatorContext;
 
-        if (this.changePositionTimeout != null) {
+        if (this.positionAnimationTimeout != null) {
             //stop any existing position change delay
-            clearTimeout(this.changePositionTimeout);
-            this.changePositionTimeout = null;
+            clearTimeout(this.positionAnimationTimeout);
+            this.positionAnimationTimeout = null;
         }
 
         if (this.positionAnimator != null && this.positionAnimator.isRunning() === true) {
             this.positionAnimator.stop();
         }
-        var layer = this.group.getLayer();
-        //if we don't belong to our pile's group, move there
-        this.tryMoveToPileGroup();
-        //make sure the final position is exactly what was intended
+
         if (moveToIntendedPos === true) {
-            this.group.setPosition(context.intendedPos);
+            this.group.setAbsolutePosition(context.intendedAbsPos);
+//            this.group.setPosition(context.intendedPos);
         }
-        if (context.originalLayer != null && context.originalLayer !== layer) {
+
+        //we need to wait for other animations in the group to stop before moving them all back to original layer
+        //otherwise we get some graphical glitches with cards having the wrong z order because of 2 layers
+        if (this.pile != null && this.pile.getGroup() !== this.group.getParent()) {
+            var animating = this.pile.countCardsAnimating();
+            if (animating <= 1) {
+                this.pile.moveAllCardsToGroup();
+            }
+        }
+
+        //redraw original layer
+        if (context.originalLayer != null) {
             context.originalLayer.draw();
         }
+
         //cleanup
         this.positionAnimator = null;
         this.positionAnimatorContext = null;
@@ -390,26 +402,7 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
         }
     };
 
-    Card.prototype.startPositionAnimation = function (x, y, animTime) {
-        if (this.positionAnimatorContext == null) {
-            this.positionAnimatorContext = {};
-            this.positionAnimatorContext.intendedPos = { x: x, y: y };
-        }
-
-        //find absolute positions for ourselves and our parent
-        var scale = this.group.getScaleX();
-        var absPos = this.group.getAbsolutePosition();
-        var layer = this.group.getLayer();
-        var ownerAbsPos, ownerLayer;
-        if (this.pile != null && this.pile.getGroup() != null) {
-            ownerAbsPos = this.pile.getGroup().getAbsolutePosition();
-            scale = this.pile.getGroup().getScaleX();
-            ownerLayer = this.pile.getGroup().getLayer();
-        } else {
-            ownerAbsPos = { x: absPos.x, y: absPos.y };
-            ownerLayer = this.group.getLayer();
-        }
-
+    Card.prototype.startPositionAnimation = function () {
         //if animation layer isn't current layer, move to animation layer
         if (this.tryMoveToAnimationLayer() === true) {
             this.group.moveToTop();
@@ -417,28 +410,16 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
             this.pile.moveToTop();
         }
 
-        //figure out our delta
-        var from = fSpider.Utils.formatPointToLayer(absPos, this.animationLayer || layer);
-        var to = fSpider.Utils.formatPointToLayer(ownerAbsPos, ownerLayer);
-        to.y += y * scale;
-        to.x += x * scale;
-        var delta = { x: to.x - from.x, y: to.y - from.y };
-
-        //prepare some information for our animator to use
-        this.positionAnimatorContext.originalAbsPos = absPos;
-        this.positionAnimatorContext.msStep = { x: delta.x / animTime, y: delta.y / animTime };
-        this.positionAnimatorContext.animTime = animTime;
-        this.positionAnimatorContext.originalLayer = layer;
+        var layer = this.group.getLayer();
+        if (layer != null && this.animationLayer != null && layer !== this.animationLayer) {
+            layer.draw();
+        }
 
         if (this.positionAnimator == null) {
             var self = this;
             this.positionAnimator = new Kinetic.Animation(function (frame) {
                 self.stepPositionAnimation(frame);
             }, this.animationLayer || layer);
-        }
-
-        if (this.animationLayer != null && layer !== this.animationLayer) {
-            layer.draw();
         }
 
         this.positionAnimator.start();
@@ -468,10 +449,43 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
     };
 
     Card.prototype.stopAllAnimations = function () {
-        if (this.changePositionTimeout != null
-            || (this.positionAnimator != null && this.positionAnimator.isRunning() === true)) {
+        if (this.isPositionAnimationRunning() === true) {
             this.stopPositionAnimation(true);
         }
+    };
+
+    Card.prototype.preparePositionAnimationContext = function (x, y, animTime) {
+        //find absolute positions for ourselves and our parent
+        var scale = this.group.getScaleX();
+        var absPos = this.group.getAbsolutePosition();
+        var layer = this.group.getLayer();
+        var ownerAbsPos, ownerLayer;
+        if (this.pile != null && this.pile.getGroup() != null) {
+            ownerAbsPos = this.pile.getGroup().getAbsolutePosition();
+            scale = this.pile.getGroup().getScaleX();
+            ownerLayer = this.pile.getGroup().getLayer();
+        } else {
+            ownerAbsPos = { x: absPos.x, y: absPos.y };
+            ownerLayer = this.group.getLayer();
+        }
+
+        //figure out our delta
+        var from = fSpider.Utils.formatPointToLayer(absPos, this.animationLayer || layer);
+        var to = fSpider.Utils.formatPointToLayer(ownerAbsPos, ownerLayer);
+        to.y += y * scale;
+        to.x += x * scale;
+        var delta = { x: to.x - from.x, y: to.y - from.y };
+
+        //build context
+        var context = {};
+        context.originalLayer = layer;
+        context.animTime = animTime;
+        context.intendedPos = { x: x, y: y };
+        context.intendedAbsPos = to;
+        context.originalAbsPos = from;
+        context.msStep = { x: delta.x / animTime, y: delta.y / animTime };
+
+        return context;
     };
 
     Card.prototype.toString = function () {

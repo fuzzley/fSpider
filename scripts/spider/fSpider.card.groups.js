@@ -213,6 +213,35 @@ fSpider.Pile = (function (Pile, undefined) {
         return cardsToGive;
     };
 
+    Pile.prototype.countCardsAnimating = function () {
+        var animating = 0;
+        var length = this.cards.length;
+        for (var i = 0; i < length; i++) {
+            if (this.cards[i].isPositionAnimationRunning() === true) {
+                animating++;
+            }
+        }
+        return animating;
+    };
+
+    Pile.prototype.moveAllCardsToGroup = function () {
+        if (this.group == null) {
+            return;
+        }
+
+        var length = this.cards.length;
+        var card, pos;
+        for (var i = 0; i < length; i++) {
+            card = this.cards[i];
+            if (card.getGroup().getParent() !== this.group) {
+                pos = card.getAbsolutePosition();
+                card.getGroup().moveTo(this.group);
+                card.setAbsolutePosition(pos);
+            }
+        }
+        this.resetCardZOrder();
+    };
+
     Pile.prototype.destroy = function () {
         this.removeAllCards();
         this.group.remove();
@@ -423,22 +452,7 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
         if (settings == null) {
             settings = {};
         }
-        var animate = settings.animate === true;
-        var animTime = 0;
-        var delay = 0;
-        if (animate === true) {
-            if (settings.animTime == null) {
-                animTime = 150;
-            } else {
-                animTime = settings.animTime;
-            }
-            if (settings.animTime == null) {
-                delay = settings.delay;
-            }
-        }
-        var sound = settings.volume != null && settings.volume > 0;
 
-        var card;
         var cards = this.cards;
         var length = cards.length;
 
@@ -476,7 +490,6 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
         var prevCard;
         //distribute height
         for (i = 0; i < length; i++) {
-            card = this.cards[i];
             if (i > 0) {
                 prevCard = this.cards[i - 1];
                 if (prevCard.isFaceUp() === true) {
@@ -488,7 +501,7 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
                     y += padTopFaceDown;
                 }
             }
-            card.setPosition(0, y, settings);
+            this.cards[i].setPosition(0, y, settings);
         }
         var height = y + PlayingCard.CARD_DIM.h;
 
