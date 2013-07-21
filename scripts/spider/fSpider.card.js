@@ -118,7 +118,6 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
         }
 
         //stop any existing position animation
-
         if (this.changePositionTimeout != null
             || (this.positionAnimator != null && this.positionAnimator.isRunning() === true)) {
             this.stopPositionAnimation(false);
@@ -473,6 +472,10 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
             || (this.positionAnimator != null && this.positionAnimator.isRunning() === true)) {
             this.stopPositionAnimation(true);
         }
+    };
+
+    Card.prototype.toString = function () {
+        return '[Card]faceup: ' + this.faceUp;
     };
 
     Card.prototype.on = function (eventName, callback) {
