@@ -860,7 +860,6 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         var piles = this.getPiles();
 
         this.gameInProgress = false;
-        this.recalculateGlobalScale();
 
         this.resetStatistics();
         this.history.clear();
@@ -869,7 +868,6 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         this.deck.shuffle();
 
         this.setupPiles();
-        this.rescalePiles();
         piles.forEach(function (pile) {
             pile.setVisible(true);
             pile.resetCardFaces();
@@ -877,7 +875,6 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
             pile.resetDraggable();
         });
         this.arrangePiles(Utils.extendProps({ animate: false }, this.settings));
-        this.redraw();
 
         this.redraw();
         this.gameInProgress = true;
@@ -1056,10 +1053,16 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
     };
 
     SpiderBoard.prototype.recalculateGlobalScale = function () {
+        var origScale = this.scale;
         var scaleX = this.stage.getWidth() / SpiderBoard.ORIGINAL_DIMENSIONS.w;
         var scaleY = this.stage.getHeight() / SpiderBoard.ORIGINAL_DIMENSIONS.h;
-        this.scale = scaleY < scaleX ? scaleY : scaleX;
-        this.animLayer.setScale(this.scale);
+        var scale = scaleY < scaleX ? scaleY : scaleX;
+        if (origScale !== scale) {
+            this.scale = scale;
+            this.animLayer.setScale(this.scale);
+            this.rescalePiles();
+            this.arrangePiles(Utils.extendProps({ animate: false }, this.settings));
+        }
     };
 
     SpiderBoard.prototype.onMovesChanged = function (callback) {

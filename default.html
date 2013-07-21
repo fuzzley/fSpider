@@ -90,6 +90,7 @@
         //prepare board
         fSpider.board = new fSpider.SpiderBoard(stage, cardAssetsImg, cardDim);
         var board = fSpider.board;
+        board.recalculateGlobalScale();
         ////set image assets
         board.setCardBackImage(cardAssetsImg, {
             x: 0,
@@ -110,11 +111,7 @@
             stage.setWidth(canvasWrap.width());
             stage.setHeight(canvasWrap.height());
             board.recalculateGlobalScale();
-            if (board.isGameInProgress() === true) {
-                board.rescalePiles();
-                board.arrangePiles();
-                board.redraw();
-            }
+            board.redraw();
         });
 
         $(document).on('keydown', function (evt) {

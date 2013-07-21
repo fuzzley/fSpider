@@ -372,12 +372,17 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
 //            this.group.setPosition(context.intendedPos);
         }
 
+        var layer = this.group.getLayer();
         //we need to wait for other animations in the group to stop before moving them all back to original layer
         //otherwise we get some graphical glitches with cards having the wrong z order because of 2 layers
         if (this.pile != null && this.pile.getGroup() !== this.group.getParent()) {
             var animating = this.pile.countCardsAnimating();
             if (animating <= 1) {
                 this.pile.moveAllCardsToGroup();
+                this.group.getLayer().draw();
+                if (layer !== this.group.getLayer()) {
+                    layer.draw();
+                }
             }
         }
 
