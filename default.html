@@ -87,9 +87,10 @@
         };
         var tableauPlaceHolderImage = $('#tableau-ph').get(0);
 
+        var soundFolder = 'content/sound_assets/card_sounds/';
         var sounds = {};
         sounds.cardFlip = new Howl({
-            urls: ['content/sound_assets/card_sounds/cardflip.wav']
+            urls: [soundFolder + 'cardflip.ogg', soundFolder + 'cardflip.mp3', soundFolder + 'cardflip.wav']
         });
 
         //prepare board
