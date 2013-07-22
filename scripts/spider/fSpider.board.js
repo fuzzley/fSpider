@@ -181,6 +181,15 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         }
     };
 
+    SpiderBoard.prototype.setSounds = function (sounds) {
+        this.sounds = sounds;
+        var cards = this.deck.getCards();
+        var length = cards.length;
+        for (var i = 0; i < length; i++) {
+            cards[i].setCardFlipSound(sounds.cardFlip);
+        }
+    };
+
     SpiderBoard.prototype.getPiles = function () {
         var piles = [];
 
@@ -864,6 +873,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         this.resetStatistics();
         this.history.clear();
 
+        this.settings.volume = 0;
         this.setupDeck(this.getSuitsForDifficulty(difficulty));
         this.deck.shuffle();
 
@@ -875,6 +885,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
             pile.resetDraggable();
         });
         this.arrangePiles(Utils.extendProps({ animate: false }, this.settings));
+        this.settings.volume = 1;
 
         this.redraw();
         this.gameInProgress = true;

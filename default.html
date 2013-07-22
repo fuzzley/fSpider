@@ -87,6 +87,11 @@
         };
         var tableauPlaceHolderImage = $('#tableau-ph').get(0);
 
+        var sounds = {};
+        sounds.cardFlip = new Howl({
+            urls: ['content/sound_assets/card_sounds/cardflip.wav']
+        });
+
         //prepare board
         fSpider.board = new fSpider.SpiderBoard(stage, cardAssetsImg, cardDim);
         var board = fSpider.board;
@@ -99,6 +104,8 @@
             height: cardDim.height
         });
         board.setTableauPlaceHolderImage(tableauPlaceHolderImage);
+        ////set sound assets
+        board.setSounds(sounds);
         ////hook into events
         board.getHistory().onHistoryChanged(fSpider.onHistoryChanged);
         board.onScoreChanged(fSpider.onScoreChanged);
