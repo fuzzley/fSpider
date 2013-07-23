@@ -520,8 +520,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         this.draggingCards.length = 0;
         var pile = card.getPile();
 
-        card.setSelected(true);
-        this.selectedCard = card;
+        this.selectCard(card, false);
         var canMoveToAnimationLayer = card.tryMoveToAnimationLayer();
         if (canMoveToAnimationLayer !== true && pile != null) {
             pile.moveToTop();
@@ -726,8 +725,10 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
             if (this.playerAction === SpiderBoard.PLAYER_ACTIONS.dragging) {
                 this.stopDraggingCard(this.selectedCard, { x: evt.layerX, y: evt.layerY });
             } else {
-                this.deselectCard(this.selectedCard);
-                this.redraw();
+                this.deselectCard(this.selectedCard, true);
+                if (this.settings.animate !== true) {
+                    this.redraw();
+                }
             }
         } else {
             this.stopAllAnimations();
@@ -736,10 +737,9 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
 
     SpiderBoard.prototype._cardDragStart = function (evt, card) {
         this.playerAction = SpiderBoard.PLAYER_ACTIONS.dragging;
-        var animate;
         if (this.selectedCard != null) {
-            animate = this.settings.animate === true && this.selectedCard.getPile() !== card.getPile();
-            this.deselectCard(this.selectedCard, false, Utils.extendProps({ animate: animate }, this.settings));
+            var tellParent = this.settings.animate === true && this.selectedCard.getPile() !== card.getPile();
+            this.deselectCard(this.selectedCard, tellParent);
         }
         this.prepareCardForDrag(card);
     };
@@ -776,7 +776,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
                 var cardIndex = pile.getCards().indexOf(card);
                 //if touched card is the last card in its pile and selected card is allowed to be added
                 if (cardIndex === pile.getSize() - 1 && pile.canAddCard(sCard) === true) {
-                    this.deselectCard(this.selectedCard, false, Utils.extendProps({ animate: false }, this.settings));
+                    this.deselectCard(this.selectedCard, false);
                     this.transferCardsFromTableauToTableau(sPile.getCardAndCardsAfter(sCard), sPile, pile);
                 } else {
                     this.deselectCard(sCard, true);

@@ -3,6 +3,8 @@ var fSpider = fSpider || {};
 fSpider.SpiderSettings = (function (SpiderSettings, undefined) {
     'use strict';
 
+    var Utils = fSpider.Utils;
+
     //constructor
     SpiderSettings = function () {
     };
@@ -28,6 +30,10 @@ fSpider.SpiderSettings = (function (SpiderSettings, undefined) {
         }
 
         return settings;
+    };
+
+    SpiderSettings.prototype.extendForAnimate = function (animate) {
+        Utils.extendProps({ animate: animate }, this);
     };
 
     return SpiderSettings;
