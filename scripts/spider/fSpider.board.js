@@ -555,13 +555,13 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         //make sure we can add card to pile
         var tPile = this.findOverlappingTableauPile(card, pos);
         if (tPile != null) {
+            this.deselectCard(this.selectedCard, false, Utils.extendProps({ animate: false }, this.settings));
             this.transferCardsFromTableauToTableau(originalPile.getCardAndCardsAfter(card), originalPile, tPile);
-            this.deselectCard(this.selectedCard);
+        } else {
+            this.arrangeTableauPile(card.getPile());
         }
-        this.arrangeTableauPile(card.getPile());
 
         this.playerAction = SpiderBoard.PLAYER_ACTIONS.none;
-        this.redraw();
     };
 
     SpiderBoard.prototype.checkForWin = function () {
@@ -669,7 +669,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         return overlapPile;
     };
 
-    SpiderBoard.prototype.deselectCard = function (card, settings) {
+    SpiderBoard.prototype.deselectCard = function (card, tellParent, settings) {
         if (settings == null) {
             settings = this.settings;
         }
@@ -678,19 +678,19 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
             card = this.selectedCard;
         }
         if (card != null) {
-            card.setSelected(false, settings);
+            card.setSelected(false, tellParent, settings);
             if (this.selectedCard === card) {
                 this.selectedCard = null;
             }
         }
     };
 
-    SpiderBoard.prototype.selectCard = function (card, settings) {
+    SpiderBoard.prototype.selectCard = function (card, tellParent, settings) {
         if (settings == null) {
             settings = this.settings;
         }
 
-        card.setSelected(true, settings);
+        card.setSelected(true, tellParent, settings);
         this.selectedCard = card;
     };
 
@@ -731,7 +731,6 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
             }
         } else {
             this.stopAllAnimations();
-            this.redraw();
         }
     };
 
@@ -740,10 +739,9 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         var animate;
         if (this.selectedCard != null) {
             animate = this.settings.animate === true && this.selectedCard.getPile() !== card.getPile();
-            this.deselectCard(this.selectedCard, Utils.extendProps({ animate: animate }, this.settings));
+            this.deselectCard(this.selectedCard, false, Utils.extendProps({ animate: animate }, this.settings));
         }
         this.prepareCardForDrag(card);
-        this.redraw();
     };
 
     SpiderBoard.prototype._cardDragMove = function (evt, card) {
@@ -771,30 +769,30 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
             if (sCard === card) {
                 //just deselect it
                 if (this.playerAction !== SpiderBoard.PLAYER_ACTIONS.dragging) {
-                    this.deselectCard(sCard);
-                    this.redraw();
+                    this.deselectCard(sCard, true);
                 }
             } else if (sCard != null) {
                 sPile = sCard.getPile();
                 var cardIndex = pile.getCards().indexOf(card);
                 //if touched card is the last card in its pile and selected card is allowed to be added
                 if (cardIndex === pile.getSize() - 1 && pile.canAddCard(sCard) === true) {
-                    this.deselectCard(this.selectedCard, Utils.extendProps({ animate: false }, this.settings));
+                    this.deselectCard(this.selectedCard, false, Utils.extendProps({ animate: false }, this.settings));
                     this.transferCardsFromTableauToTableau(sPile.getCardAndCardsAfter(sCard), sPile, pile);
                 } else {
-                    this.deselectCard(sCard);
+                    this.deselectCard(sCard, true);
                 }
             } else if (pile.canRemoveCard(card) === true) {
-                this.selectCard(card);
+                this.selectCard(card, true);
             }
-            this.redraw();
+            if (this.settings.animate !== true) {
+                this.redraw();
+            }
 
             evt.handledByCardTouch = true; //prevent bubbled event to trigger "deselect card"
         } else {
             if (pile === this.stockPile) {
                 if (this.canTakeFromStockPile() === true) {
                     this.drawFromStockPile();
-                    this.redraw();
                     evt.handledByCardTouch = true; //prevent bubbled event to trigger "deselect card"
                 }
             } else {
@@ -803,7 +801,9 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
                     pile.resetDraggable();
                     pile.resetListening();
                 }
-                this.redraw();
+                if (this.settings.animate !== true) {
+                    this.redraw();
+                }
             }
         }
     };
@@ -823,13 +823,15 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         if (card != null) {
             //if selected card is allowed to be added
             if (tPile.canAddCard(card) === true) {
+                this.deselectCard(this.selectedCard, false);
                 var pile = card.getPile();
                 this.transferCardsFromTableauToTableau(pile.getCardAndCardsAfter(card), pile, tPile);
-                this.deselectCard(this.selectedCard);
             } else {
-                this.deselectCard(card);
+                this.deselectCard(card, true);
             }
-            this.redraw();
+            if (this.settings.animate !== true) {
+                this.redraw();
+            }
         }
     };
 

@@ -38,11 +38,11 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
     Card.prototype.borderProps = {
         'visible': true,
         'stroke': '#F5F5F5',
-        'strokeWidth': 1.85,
+        'strokeWidth': 2,
         'cornerRadius': 3.5,
         'fill': '',
         'opacity': 1,
-        'padding': -.5
+        'padding': -.25
     };
     Card.prototype.activeBorderProps = {
         'visible': true,
@@ -197,7 +197,6 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
         var self = this;
         var setPos = function () {
             if (animTime > 0) {
-                self.group.getLayer().draw();
                 self.startPositionAnimation();
             } else {
                 self.group.setPosition(x, y);
@@ -326,7 +325,8 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
         return this.hovering;
     };
 
-    Card.prototype.setSelected = function (selected, settings) {
+    //wont' tell pile
+    Card.prototype.setSelected = function (selected, tellParent, settings) {
         if (settings == null) {
             settings = {};
         }
@@ -336,7 +336,7 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
         }
         this.selected = selected;
         this.refresh();
-        if (this.pile != null) {
+        if (tellParent === true && this.pile != null) {
             this.pile.arrangeCards(settings);
         }
     };
@@ -490,16 +490,16 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
     };
 
     Card.prototype.startPositionAnimation = function () {
+        var layer = this.group.getLayer();
         //if animation layer isn't current layer, move to animation layer
         if (this.tryMoveToAnimationLayer() === true) {
             this.group.moveToTop();
+            this.group.getLayer().draw();
+            if (layer !== this.group.getLayer()) {
+                layer.draw();
+            }
         } else if (this.pile != null && this.pile.getGroup() != null && this.group.getLayer() != null) {
             this.pile.moveToTop();
-        }
-
-        var layer = this.group.getLayer();
-        if (layer != null && this.animationLayer != null && layer !== this.animationLayer) {
-            layer.draw();
         }
 
         if (this.positionAnimator == null) {
@@ -527,7 +527,6 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
 
         if (moveToIntendedPos === true) {
             this.group.setAbsolutePosition(context.intendedAbsPos);
-//            this.group.setPosition(context.intendedPos);
         }
 
         var layer = this.group.getLayer();
@@ -535,18 +534,15 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
         //otherwise we get some graphical glitches with cards having the wrong z order because of 2 layers
         if (this.pile != null && this.pile.getGroup() !== this.group.getParent()) {
             var animating = this.pile.countCardsAnimating();
-            if (animating <= 1) {
+            if (animating < 1) {
                 this.pile.moveAllCardsToGroup();
                 this.group.getLayer().draw();
                 if (layer !== this.group.getLayer()) {
                     layer.draw();
                 }
+            } else {
+                layer.draw();
             }
-        }
-
-        //redraw original layer
-        if (context.originalLayer != null) {
-            context.originalLayer.draw();
         }
 
         //cleanup
@@ -590,8 +586,8 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
         //if animation layer isn't current layer, move to animation layer
         if (this.tryMoveToAnimationLayer() === true) {
             this.group.moveToTop();
-            layer.draw();
-            this.group.getLayer().draw();
+//            layer.draw();
+//            this.group.getLayer().draw();
         } else if (this.pile != null && this.pile.getGroup() != null && this.group.getLayer() != null) {
             this.pile.moveToTop();
         }
