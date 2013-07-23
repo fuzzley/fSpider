@@ -726,9 +726,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
                 this.stopDraggingCard(this.selectedCard, { x: evt.layerX, y: evt.layerY });
             } else {
                 this.deselectCard(this.selectedCard, true);
-                if (this.settings.animate !== true) {
-                    this.redraw();
-                }
+                this.redraw();
             }
         } else {
             this.stopAllAnimations();
