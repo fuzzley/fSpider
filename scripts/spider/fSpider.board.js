@@ -808,12 +808,12 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
 
     SpiderBoard.prototype._cardMouseOver = function (evt, card) {
         card.setHovering(true);
-        this.redraw();
+        this.redraw(this.pilesLayer);
     };
 
     SpiderBoard.prototype._cardMouseOut = function (evt, card) {
         card.setHovering(false);
-        this.redraw();
+        this.redraw(this.pilesLayer);
     };
 
     SpiderBoard.prototype._tableauPlaceHolderTouch = function (evt, tPile) {
@@ -832,12 +832,12 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
 
     SpiderBoard.prototype._tableauPlaceHolderMouseOver = function (evt, tPile) {
         tPile.setHovering(true);
-        this.redraw();
+        this.redraw(this.pilesLayer);
     };
 
     SpiderBoard.prototype._tableauPlaceHolderMouseOut = function (evt, tPile) {
         tPile.setHovering(false);
-        this.redraw();
+        this.redraw(this.pilesLayer);
     };
 
     //public methods
