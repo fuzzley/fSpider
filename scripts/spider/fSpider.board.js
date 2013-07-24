@@ -334,7 +334,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         var self = this;
         this.tableauPiles.forEach(function (tPile) {
             var ph = tPile.getPlaceHolderImg();
-            if (ph !== undefined) {
+            if (ph != null) {
                 ph.on('touchend mouseup', function (evt) {
                     self._tableauPlaceHolderTouch(evt, tPile);
                 });
@@ -826,9 +826,6 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
                 this.transferCardsFromTableauToTableau(pile.getCardAndCardsAfter(card), pile, tPile);
             } else {
                 this.deselectCard(card, true);
-            }
-            if (this.settings.animate !== true) {
-                this.redraw();
             }
         }
     };

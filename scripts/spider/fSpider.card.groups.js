@@ -266,7 +266,7 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
     TableauPile = function (cards) {
         this.cards = cards || [];
         this.group = new Kinetic.Group();
-        this.baseZIndex = 1;
+        this.baseZIndex = 2;
 
         this.placeHolderImg = new Kinetic.Image();
 
@@ -344,7 +344,7 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
     //public methods
     TableauPile.prototype.refresh = function () {
         //hover border
-        this.hoverBorder.setVisible(this.hovering === true && TableauPile.HOVER_BORDER.visible);
+        this.hoverBorder.setVisible(this.hovering === true && this.HOVER_BORDER.visible);
     };
 
     TableauPile.prototype.getCompleteSequence = function () {
@@ -416,6 +416,7 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
         }
         this.placeHolderImg.setImage(img);
         this.placeHolderImg.moveToBottom();
+        this.hoverBorder.moveToBottom();
         if (cropSqr != null) {
             this.placeHolderImg.setCrop(cropSqr);
         }
