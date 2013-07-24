@@ -110,8 +110,8 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
     };
     SpiderBoard.GENERAL_ANIM_TIME = 200;
     SpiderBoard.GENERAL_DELAY_FRACTION = 40;
-    SpiderBoard.STOCK_ANIM_TIME = 300;
-    SpiderBoard.STOCK_DELAY_FRACTION = 50;
+    SpiderBoard.STOCK_ANIM_TIME = 400;
+    SpiderBoard.STOCK_DELAY_FRACTION = 100;
     SpiderBoard.DIFFICULTIES = {
         'OneSuit': 0,
         'TwoSuit': 1,
@@ -487,29 +487,28 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
 
         var delayFraction = SpiderBoard.STOCK_DELAY_FRACTION;
 
-        var sPile = this.stockPile;
+        var nCards = this.stockPile.getSize();
         var tPiles = this.tableauPiles;
         var tPilesLen = tPiles.length;
-        var cards = sPile.getCards();
-        var i = 0;
-        var cardToTransfer, tPile, flipAction, transferAction;
-        while (i < tPilesLen && cards.length > 0) {
-            cardToTransfer = cards[cards.length - 1];
-            cardToTransfer.setFaceUp(true, this.settings);
-            tPile = tPiles[tPilesLen - 1 - i];
-            tPile.transferCards([cardToTransfer], Utils.extendProps({
-                animTime: SpiderBoard.STOCK_ANIM_TIME,
-                animDelay: delayFraction * (tPilesLen - i)
-            }, this.settings));
-            tPile.resetDraggable();
-            tPile.resetListening();
-            i++;
+        var transferTo = [];
+        var card, pile, flipAction, transferAction;
+        for (var i = 0; i < tPilesLen; i++) {
+            pile = tPiles[i];
+            card = this.stockPile.getCardAt(nCards - i - 1);
 
-            flipAction = new FlipCardAction(cardToTransfer, true);
-            transferAction = new TransferCardsAction([cardToTransfer], sPile, tPile);
+            flipAction = new FlipCardAction(card, true);
+            transferAction = new TransferCardsAction([card], this.stockPile, pile);
             actionSet.addAction(flipAction);
             actionSet.addAction(transferAction);
+
+            transferTo.push(pile);
         }
+
+        var settings = Utils.extendProps({
+                    animDelay: delayFraction,
+                    animTime: SpiderBoard.STOCK_ANIM_TIME },
+                this.settings);
+        this.stockPile.drawCards(transferTo, true, settings);
 
         if (actionSet.actions.length > 0) {
             this.history.registerActionSet(actionSet);

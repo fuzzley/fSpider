@@ -72,6 +72,40 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
         return this.backImg;
     };
 
+    Card.prototype.getGroup = function () {
+        return this.group;
+    };
+
+    Card.prototype.getBorder = function () {
+        return this.border;
+    };
+
+    Card.prototype.getActiveBorder = function () {
+        return this.activeBorder;
+    };
+
+    Card.prototype.getHoverBorder = function () {
+        return this.hoverBorder;
+    };
+
+    Card.prototype.setAnimationLayer = function (layer) {
+        this.animationLayer = layer;
+    };
+    Card.prototype.getAnimationLayer = function () {
+        return this.animationLayer;
+    };
+
+    Card.prototype.setCardFlipSound = function (cardFlipSound) {
+        this.cardFlipSound = cardFlipSound;
+    };
+
+    Card.prototype.getPile = function () {
+        return this.pile;
+    };
+    Card.prototype.setPile = function (pile) {
+        this.pile = pile;
+    };
+
     Card.prototype.isFaceUp = function () {
         return this.faceUp;
     };
@@ -122,7 +156,7 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
         };
 
         if (delay > 0) {
-            this.positionAnimationTimeout = setTimeout(function () {
+            this.flipAnimationTimeout = setTimeout(function () {
                 flip();
 
                 clearTimeout(self.flipAnimationTimeout);
@@ -131,40 +165,6 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
         } else {
             flip();
         }
-    };
-
-    Card.prototype.getGroup = function () {
-        return this.group;
-    };
-
-    Card.prototype.getBorder = function () {
-        return this.border;
-    };
-
-    Card.prototype.getActiveBorder = function () {
-        return this.activeBorder;
-    };
-
-    Card.prototype.getHoverBorder = function () {
-        return this.hoverBorder;
-    };
-
-    Card.prototype.setAnimationLayer = function (layer) {
-        this.animationLayer = layer;
-    };
-    Card.prototype.getAnimationLayer = function () {
-        return this.animationLayer;
-    };
-
-    Card.prototype.setCardFlipSound = function (cardFlipSound) {
-        this.cardFlipSound = cardFlipSound;
-    };
-
-    Card.prototype.getPile = function () {
-        return this.pile;
-    };
-    Card.prototype.setPile = function (pile) {
-        this.pile = pile;
     };
 
     Card.prototype.setPosition = function (x, y, settings) {
@@ -619,6 +619,9 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
             this.faceUp = context.intendedFaceUp;
             this.group.setScaleX(context.originalScaleX);
         }
+        this.border.setX(0);
+        this.faceImg.setX(0);
+        this.backImg.setX(0);
         this.refresh();
 
         var layer = this.group.getLayer();
@@ -626,7 +629,7 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
         //otherwise we get some graphical glitches with cards having the wrong z order because of 2 layers
         if (this.pile != null && this.pile.getGroup() !== this.group.getParent()) {
             var animating = this.pile.countCardsAnimating();
-            if (animating <= 1) {
+            if (animating < 1) {
                 this.pile.moveAllCardsToGroup();
                 this.group.getLayer().draw();
                 if (layer !== this.group.getLayer()) {
@@ -635,10 +638,10 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
             }
         }
 
-        //redraw original layer
-        if (context.originalLayer != null) {
-            context.originalLayer.draw();
-        }
+//        //redraw original layer
+//        if (context.originalLayer != null) {
+//            context.originalLayer.draw();
+//        }
 
         //cleanup
         this.flipAnimator = null;
@@ -648,9 +651,7 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
     Card.prototype.stepFlipAnimation = function (frame) {
         var context = this.flipAnimatorContext;
         if (frame.time >= context.animTime) { //done with animation
-            this.border.setX(0);
-            this.faceImg.setX(0);
-            this.backImg.setX(0);
+            this.refresh();
             this.stopFlipAnimation(true);
         } else {
             var newScale = this.group.getScaleX();

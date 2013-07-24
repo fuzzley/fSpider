@@ -629,6 +629,33 @@ fSpider.StockPile = (function (StockPile, undefined) {
         });
     };
 
+    StockPile.prototype.drawCards = function (piles, setFaceUp, settings) {
+        if (settings == null) {
+            settings = {};
+        }
+
+        var delay = 0;
+        if (settings.animate === true) {
+            delay = settings.animDelay;
+        }
+
+        var pLength = piles.length;
+        var pile, card;
+        for (var i = 0; i < pLength; i++) {
+            if (this.getSize() <= 0) {
+                break;
+            }
+            pile = piles[i];
+            card = this.getLastCard();
+            if (setFaceUp === true) {
+                card.setFaceUp(true, Utils.extendProps({ animDelay: delay * i }, settings));
+            }
+            pile.transferCards([card], Utils.extendProps({ animDelay: delay * i }, settings));
+            pile.resetDraggable();
+            pile.resetListening();
+        }
+    };
+
     return StockPile;
 })(fSpider.StockPile || {});
 
