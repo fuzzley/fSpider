@@ -54,7 +54,7 @@ fSpider.Pile = (function (Pile, undefined) {
         if (scale == null) {
             scale = 1;
         }
-        return this.group.getHeight() * scale;
+        return this.group.getWidth() * scale;
     };
 
     Pile.prototype.setY = function (y) {

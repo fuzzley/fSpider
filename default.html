@@ -28,9 +28,9 @@
             <button id="new-game-btn">New Game</button>
             <label for="difficulty-select"></label>
             <select id="difficulty-select" name="difficulty-select">
-                <option>1 Suit</option>
-                <option>2 Suits</option>
-                <option>4 Suits</option>
+                <option value="1">1 Suit</option>
+                <option value="2">2 Suits</option>
+                <option value="4">4 Suits</option>
             </select>
             <button id="undo-btn" disabled="disabled">Undo (Ctrl+Z)</button>
             <button id="redo-btn" disabled="disabled">Redo (Ctrl+Y)</button>
@@ -194,10 +194,10 @@
     fSpider.getDifficulty = function () {
         var difficulty = fSpider.SpiderBoard.DIFFICULTIES.OneSuit;
 
-        var selected = $('#difficulty-select').find(':selected').text();
-        if (selected === '2 Suits') {
+        var selected = $('#difficulty-select').find(':selected').val();
+        if (selected == '2') {
             difficulty = fSpider.SpiderBoard.DIFFICULTIES.TwoSuit;
-        } else if (selected === '4 Suits') {
+        } else if (selected == '4') {
             difficulty = fSpider.SpiderBoard.DIFFICULTIES.FourSuit;
         }
 
