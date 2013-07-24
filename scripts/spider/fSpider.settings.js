@@ -11,7 +11,7 @@ fSpider.SpiderSettings = (function (SpiderSettings, undefined) {
 
     //fields
     SpiderSettings.prototype.animate = true;
-    SpiderSettings.prototype.volume = 0;
+    SpiderSettings.prototype.volume = 1;
     SpiderSettings.prototype.animTime = 150;
     SpiderSettings.prototype.animDelay = 0;
 

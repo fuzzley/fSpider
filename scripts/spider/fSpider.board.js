@@ -870,6 +870,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         this.resetStatistics();
         this.history.clear();
 
+        var originalVol = this.settings.volume;
         this.settings.volume = 0;
         this.setupDeck(this.getSuitsForDifficulty(difficulty));
         this.deck.shuffle();
@@ -882,7 +883,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
             pile.resetDraggable();
         });
         this.arrangePiles(Utils.extendProps({ animate: false }, this.settings));
-        this.settings.volume = 1;
+        this.settings.volume = originalVol;
 
         this.redraw();
         this.gameInProgress = true;
