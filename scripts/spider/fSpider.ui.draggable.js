@@ -137,15 +137,17 @@
                     pos.top = 0;
                     reposition = true;
                 }
-                //right
-                if (pos.left + dim.width > (parentPos.left + containDim.width)) {
-                    pos.left = containDim.width - dim.width;
-                    reposition = true;
-                }
-                //bottom
-                if (pos.top + dim.height > (parentPos.top + containDim.height)) {
-                    pos.top = containDim.height - dim.height;
-                    reposition = true;
+                if (opts.scroll !== true) {
+                    //right
+                    if (pos.left + dim.width > (parentPos.left + containDim.width)) {
+                        pos.left = containDim.width - dim.width;
+                        reposition = true;
+                    }
+                    //bottom
+                    if (pos.top + dim.height > (parentPos.top + containDim.height)) {
+                        pos.top = containDim.height - dim.height;
+                        reposition = true;
+                    }
                 }
 
                 if (reposition === true) {
