@@ -20,7 +20,7 @@
 
 .modal {
     display: inline-block;
-    position: relative;
+    position: absolute;
     background: black;
     color: white;
     opacity: 0.82;
@@ -33,14 +33,14 @@
     opacity: 1;
 }
 
-#moves-display {
+.lite-red {
     color: #fff2f2;
 }
 
-#score-display {
+.lite-green {
     color: #e4ffe5;
 }
 
-#time-elapsed-wrap {
+.lite-yellow {
     color: #fcfedf;
 }
