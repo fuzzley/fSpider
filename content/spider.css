@@ -20,7 +20,8 @@
 
 .modal {
     display: inline-block;
-    position: relative;
+    position: absolute;
+    top: 50px;
     background: black;
     color: white;
     opacity: 0.82;

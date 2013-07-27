@@ -4,7 +4,6 @@
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width"/>
     <title>Fuzzley - Spider Solitaire</title>
-    <link href="content/external/dot-luv/jquery-ui-1.10.3.custom.min.css" rel="stylesheet"/>
     <link href="content/site.css" rel="stylesheet"/>
     <link href="content/spider.css" rel="stylesheet"/>
 </head>
@@ -42,9 +41,10 @@
 </div>
 
 <script src="scripts/jquery/jquery-2.0.3.min.js"></script>
-<script src="scripts/jquery/jquery-ui-1.10.3.custom.min.js"></script>
 <script src="scripts/kinetic/kinetic-v4.5.4.min.js"></script>
-<script src="scripts/howler/howler.min.js"></script>
+<script src="scripts/howler/howler.js"></script>
+
+<script src="scripts/spider/fSpider.ui.draggable.js"></script>
 
 <script src="scripts/spider/fSpider.utils.js"></script>
 <script src="scripts/spider/fSpider.history.js"></script>
@@ -142,7 +142,7 @@
     };
 
     fSpider.initGameControls = function () {
-        $('.modal').draggable({ containment: '#ui-container', scroll: false });
+        $('.modal').draggable({ containment: '#ui-container' });
 
         $('#new-game-btn').on('click', function () {
             fSpider.startNewGame();
