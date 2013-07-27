@@ -2,14 +2,35 @@
     height: 100%;
     overflow: hidden;
     background: url(art_assets/bg1.jpg) no-repeat;
-    -moz-background-size: cover;
-    -o-background-size: cover;
-    -webkit-background-size: cover;
     background-size: cover;
 }
 
 #canvas-resources {
     display: none;
+}
+
+#ui-container {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    pointer-events: none;
+}
+
+.modal {
+    display: inline-block;
+    position: relative;
+    background: black;
+    color: white;
+    opacity: 0.82;
+    padding: .6em;
+    border-radius: .6em;
+    pointer-events: auto;
+}
+
+.modal:hover {
+    opacity: 1;
 }
 
 #moves-display {
@@ -22,30 +43,4 @@
 
 #time-elapsed-wrap {
     color: #fcfedf;
-}
-
-#statistics-container {
-    position: absolute;
-    left: .6em;
-    bottom: .6em;
-}
-
-.modal-wrap {
-    background: black;
-    color: white;
-    opacity: 0.82;
-    padding: .6em;
-    margin: .3em;
-    cursor: default;
-    border-radius: .6em;
-}
-
-    .modal-wrap:hover {
-        opacity: 1;
-    }
-
-#controls-container {
-    position: absolute;
-    right: .6em;
-    bottom: .6em;
 }
