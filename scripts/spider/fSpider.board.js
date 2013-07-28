@@ -862,6 +862,14 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
     };
 
     SpiderBoard.prototype.startNewGame = function (difficulty) {
+        this.startGame(true, difficulty);
+    };
+
+    SpiderBoard.prototype.restartGame = function (difficulty) {
+        this.startGame(false, difficulty);
+    };
+
+    SpiderBoard.prototype.startGame = function (shuffle, difficulty) {
         if (difficulty === undefined) {
             difficulty = SpiderBoard.DIFFICULTIES.OneSuit;
         }
@@ -875,8 +883,10 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
 
         var originalVol = this.settings.volume;
         this.settings.volume = 0;
-        this.setupDeck(this.getSuitsForDifficulty(difficulty));
-        this.deck.shuffle();
+        if (shuffle === true) {
+            this.setupDeck(this.getSuitsForDifficulty(difficulty));
+            this.deck.shuffle();
+        }
 
         this.setupPiles();
         piles.forEach(function (pile) {

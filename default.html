@@ -36,6 +36,7 @@
             <option value="2">2 Suits</option>
             <option value="4">4 Suits</option>
         </select>
+        <button id="restart-btn">Restart</button>
         <button id="undo-btn" disabled="disabled">Undo (Ctrl+Z)</button>
         <button id="redo-btn" disabled="disabled">Redo (Ctrl+Y)</button>
     </div>
@@ -155,6 +156,9 @@
         $('#new-game-btn').on('click', function () {
             fSpider.startNewGame();
         });
+        $('#restart-btn').on('click', function () {
+            fSpider.restartGame();
+        });
         $('#undo-btn').on('click', function () {
             if ($('#undo-btn').attr('disabled') !== 'disabled') {
                 fSpider.board.undo();
@@ -178,6 +182,12 @@
     fSpider.startNewGame = function () {
         if (fSpider.board.isGameInProgress() !== true || confirm("Are you sure you want to start a new game? Your current game will be replaced.") === true) {
             fSpider.board.startNewGame(fSpider.getDifficulty());
+        }
+    };
+
+    fSpider.restartGame = function () {
+        if (fSpider.board.isGameInProgress() !== true || confirm("Are you sure you want to restart this game? Your progress will be lost.") === true) {
+            fSpider.board.restartGame(fSpider.getDifficulty());
         }
     };
 
