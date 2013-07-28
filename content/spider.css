@@ -52,8 +52,8 @@
 .modal-content {
     background: black;
     color: white;
-    opacity: 0.6;
-    padding: .5em;
+    opacity: 0.65;
+    padding: .4em;
     border-bottom-left-radius: .6em;
     border-bottom-right-radius: .6em;
 }
@@ -63,10 +63,10 @@
 }
 
 .modal-top {
-    opacity: 0.75;
+    opacity: 0.9;
     color: #ffffff;
     background-color: #000000;
-    padding: .25em;
+    padding: .1em;
     border-top-left-radius: .6em;
     border-top-right-radius: .6em;
 }
