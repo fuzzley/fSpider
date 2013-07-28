@@ -30,8 +30,6 @@
                     originalPos.top -= parseFloat(cssPos.top);
                 }
 
-                captureDimensions();
-
                 //attach mousedown
                 $this.on('mousedown', onMouseDown);
 
@@ -47,6 +45,8 @@
                     return;
                 }
 
+                captureDimensions();
+
                 //attach move/up listeners
                 $(document).on('mousemove', onMouseMove);
                 $(document).on('mouseup', onMouseUp);
@@ -56,8 +56,8 @@
                 document.body.style.cursor = opts.cursor;
 
                 //capture offset
-                offset.left = evt.offsetX;
-                offset.top = evt.offsetY;
+                offset.left = evt.clientX - $this.offset().left;
+                offset.top = evt.clientY - $this.offset().top;
 
                 $(document.body).css({ 'user-select': 'none' });
 

@@ -20,6 +20,14 @@
     <div class="modal" style="bottom: 58px; left: 10px">
         <div id="time-elapsed-display" class="lite-yellow">Time: 00:00</div>
     </div>
+    <div class="modal" style="bottom: 99px; left: 115px">
+        <label for="animate-checkbox">Animate</label>
+        <input id="animate-checkbox" name="animate-checkbox" type="checkbox" checked />
+    </div>
+    <div class="modal" style="bottom: 58px; left: 115px;">
+        <label for="sound-checkbox">Sound</label>
+        <input id="sound-checkbox" name="sound-checkbox" type="checkbox" checked />
+    </div>
     <div class="modal" style="bottom: 10px; left: 10px;">
         <button id="new-game-btn">New Game</button>
         <label for="difficulty-select"></label>
@@ -156,6 +164,14 @@
             if ($('#redo-btn').attr('disabled') !== 'disabled') {
                 fSpider.board.redo();
             }
+        });
+
+        $('#animate-checkbox').on('click', function () {
+            fSpider.board.getSettings().animate = $('#animate-checkbox').is(':checked');
+        });
+
+        $('#sound-checkbox').on('click', function () {
+            fSpider.board.getSettings().volume = $('#sound-checkbox').is(':checked') ? 1 : 0;
         });
     };
 
