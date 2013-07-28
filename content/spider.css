@@ -18,21 +18,6 @@
     pointer-events: none;
 }
 
-.modal {
-    display: inline-block;
-    position: absolute;
-    background: black;
-    color: white;
-    opacity: 0.82;
-    padding: .6em;
-    border-radius: .6em;
-    pointer-events: auto;
-}
-
-.modal:hover {
-    opacity: 1;
-}
-
 .lite-red {
     color: #fff2f2;
 }
@@ -44,3 +29,82 @@
 .lite-yellow {
     color: #fcfedf;
 }
+
+.clear:after {
+    content: "";
+    display: block;
+    clear: both;
+}
+
+/* MODAL */
+
+.modal {
+    opacity: .8;
+    display: inline-block;
+    position: absolute;
+    pointer-events: auto;
+}
+
+.modal:hover {
+    opacity: 1;
+}
+
+.modal-content {
+    background: black;
+    color: white;
+    opacity: 0.6;
+    padding: .5em;
+    border-bottom-left-radius: .6em;
+    border-bottom-right-radius: .6em;
+}
+
+.modal-content:hover {
+    opacity: 1;
+}
+
+.modal-top {
+    opacity: 0.75;
+    color: #ffffff;
+    background-color: #000000;
+    padding: .25em;
+    border-top-left-radius: .6em;
+    border-top-right-radius: .6em;
+}
+
+.modal-top:hover {
+    opacity: 1;
+}
+
+.modal-controls, .modal-control, .modal-title {
+    display: inline-block;
+}
+
+.modal-title {
+    float: left;
+    font-size: 1em;
+    padding: 0 .5em;
+}
+
+.modal-controls {
+    float: right;
+    padding-left: .5em;
+}
+
+.modal-control {
+    right: 0;
+    font-size: .75em;
+    padding: .1em .3em;
+    margin: .3em;
+}
+
+.modal-control:hover {
+    color: black;
+    background-color: white;
+}
+
+.modal-right {
+    color: #ffffff;
+    margin-right: -.2em;
+}
+
+/* MODAL */

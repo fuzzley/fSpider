@@ -4,6 +4,7 @@
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width"/>
     <title>Fuzzley - Spider Solitaire</title>
+    <link href="content/font_awesome/css/font-awesome.css" rel="stylesheet"/>
     <link href="content/site.css" rel="stylesheet"/>
     <link href="content/spider.css" rel="stylesheet"/>
 </head>
@@ -11,24 +12,18 @@
 <div id="canvas-wrap">
 </div>
 <div id="ui-container">
-    <div class="modal " style="bottom: 140px; left: 10px">
-        <div id="score-display" class="lite-green">Score: 0</div>
-    </div>
-    <div class="modal" style="bottom: 99px; left: 10px">
-        <div id="moves-display" class="lite-red">Moves: 0</div>
-    </div>
-    <div class="modal" style="bottom: 58px; left: 10px">
-        <div id="time-elapsed-display" class="lite-yellow">Time: 00:00</div>
-    </div>
-    <div class="modal" style="bottom: 99px; left: 115px">
+    <div id="score-display" class="lite-green">Score: 0</div>
+    <div id="moves-display" class="lite-red">Moves: 0</div>
+    <div id="time-elapsed-display" class="lite-yellow">Time: 00:00</div>
+    <div id="animate-wrap">
         <label for="animate-checkbox">Animate</label>
-        <input id="animate-checkbox" name="animate-checkbox" type="checkbox" checked />
+        <input id="animate-checkbox" name="animate-checkbox" type="checkbox" checked/>
     </div>
-    <div class="modal" style="bottom: 58px; left: 115px;">
+    <div id="sound-wrap">
         <label for="sound-checkbox">Sound</label>
-        <input id="sound-checkbox" name="sound-checkbox" type="checkbox" checked />
+        <input id="sound-checkbox" name="sound-checkbox" type="checkbox" checked/>
     </div>
-    <div class="modal" style="bottom: 10px; left: 10px;">
+    <div id="game-ctrls-wrap">
         <button id="new-game-btn">New Game</button>
         <label for="difficulty-select"></label>
         <select id="difficulty-select" name="difficulty-select">
@@ -54,6 +49,7 @@
 <script src="scripts/howler/howler.js"></script>
 
 <script src="scripts/spider/fSpider.ui.draggable.js"></script>
+<script src="scripts/spider/fSpider.ui.modal.js"></script>
 
 <script src="scripts/spider/fSpider.utils.js"></script>
 <script src="scripts/spider/fSpider.history.js"></script>
@@ -151,7 +147,36 @@
     };
 
     fSpider.initGameControls = function () {
-        $('.modal').draggable({ containment: '#ui-container' });
+        var scoreDisplayModal = new fSpider.Modal('#score-display', {
+            title: '',
+            startPosition: { bottom: '81px', left: '10px' },
+            containment: '#ui-container'
+        });
+        var movesDisplayModal = new fSpider.Modal('#moves-display', {
+            title: '',
+            startPosition: { bottom: '81px', left: '100px' },
+            containment: '#ui-container'
+        });
+        var timeElapsedDisplayModal = new fSpider.Modal('#time-elapsed-display', {
+            title: '',
+            startPosition: { bottom: '81px', left: '190px' },
+            containment: '#ui-container'
+        });
+        var animateWrapModal = new fSpider.Modal('#animate-wrap', {
+            title: '',
+            startPosition: { bottom: '81px', left: '280px' },
+            containment: '#ui-container'
+        });
+        var soundWrapModal = new fSpider.Modal('#sound-wrap', {
+            title: '',
+            startPosition: { bottom: '81px', left: '372px' },
+            containment: '#ui-container'
+        });
+        var gameCtrlsWrapModal = new fSpider.Modal('#game-ctrls-wrap', {
+            title: 'Game',
+            startPosition: { bottom: '10px', left: '10px' },
+            containment: '#ui-container'
+        });
 
         $('#new-game-btn').on('click', function () {
             fSpider.startNewGame();

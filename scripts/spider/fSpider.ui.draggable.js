@@ -1,4 +1,6 @@
 (function ($, window, document, undefined) {
+    'use strict';
+
     $.fn.draggable = function (options) {
         var opts = $.extend({ }, $.fn.draggable.defaults, options);
         var $contain = $(opts.containment);

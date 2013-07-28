@@ -222,7 +222,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         return this.foundationPiles || [];
     };
 
-    //private methods
+    //"private" methods
     //build
     SpiderBoard.prototype.resetStatistics = function () {
         var self = this;
