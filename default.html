@@ -31,9 +31,9 @@
             <option value="2">2 Suits</option>
             <option value="4">4 Suits</option>
         </select>
-        <button id="restart-btn">Restart</button>
-        <button id="undo-btn" disabled="disabled">Undo (Ctrl+Z)</button>
-        <button id="redo-btn" disabled="disabled">Redo (Ctrl+Y)</button>
+        <button id="restart-btn" disabled>Restart</button>
+        <button id="undo-btn" disabled>Undo (Ctrl+Z)</button>
+        <button id="redo-btn" disabled>Redo (Ctrl+Y)</button>
     </div>
 </div>
 <div id="canvas-resources">
@@ -185,12 +185,12 @@
             fSpider.restartGame();
         });
         $('#undo-btn').on('click', function () {
-            if ($('#undo-btn').attr('disabled') !== 'disabled') {
+            if ($('#undo-btn').is(':disabled') === true) {
                 fSpider.board.undo();
             }
         });
         $('#redo-btn').on('click', function () {
-            if ($('#redo-btn').attr('disabled') !== 'disabled') {
+            if ($('#redo-btn').is(':disabled') === true) {
                 fSpider.board.redo();
             }
         });
@@ -207,11 +207,12 @@
     fSpider.startNewGame = function () {
         if (fSpider.board.isGameInProgress() !== true || confirm("Are you sure you want to start a new game? Your current game will be replaced.") === true) {
             fSpider.board.startNewGame(fSpider.getDifficulty());
+            $('#restart-btn').removeAttr('disabled');
         }
     };
 
     fSpider.restartGame = function () {
-        if (fSpider.board.isGameInProgress() !== true || confirm("Are you sure you want to restart this game? Your progress will be lost.") === true) {
+        if (fSpider.board.isGameInProgress() === true && confirm("Are you sure you want to restart this game? Your progress will be lost.") === true) {
             fSpider.board.restartGame(fSpider.getDifficulty());
         }
     };
