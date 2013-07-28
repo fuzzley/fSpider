@@ -59,7 +59,7 @@
 }
 
 .modal-content:hover {
-    opacity: 1;
+    opacity: .8;
 }
 
 .modal-top {
