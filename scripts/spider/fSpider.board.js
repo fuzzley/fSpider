@@ -559,6 +559,10 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
             this.arrangeTableauPile(card.getPile());
         }
 
+        if (this.settings.animate !== true) {
+            this.redraw();
+        }
+
         this.playerAction = SpiderBoard.PLAYER_ACTIONS.none;
     };
 
