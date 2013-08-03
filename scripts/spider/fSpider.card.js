@@ -38,7 +38,7 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
     Card.prototype.borderProps = {
         'visible': true,
         'stroke': '#F5F5F5',
-        'strokeWidth': 2,
+        'strokeWidth': 1.5,
         'cornerRadius': 3.5,
         'fill': '',
         'opacity': 1,
