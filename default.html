@@ -12,16 +12,18 @@
 <div id="canvas-wrap">
 </div>
 <div id="ui-container">
-    <div id="score-display" class="lite-green">Score: 0</div>
-    <div id="moves-display" class="lite-red">Moves: 0</div>
-    <div id="time-elapsed-display" class="lite-yellow">Time: 00:00</div>
+    <div id="score-display" class="lite-green">0</div>
+    <div id="moves-display" class="lite-red">0</div>
+    <div id="time-elapsed-display" class="lite-yellow">00:00</div>
     <div id="animate-wrap">
-        <label for="animate-checkbox">Animate</label>
-        <input id="animate-checkbox" name="animate-checkbox" type="checkbox" checked/>
-    </div>
-    <div id="sound-wrap">
-        <label for="sound-checkbox">Sound</label>
-        <input id="sound-checkbox" name="sound-checkbox" type="checkbox" checked/>
+        <div>
+            <label for="animate-checkbox">Animate</label>
+            <input id="animate-checkbox" name="animate-checkbox" type="checkbox" checked/>
+        </div>
+        <div>
+            <label for="sound-checkbox">Sound</label>
+            <input id="sound-checkbox" name="sound-checkbox" style="margin-left: 1.2em;" type="checkbox" checked/>
+        </div>
     </div>
     <div id="game-ctrls-wrap">
         <button id="new-game-btn">New Game</button>
@@ -147,34 +149,29 @@
     };
 
     fSpider.initGameControls = function () {
+        var animateWrapModal = new fSpider.Modal('#animate-wrap', {
+            title: 'Options',
+            startPosition: { bottom: '60px', left: '5px' },
+            draggableOptions: { containment: '#ui-container' }
+        });
         var scoreDisplayModal = new fSpider.Modal('#score-display', {
-            title: '',
-            startPosition: { bottom: '65px', left: '10px' },
+            title: 'Score',
+            startPosition: { bottom: '60px', left: '95px' },
             draggableOptions: { containment: '#ui-container' }
         });
         var movesDisplayModal = new fSpider.Modal('#moves-display', {
-            title: '',
-            startPosition: { bottom: '65px', left: '95px' },
+            title: 'Moves',
+            startPosition: { bottom: '60px', left: '150px' },
             draggableOptions: { containment: '#ui-container' }
         });
         var timeElapsedDisplayModal = new fSpider.Modal('#time-elapsed-display', {
-            title: '',
-            startPosition: { bottom: '65px', left: '185px' },
-            draggableOptions: { containment: '#ui-container' }
-        });
-        var animateWrapModal = new fSpider.Modal('#animate-wrap', {
-            title: '',
-            startPosition: { bottom: '65px', left: '285px' },
-            draggableOptions: { containment: '#ui-container' }
-        });
-        var soundWrapModal = new fSpider.Modal('#sound-wrap', {
-            title: '',
-            startPosition: { bottom: '65px', left: '385px' },
+            title: 'Time',
+            startPosition: { bottom: '60px', left: '210px' },
             draggableOptions: { containment: '#ui-container' }
         });
         var gameCtrlsWrapModal = new fSpider.Modal('#game-ctrls-wrap', {
             title: 'Game',
-            startPosition: { bottom: '10px', left: '10px' },
+            startPosition: { bottom: '5px', left: '5px' },
             draggableOptions: { containment: '#ui-container' }
         });
 
@@ -231,15 +228,15 @@
     };
 
     fSpider.onScoreChanged = function (score) {
-        $('#score-display').text('Score: ' + score);
+        $('#score-display').text(score);
     };
 
     fSpider.onMovesChanged = function (moves) {
-        $('#moves-display').text('Moves: ' + moves);
+        $('#moves-display').text(moves);
     };
 
     fSpider.onTimeElapsedTick = function (time) {
-        $('#time-elapsed-display').text('Time: ' + fSpider.Utils.formatTime(time));
+        $('#time-elapsed-display').text(fSpider.Utils.formatTime(time));
     };
 
     fSpider.getDifficulty = function () {

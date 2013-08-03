@@ -7,19 +7,11 @@ fSpider.Modal = (function (Modal, $, undefined) {
     Modal = function (element, options) {
         this.options = $.extend(true, {}, this.defaultOptions, options);
 
-        var $tEl = $(element);
-        var $parent = $tEl.parent();
-        $tEl.addClass('modal-content');
-        this.$element = $('<div />').addClass('modal');
-        this.$element.append($tEl);
-        this.$element.css(this.options.startPosition);
-        $parent.append(this.$element);
-
         //prepare element
+        this.$modal = this.wrapElement(element);
         if (this.options.draggable === true) {
-            this.applyDraggable(this.$element);
+            this.applyDraggable(this.$modal);
         }
-        this.wrapControls(this.$element);
         this.applyState(this.options.startState);
     };
 
@@ -45,7 +37,7 @@ fSpider.Modal = (function (Modal, $, undefined) {
             minimize: false,
             restore: false,
             close: true,
-            dragHandle: true
+            dragHandle: false
         },
         startState: Modal.prototype.STATES.expanded,
         startPosition: {
@@ -78,17 +70,26 @@ fSpider.Modal = (function (Modal, $, undefined) {
         el.draggable(opts.draggableOptions || {});
     };
 
-    Modal.prototype.wrapControls = function (el) {
+    Modal.prototype.wrapElement = function (el) {
         var opts = this.options || {};
         var ctrls = opts.controls || {};
 
-        el.addClass('modal');
+        var $el = $(el);
+        $el.addClass('modal-content');
 
-        var $wrapTop = $('<div />').addClass('modal-top');
+        var $modal = $('<div />').addClass('modal');
+        $modal.css(this.options.startPosition);
+        $el.parent().append($modal);
 
+        //LEFT
+        var $wrapLeft = $('<div />').addClass('modal-left');
+        var $wrapLeftTop = $('<div />').addClass('modal-left-top');
+        var $wrapLeftBottom = $('<div />').addClass('modal-left-bottom');
+
+        //LEFT-TOP
         //title bar
         var $titleBar = $('<div />').addClass('modal-title').html(opts.title);
-        $wrapTop.append($titleBar);
+        $wrapLeftTop.append($titleBar);
 
         var $controls = $('<div />').addClass('modal-controls');
         //pin
@@ -120,21 +121,41 @@ fSpider.Modal = (function (Modal, $, undefined) {
             $minimize.hide();
         }
         $controls.append($close);
-        $wrapTop.append($controls);
-        $wrapTop.append($('<div />').addClass('clear'));
 
-        el.prepend($wrapTop);
+        $wrapLeftTop.append($controls);
+        $wrapLeftTop.append($('<div />').addClass('clear'));
 
+        $wrapLeft.append($wrapLeftTop);
+
+        //LEFT-BOTTOM
+        $wrapLeftBottom.append($el);
+        $wrapLeft.append($wrapLeftBottom);
+
+        //LEFT END
+        $modal.prepend($wrapLeft);
+
+        //RIGHT
         var $wrapRight = $('<div />').addClass('modal-right');
+        var $wrapRightTop = $('<div />').addClass('modal-right-top');
+        var $wrapRightBottom = $('<div />').addClass('modal-right-bottom');
 
+        //RIGHT-TOP
+        $wrapRight.append($wrapRightTop);
+
+        //RIGHT-BOTTOM
         //drag handle
         var $dragHandle = $('<div />').addClass('modal-drag-handle');
         if (ctrls.dragHandle !== true) {
             $dragHandle.hide();
         }
-        $wrapRight.append($dragHandle);
+        $wrapRightBottom.append($dragHandle);
 
-        el.append($wrapRight);
+        $wrapRight.append($wrapRightBottom);
+
+        //RIGHT END
+        $modal.append($wrapRight);
+
+        return $modal;
     };
 
     Modal.prototype.applyState = function (state) {

@@ -184,7 +184,8 @@
         ignoreNodeNames: [
             'BUTTON',
             'INPUT',
-            'SELECT'
+            'SELECT',
+            'LABEL'
         ],
         ignoreClasses: [
         ],
