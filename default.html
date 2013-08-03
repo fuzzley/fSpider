@@ -185,12 +185,12 @@
             fSpider.restartGame();
         });
         $('#undo-btn').on('click', function () {
-            if ($('#undo-btn').is(':disabled') === true) {
+            if ($('#undo-btn').is(':disabled') !== true) {
                 fSpider.board.undo();
             }
         });
         $('#redo-btn').on('click', function () {
-            if ($('#redo-btn').is(':disabled') === true) {
+            if ($('#redo-btn').is(':disabled') !== true) {
                 fSpider.board.redo();
             }
         });
