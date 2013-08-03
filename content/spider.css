@@ -54,19 +54,19 @@
     z-index: 1;
     background: black;
     color: white;
-    opacity: 0.65;
+    opacity: 0.8;
     padding: .4em;
     border-radius: .6em;
 }
 
 .modal-content:hover {
-    opacity: .8;
+    opacity: 1;
 }
 
 .modal-top {
     position: relative;
     z-index: 2;
-    opacity: .9;
+    opacity: .8;
     color: #ffffff;
     padding: .1em;
 }
@@ -114,10 +114,15 @@
 }
 
 .modal-right {
+    opacity: 0.8;
     position: absolute;
     float: right;
     z-index: 2;
     color: #ffffff;
+}
+
+.modal-right:hover {
+    opacity: 1;
 }
 
 .modal-drag-handle {
