@@ -139,4 +139,8 @@
     cursor: -webkit-grabbing;
 }
 
+.modal-btn {
+    cursor: default;
+}
+
 /* MODAL */
