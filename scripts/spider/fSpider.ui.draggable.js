@@ -43,7 +43,7 @@
             }
 
             function onMouseDown(evt) {
-                if (isIgnoreNode(evt.target) === true) {
+                if (isIgnoreNode(evt.target) === true || isIgnoreClass(evt.target) === true) {
                     return;
                 }
 
@@ -161,6 +161,15 @@
                 return opts.ignoreNodeNames.indexOf(target.nodeName) >= 0;
             }
 
+            function isIgnoreClass(target) {
+                for (var i = 0; i < opts.ignoreClasses.length; i++) {
+                    if ($(target).hasClass(opts.ignoreClasses[i]) === true) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
             function captureDimensions() {
                 containDim = { width: $contain[0].clientWidth, height: $contain[0].clientHeight };
                 dim = { width: $this[0].clientWidth, height: $this[0].clientHeight };
@@ -176,6 +185,8 @@
             'BUTTON',
             'INPUT',
             'SELECT'
+        ],
+        ignoreClasses: [
         ],
         dragstart: function () {},
         dragging: function () {},

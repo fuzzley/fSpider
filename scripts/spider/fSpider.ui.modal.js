@@ -33,12 +33,17 @@ fSpider.Modal = (function (Modal, $, undefined) {
     };
     Modal.prototype.defaultOptions = {
         draggable: true,
-        containment: 'body',
+        draggableOptions: {
+            ignoreClasses: [
+                'modal-control',
+                'modal-btn'
+            ]
+        },
         title: '',
         controls: {
-            pin: true,
-            minimize: true,
-            restore: true,
+            pin: false,
+            minimize: false,
+            restore: false,
             close: true,
             dragHandle: true
         },
@@ -59,12 +64,6 @@ fSpider.Modal = (function (Modal, $, undefined) {
         closed: function () {
         },
         opened: function () {
-        },
-        dragstart: function () {
-        },
-        dragging: function () {
-        },
-        dragend: function () {
         }
     };
 
@@ -76,13 +75,7 @@ fSpider.Modal = (function (Modal, $, undefined) {
     //"private" functions
     Modal.prototype.applyDraggable = function (el) {
         var opts = this.options || {};
-
-        el.draggable({
-            'containment': opts.containment,
-            'dragstart': opts.dragstart,
-            'dragging': opts.dragging,
-            'dragend': opts.dragend
-        });
+        el.draggable(opts.draggableOptions || {});
     };
 
     Modal.prototype.wrapControls = function (el) {
@@ -100,7 +93,7 @@ fSpider.Modal = (function (Modal, $, undefined) {
         var $controls = $('<div />').addClass('modal-controls');
         //pin
         var $pin = $('<div />').addClass('modal-pin').addClass('modal-control')
-            .append($('<i />').addClass('icon-pushpin'));
+            .append($('<i />').addClass('icon-pushpin').addClass('modal-btn'));
         if (ctrls.pin !== true) {
             $pin.hide();
         }
@@ -108,7 +101,7 @@ fSpider.Modal = (function (Modal, $, undefined) {
 
         //minimize
         var $minimize = $('<div />').addClass('modal-minimize').addClass('modal-control')
-            .append($('<i />').addClass('icon-minus'));
+            .append($('<i />').addClass('icon-minus').addClass('modal-btn'));
         if (ctrls.pin !== true) {
             $minimize.hide();
         }
@@ -116,13 +109,13 @@ fSpider.Modal = (function (Modal, $, undefined) {
 
         //restore
         var $restore = $('<div />').addClass('modal-restore').addClass('modal-control')
-            .append($('<i />').addClass('icon-external-link'));
+            .append($('<i />').addClass('icon-external-link').addClass('modal-btn'));
         $restore.hide();
         $controls.append($restore);
 
         //close
         var $close = $('<div />').addClass('modal-close').addClass('modal-control')
-            .append($('<i />').addClass('icon-remove'));
+            .append($('<i />').addClass('icon-remove').addClass('modal-btn'));
         if (ctrls.pin !== true) {
             $minimize.hide();
         }

@@ -149,33 +149,33 @@
     fSpider.initGameControls = function () {
         var scoreDisplayModal = new fSpider.Modal('#score-display', {
             title: '',
-            startPosition: { bottom: '81px', left: '10px' },
-            containment: '#ui-container'
+            startPosition: { bottom: '65px', left: '10px' },
+            draggableOptions: { containment: '#ui-container' }
         });
         var movesDisplayModal = new fSpider.Modal('#moves-display', {
             title: '',
-            startPosition: { bottom: '81px', left: '100px' },
-            containment: '#ui-container'
+            startPosition: { bottom: '65px', left: '95px' },
+            draggableOptions: { containment: '#ui-container' }
         });
         var timeElapsedDisplayModal = new fSpider.Modal('#time-elapsed-display', {
             title: '',
-            startPosition: { bottom: '81px', left: '190px' },
-            containment: '#ui-container'
+            startPosition: { bottom: '65px', left: '185px' },
+            draggableOptions: { containment: '#ui-container' }
         });
         var animateWrapModal = new fSpider.Modal('#animate-wrap', {
             title: '',
-            startPosition: { bottom: '81px', left: '280px' },
-            containment: '#ui-container'
+            startPosition: { bottom: '65px', left: '285px' },
+            draggableOptions: { containment: '#ui-container' }
         });
         var soundWrapModal = new fSpider.Modal('#sound-wrap', {
             title: '',
-            startPosition: { bottom: '81px', left: '372px' },
-            containment: '#ui-container'
+            startPosition: { bottom: '65px', left: '385px' },
+            draggableOptions: { containment: '#ui-container' }
         });
         var gameCtrlsWrapModal = new fSpider.Modal('#game-ctrls-wrap', {
             title: 'Game',
             startPosition: { bottom: '10px', left: '10px' },
-            containment: '#ui-container'
+            draggableOptions: { containment: '#ui-container' }
         });
 
         $('#new-game-btn').on('click', function () {

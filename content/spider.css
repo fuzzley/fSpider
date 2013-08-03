@@ -39,7 +39,7 @@
 /* MODAL */
 
 .modal {
-    opacity: .8;
+    opacity: .7;
     display: inline-block;
     position: absolute;
     pointer-events: auto;
@@ -50,12 +50,13 @@
 }
 
 .modal-content {
+    position: relative;
+    z-index: 1;
     background: black;
     color: white;
     opacity: 0.65;
     padding: .4em;
-    border-bottom-left-radius: .6em;
-    border-bottom-right-radius: .6em;
+    border-radius: .6em;
 }
 
 .modal-content:hover {
@@ -63,19 +64,18 @@
 }
 
 .modal-top {
-    opacity: 0.9;
+    position: relative;
+    z-index: 2;
+    opacity: .9;
     color: #ffffff;
-    background-color: #000000;
     padding: .1em;
-    border-top-left-radius: .6em;
-    border-top-right-radius: .6em;
 }
 
 .modal-top:hover {
     opacity: 1;
 }
 
-.modal-controls, .modal-control, .modal-title {
+.modal-controls, .modal-control, .modal-title, .modal-content, .modal-right {
     display: inline-block;
 }
 
@@ -83,28 +83,60 @@
     float: left;
     font-size: 1em;
     padding: 0 .5em;
+    margin-left: .4em;
+    background-color: black;
+    border-radius: .4em;
 }
 
 .modal-controls {
     float: right;
-    padding-left: .5em;
+    margin-left: .5em;
+    margin-right: -.4em;
 }
 
 .modal-control {
-    right: 0;
+    opacity: .8;
     font-size: .75em;
     padding: .1em .3em;
     margin: .3em;
+    background-color: black;
+    border-radius: .5em;
 }
 
 .modal-control:hover {
+    opacity: 1;
     color: black;
-    background-color: white;
+    background-color: lightgray;
+}
+
+.modal-controls, .modal-title {
+    margin-bottom: -.8em;
 }
 
 .modal-right {
+    position: absolute;
+    float: right;
+    z-index: 2;
     color: #ffffff;
-    margin-right: -.2em;
+}
+
+.modal-drag-handle {
+    margin-top: .3em;
+    margin-left: -.1em;
+    border-top-right-radius: .5em;
+    border-bottom-right-radius: .5em;
+    width: .7em;
+    height: 1.5em;
+    background-color: black;
+    cursor: grab;
+    cursor: -moz-grab;
+    cursor: -webkit-grab;
+}
+
+.modal-drag-handle:active {
+    cursor: grabbing;
+    cursor: -moz-grabbing;
+    cursor: -webkit-grabbing;
 }
 
 /* MODAL */
