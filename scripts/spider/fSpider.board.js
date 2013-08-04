@@ -58,8 +58,15 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
             width: 999999,
             height: 999999
         });
+        this.winText = new Kinetic.Text({
+            text: 'You won! Congratulations.',
+            fill: 'white',
+            fontSize: 20,
+            visible: false
+        });
         this.pilesLayer = new Kinetic.Layer();
         this.pilesLayer.add(this._layerBackground);
+        this.pilesLayer.add(this.winText);
         this.stage.add(this.pilesLayer);
         this.animLayer = new Kinetic.Layer();
         this.stage.add(this.animLayer);
@@ -133,6 +140,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
     SpiderBoard.prototype.score = 0;
     SpiderBoard.prototype.moves = 0;
     SpiderBoard.prototype.timeElapsed = 0;
+    SpiderBoard.prototype.winText = null;
     SpiderBoard.prototype.playerAction = SpiderBoard.PLAYER_ACTIONS.none;
     SpiderBoard.prototype.selectedCard = null;
     SpiderBoard.prototype.draggingCards = null;
@@ -633,7 +641,9 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
 
     SpiderBoard.prototype.win = function () {
         this.gameInProgress = false;
-        alert('You won with a score of ' + this.score + '!');
+        clearInterval(this._timeElapsedTimer);
+        this.winText.setVisible(true);
+        this.redraw();
     };
 
     //helpers
@@ -920,6 +930,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         this.gameInProgress = false;
 
         this.resetStatistics();
+        this.winText.setVisible(false);
         this.history.clear();
 
         if (shuffle === true) {
@@ -1137,6 +1148,11 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
             this.animLayer.setScale(this.scale);
             this.rescalePiles();
             this.arrangePiles(Utils.extendProps({ animate: false }, this.settings));
+            this.winText.setScale(this.scale);
+            this.winText.setPosition(
+                this.stage.getWidth() / 2 - this.winText.getWidth() / 2 * this.scale,
+                this.stage.getHeight() / 2 - this.winText.getHeight() / 2 * this.scale
+            );
         }
     };
 
