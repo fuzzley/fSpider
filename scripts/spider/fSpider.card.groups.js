@@ -743,13 +743,13 @@ fSpider.StockPile = (function (StockPile, undefined) {
             card = this.getLastCard();
             if (setFaceUp === true) {
                 expectedCallbacks++;
-                card.setFaceUp(true, Utils.extendProps({ animDelay: delay * i }, settings), onCallback);
+                card.setFaceUp(true, settings.extendAnimDelay(delay * i), onCallback);
             }
             expectedCallbacks++;
             if (i === pLength - 1) {
                 stillLooping = false;
             }
-            pile.transferCards([card], Utils.extendProps({ animDelay: delay * i }, settings), onCallback);
+            pile.transferCards([card], settings.extendAnimDelay(delay * i), onCallback);
         }
     };
 

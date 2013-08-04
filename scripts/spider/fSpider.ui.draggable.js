@@ -40,6 +40,9 @@
                     captureDimensions();
                     fixOverDrag();
                 });
+
+                captureDimensions();
+                fixOverDrag();
             }
 
             function onMouseDown(evt) {

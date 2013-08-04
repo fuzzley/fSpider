@@ -25,6 +25,88 @@ fSpider.Utils = (function (Utils, undefined) {
         return childObj;
     };
 
+    Utils.filterOutProperties = function (obj, ignoreProps, ignoreValues) {
+        obj = obj || {};
+        ignoreProps = ignoreProps || {};
+        ignoreValues = ignoreValues || {};
+
+        var newObj = {};
+        var valid;
+
+        for (var option in obj) {
+            //check for function
+            if (typeof (obj[option]) === 'function') {
+                continue;
+            }
+
+            valid = true;
+
+            //check ignore properties
+            for (var propIndex in ignoreProps) {
+                if (option === ignoreProps[propIndex]) {
+                    valid = false;
+                    break;
+                }
+            }
+
+            if (valid !== true) {
+                continue;
+            }
+
+            //check ignore values
+            for (var valIndex in ignoreValues) {
+                if (obj[option] === ignoreValues[valIndex]) {
+                    valid = false;
+                    break;
+                }
+            }
+
+            if (valid !== true) {
+                continue;
+            }
+
+            newObj[option] = obj[option];
+        }
+
+        return newObj;
+    };
+
+    Utils.filterInProperties = function (obj, props, ignoreValues) {
+        obj = obj || {};
+        props = props || {};
+        ignoreValues = ignoreValues || {};
+
+        var newObj = {};
+        var valid;
+
+        for (var option in obj) {
+            valid = true;
+
+            //check for requested property
+            for (var propIndex in props) {
+                if (option === props[propIndex]) {
+
+                    //check ignore values
+                    for (var valIndex in ignoreValues) {
+                        if (obj[option] === ignoreValues[valIndex]) {
+                            valid = false;
+                            break;
+                        }
+                    }
+
+                    if (valid !== true) {
+                        continue;
+                    }
+
+                    //property is wanted and value is valid, so add it
+                    newObj[option] = obj[option];
+                }
+            }
+        }
+
+        return newObj;
+    };
+
     Utils.isPointInBounds = function (point, bounds) {
         var xValid = point.x >= bounds.x && point.x <= (bounds.x + bounds.width); // x in bounds
         var yValid = point.y >= bounds.y && point.y <= (bounds.y + bounds.height); //y in bounds

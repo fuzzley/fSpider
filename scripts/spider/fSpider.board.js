@@ -119,11 +119,6 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
     SpiderBoard.GENERAL_DELAY_FRACTION = 40;
     SpiderBoard.STOCK_ANIM_TIME = 400;
     SpiderBoard.STOCK_DELAY_FRACTION = 100;
-    SpiderBoard.DIFFICULTIES = {
-        'OneSuit': 0,
-        'TwoSuit': 1,
-        'FourSuit': 2
-    };
     SpiderBoard.START_SCORE = 500;
     SpiderBoard.MOVES_INCREMENT_BY = 1;
     SpiderBoard.SCORE_INCREMENT_BY_AFTER_COMPLETE_SEQUENCE = 100;
@@ -553,10 +548,10 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
             transferTo.push(pile);
         }
 
-        var settings = Utils.extendProps({
+        var settings = this.settings.extend({
                 animDelay: delayFraction,
-                animTime: SpiderBoard.STOCK_ANIM_TIME },
-            this.settings);
+                animTime: SpiderBoard.STOCK_ANIM_TIME
+        });
         this.stockPile.drawCards(transferTo, flipAlso === true, settings, callback);
 
         if (actionSet.actions.length > 0) {
@@ -602,7 +597,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         //make sure we can add card to pile
         var tPile = this.findOverlappingTableauPile(card, pos);
         if (tPile != null) {
-            this.deselectCard(this.selectedCard, false, Utils.extendProps({ animate: false }, this.settings));
+            this.deselectCard(this.selectedCard, false, this.settings.extendAnimate(false));
             this.transferCardsFromTableauToTableau(originalPile.getCardAndCardsAfter(card), originalPile, tPile);
         } else {
             this.arrangeTableauPile(card.getPile());
@@ -656,13 +651,13 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         var diamonds = PlayingCard.CARD_SUITS.diamonds;
 
         switch (difficulty) {
-            case SpiderBoard.DIFFICULTIES.OneSuit:
+            case SpiderSettings.prototype.DIFFICULTIES.ONE_SUIT:
                 suits = [spades, spades, spades, spades, spades, spades, spades, spades];
                 break;
-            case SpiderBoard.DIFFICULTIES.TwoSuit:
+            case SpiderSettings.prototype.DIFFICULTIES.TWO_SUIT:
                 suits = [spades, spades, spades, spades, hearts, hearts, hearts, hearts];
                 break;
-            case SpiderBoard.DIFFICULTIES.FourSuit:
+            case SpiderSettings.prototype.DIFFICULTIES.FOUR_SUIT:
                 suits = [spades, spades, clubs, clubs, hearts, hearts, diamonds, diamonds];
                 break;
         }
@@ -912,17 +907,17 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         }
     };
 
-    SpiderBoard.prototype.startNewGame = function (difficulty) {
-        this.startGame(true, difficulty);
+    SpiderBoard.prototype.startNewGame = function () {
+        this.startGame(true, this.settings.difficulty);
     };
 
-    SpiderBoard.prototype.restartGame = function (difficulty) {
-        this.startGame(false, difficulty);
+    SpiderBoard.prototype.restartGame = function () {
+        this.startGame(false);
     };
 
     SpiderBoard.prototype.startGame = function (shuffle, difficulty) {
-        if (difficulty === undefined) {
-            difficulty = SpiderBoard.DIFFICULTIES.OneSuit;
+        if (difficulty == null) {
+            difficulty = SpiderSettings.prototype.ONE_SUIT;
         }
 
         var piles = this.getPiles();
@@ -943,7 +938,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
             pile.setVisible(true);
             pile.resetCardFaces();
         });
-        this.arrangePiles(Utils.extendProps({ animate: false }, this.settings));
+        this.arrangePiles(this.settings.extendAnimate(false));
         var self = this;
         this.drawFromStockPile(false, 0, 44, false, function () {
             self.drawFromStockPile(true, 0, 10, false);
@@ -1147,7 +1142,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
             this.scale = scale;
             this.animLayer.setScale(this.scale);
             this.rescalePiles();
-            this.arrangePiles(Utils.extendProps({ animate: false }, this.settings));
+            this.arrangePiles(this.settings.extendAnimate(false));
             this.winText.setScale(this.scale);
             this.winText.setPosition(
                 this.stage.getWidth() / 2 - this.winText.getWidth() / 2 * this.scale,

@@ -9,10 +9,14 @@ fSpider.Modal = (function (Modal, $, undefined) {
 
         //prepare element
         this.$modal = this.wrapElement(element);
+        this.$modal.attr('id', this.options.id);
         if (this.options.draggable === true) {
             this.applyDraggable(this.$modal);
         }
         this.applyState(this.options.startState);
+        if (this.options.startVisible !== true) {
+            this.$modal.hide();
+        }
     };
 
     //static fields
@@ -32,6 +36,7 @@ fSpider.Modal = (function (Modal, $, undefined) {
             ]
         },
         title: '',
+        id: '',
         controls: {
             pin: false,
             minimize: false,
@@ -46,6 +51,7 @@ fSpider.Modal = (function (Modal, $, undefined) {
             bottom: '',
             right: ''
         },
+        startVisible: true,
         //events
         pinned: function () {
         },

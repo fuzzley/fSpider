@@ -12,10 +12,10 @@
 <div id="canvas-wrap">
 </div>
 <div id="ui-container">
-    <div id="score-display" class="lite-green">0</div>
-    <div id="moves-display" class="lite-red">0</div>
-    <div id="time-elapsed-display" class="lite-yellow">00:00</div>
-    <div id="animate-wrap">
+    <div id="score-display" class="lite-green" style="display: none;">0</div>
+    <div id="moves-display" class="lite-red" style="display: none;">0</div>
+    <div id="time-elapsed-display" class="lite-yellow" style="display: none;">00:00</div>
+    <div id="options-wrap" style="display: none;">
         <div>
             <label for="animate-checkbox" style="float: left;">Animate</label>
             <input id="animate-checkbox" name="animate-checkbox" style="float: right;" type="checkbox" checked/>
@@ -27,13 +27,13 @@
         </div>
         <div class="clear"></div>
     </div>
-    <div id="game-ctrls-wrap">
+    <div id="game-ctrls-wrap" style="display: none;">
         <button id="new-game-btn">New Game</button>
         <label for="difficulty-select"></label>
         <select id="difficulty-select" name="difficulty-select">
-            <option value="1">1 Suit</option>
-            <option value="2">2 Suits</option>
-            <option value="4">4 Suits</option>
+            <option value="0">1 Suit</option>
+            <option value="1">2 Suits</option>
+            <option value="2">4 Suits</option>
         </select>
         <button id="restart-btn" disabled>Restart</button>
         <button id="undo-btn" disabled>Undo (Ctrl+Z)</button>
@@ -74,9 +74,6 @@
     fSpider.redoKey = 'Y';
 
     fSpider.init = function () {
-        //setup external ui
-        fSpider.initGameControls();
-
         //prepare stage
         var canvasWrap = $('#canvas-wrap');
         fSpider.stage = new Kinetic.Stage({
@@ -103,6 +100,7 @@
         //prepare board
         fSpider.board = new fSpider.SpiderBoard(stage, cardAssetsImg, cardDim);
         var board = fSpider.board;
+        board.getSettings().load();
         board.recalculateGlobalScale();
         ////set image assets
         board.setCardBackImage(cardAssetsImg, {
@@ -119,6 +117,9 @@
         board.onScoreChanged(fSpider.onScoreChanged);
         board.onMovesChanged(fSpider.onMovesChanged);
         board.onTimeElapsedChanged(fSpider.onTimeElapsedTick);
+
+        //setup external ui
+        fSpider.initGameControls(board.getSettings());
 
         //in case of resize, notify board
         $(window).resize(function () {
@@ -150,35 +151,81 @@
         });
     };
 
-    fSpider.initGameControls = function () {
-        var animateWrapModal = new fSpider.Modal('#animate-wrap', {
+    fSpider.initGameControls = function (settings) {
+        new fSpider.Modal('#options-wrap', {
+            id: 'options-modal',
             title: 'Options',
-            startPosition: { bottom: '56px', left: '5px' },
-            draggableOptions: { containment: '#ui-container' }
+            startPosition: settings.windows.options.position,
+            startVisible: settings.windows.options.visible,
+            draggableOptions: { containment: '#ui-container',
+                dragend: function () {
+                    settings.setWindowPosFromElement('options', $('#options-modal'));
+                    settings.save();
+                }
+            }
         });
-        var scoreDisplayModal = new fSpider.Modal('#score-display', {
+
+        new fSpider.Modal('#score-display', {
+            id: 'score-display-modal',
             title: 'Score',
-            startPosition: { bottom: '60px', left: '95px' },
-            draggableOptions: { containment: '#ui-container' }
+            startPosition: settings.windows.score.position,
+            startVisible: settings.windows.score.visible,
+            draggableOptions: { containment: '#ui-container',
+                dragend: function () {
+                    settings.setWindowPosFromElement('score', $('#score-display-modal'));
+                    settings.save();
+                }
+            }
         });
-        var movesDisplayModal = new fSpider.Modal('#moves-display', {
+
+        new fSpider.Modal('#moves-display', {
+            id: 'moves-display-modal',
             title: 'Moves',
-            startPosition: { bottom: '60px', left: '150px' },
-            draggableOptions: { containment: '#ui-container' }
+            startPosition: settings.windows.moves.position,
+            startVisible: settings.windows.moves.visible,
+            draggableOptions: { containment: '#ui-container',
+                dragend: function () {
+                    settings.setWindowPosFromElement('moves', $('#moves-display-modal'));
+                    settings.save();
+                }
+            }
         });
-        var timeElapsedDisplayModal = new fSpider.Modal('#time-elapsed-display', {
+
+        new fSpider.Modal('#time-elapsed-display', {
+            id: 'time-elapsed-display-modal',
             title: 'Time',
-            startPosition: { bottom: '60px', left: '210px' },
-            draggableOptions: { containment: '#ui-container' }
+            startPosition: settings.windows.time.position,
+            startVisible: settings.windows.time.visible,
+            draggableOptions: { containment: '#ui-container',
+                dragend: function () {
+                    settings.setWindowPosFromElement('time', $('#time-elapsed-display-modal'));
+                    settings.save();
+                }
+            }
         });
-        var gameCtrlsWrapModal = new fSpider.Modal('#game-ctrls-wrap', {
+
+        new fSpider.Modal('#game-ctrls-wrap', {
+            id: 'game-ctrls-modal',
             title: 'Game',
-            startPosition: { bottom: '5px', left: '5px' },
-            draggableOptions: { containment: '#ui-container' }
+            startPosition: settings.windows.game.position,
+            startVisible: settings.windows.game.visible,
+            draggableOptions: {
+                containment: '#ui-container',
+                dragend: function () {
+                    settings.setWindowPosFromElement('game', $('#game-ctrls-modal'));
+                    settings.save();
+                }
+            }
         });
+
+        $('.modal-content').show();
 
         $('#new-game-btn').on('click', function () {
             fSpider.startNewGame();
+        });
+        $('#difficulty-select').val(settings.difficulty).on('change', function () {
+            settings.set({ difficulty: +$('#difficulty-select').val() });
+            settings.save();
         });
         $('#restart-btn').on('click', function () {
             fSpider.restartGame();
@@ -194,25 +241,26 @@
             }
         });
 
-        $('#animate-checkbox').on('click', function () {
-            fSpider.board.getSettings().animate = $('#animate-checkbox').is(':checked');
+        $('#animate-checkbox').prop('checked', settings.animate).on('click', function () {
+            settings.set({ animate: $('#animate-checkbox').is(':checked') });
+            settings.save();
         });
-
-        $('#sound-checkbox').on('click', function () {
-            fSpider.board.getSettings().volume = $('#sound-checkbox').is(':checked') ? 1 : 0;
+        $('#sound-checkbox').prop('checked', settings.volume > 0).on('click', function () {
+            settings.set({ volume: $('#sound-checkbox').is(':checked') ? 1 : 0 });
+            settings.save();
         });
     };
 
     fSpider.startNewGame = function () {
         if (fSpider.board.isGameInProgress() !== true || confirm("Are you sure you want to start a new game? Your current game will be replaced.") === true) {
-            fSpider.board.startNewGame(fSpider.getDifficulty());
+            fSpider.board.startNewGame();
             $('#restart-btn').removeAttr('disabled');
         }
     };
 
     fSpider.restartGame = function () {
         if (fSpider.board.isGameInProgress() === true && confirm("Are you sure you want to restart this game? Your progress will be lost.") === true) {
-            fSpider.board.restartGame(fSpider.getDifficulty());
+            fSpider.board.restartGame();
         }
     };
 
@@ -239,19 +287,6 @@
 
     fSpider.onTimeElapsedTick = function (time) {
         $('#time-elapsed-display').text(fSpider.Utils.formatTime(time));
-    };
-
-    fSpider.getDifficulty = function () {
-        var difficulty = fSpider.SpiderBoard.DIFFICULTIES.OneSuit;
-
-        var selected = $('#difficulty-select').find(':selected').val();
-        if (selected == '2') {
-            difficulty = fSpider.SpiderBoard.DIFFICULTIES.TwoSuit;
-        } else if (selected == '4') {
-            difficulty = fSpider.SpiderBoard.DIFFICULTIES.FourSuit;
-        }
-
-        return difficulty;
     };
 
     $(window).load(function () {
