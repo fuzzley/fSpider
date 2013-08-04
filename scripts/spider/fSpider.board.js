@@ -270,25 +270,25 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         //TABLEAU PILES
         var k = 0;
 
-//        //4 piles with 6 cards
-//        for (i = 0; i < 4; i++) {
-//            pile = this.tableauPiles[i];
-//            //6 cards
-//            for (j = 0; j < 6; j++) {
-//                pile.addCard(cards[k]);
-//                k++;
-//            }
-//        }
-//
-//        //6 piles with 5 cards
-//        for (i = 4; i < 10; i++) {
-//            pile = this.tableauPiles[i];
-//            //5 cards
-//            for (j = 0; j < 5; j++) {
-//                pile.addCard(cards[k]);
-//                k++;
-//            }
-//        }
+        //4 piles with 6 cards
+        for (i = 0; i < 4; i++) {
+            pile = this.tableauPiles[i];
+            //6 cards
+            for (j = 0; j < 6; j++) {
+                pile.addCard(cards[k]);
+                k++;
+            }
+        }
+
+        //6 piles with 5 cards
+        for (i = 4; i < 10; i++) {
+            pile = this.tableauPiles[i];
+            //5 cards
+            for (j = 0; j < 5; j++) {
+                pile.addCard(cards[k]);
+                k++;
+            }
+        }
 
         //STOCK PILE
         //rest of cards go into stock pile
@@ -931,12 +931,15 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         this.setupPiles();
         piles.forEach(function (pile) {
             pile.setVisible(true);
+            pile.resetCardFaces();
+            pile.resetListening();
+            pile.resetDraggable();
         });
         this.arrangePiles(Utils.extendProps({ animate: false }, this.settings));
-        var self = this;
-        this.drawFromStockPile(false, 0, 44, false, function () {
-            self.drawFromStockPile(true, 4, 10, false);
-        });
+//        var self = this;
+//        this.drawFromStockPile(false, 0, 44, false, function () {
+//            self.drawFromStockPile(true, 4, 10, false);
+//        });
 
         this.redraw();
         this.gameInProgress = true;
