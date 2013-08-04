@@ -97,7 +97,7 @@ fSpider.Pile = (function (Pile, undefined) {
         this.group.moveToTop();
     };
 
-    Pile.prototype.transferCards = function (cards, settings) {
+    Pile.prototype.transferCards = function (cards, settings, callback) {
         if (settings == null) {
             settings = {};
         }
@@ -124,7 +124,7 @@ fSpider.Pile = (function (Pile, undefined) {
             pile.resetDraggable();
         });
 
-        this.arrangeCards(settings);
+        this.arrangeCards(settings, callback);
     };
 
     Pile.prototype.addCard = function (card, absPos) {
@@ -164,11 +164,11 @@ fSpider.Pile = (function (Pile, undefined) {
         }
     };
 
-    Pile.prototype.arrangeCards = function (settings) {
+    Pile.prototype.arrangeCards = function (settings, callback) {
         //specific to pile type
     };
 
-    Pile.prototype.resetCardFaces = function (settings) {
+    Pile.prototype.resetCardFaces = function (settings, callback) {
         //specific to pile type
     };
 
@@ -390,7 +390,7 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
         return sequence;
     };
 
-    TableauPile.prototype.setLastCardFaceUp = function (faceUp, settings) {
+    TableauPile.prototype.setLastCardFaceUp = function (faceUp, settings, callback) {
         if (settings == null) {
             settings = {};
         }
@@ -401,7 +401,17 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
         if (length > 0) {
             var card = this.cards[length - 1];
             changed = card.isFaceUp() !== faceUp;
-            card.setFaceUp(faceUp, settings);
+            card.setFaceUp(faceUp, settings, function () {
+                if (callback != null) {
+                    callback(true);
+                }
+            });
+        }
+
+        if (changed !== true) {
+            if (callback != null) {
+                callback(false);
+            }
         }
 
         return changed;
@@ -457,7 +467,7 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
         return true;
     };
 
-    TableauPile.prototype.arrangeCards = function (settings) {
+    TableauPile.prototype.arrangeCards = function (settings, callback) {
         if (settings == null) {
             settings = {};
         }
@@ -495,10 +505,23 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
             padTopFaceUp = maxPadTopFaceUp;
         }
 
+        var stillLooping = true;
+        var expectedCallbacks = 0;
+        var onCallback = function () {
+            expectedCallbacks--;
+            if (stillLooping !== true && expectedCallbacks <= 0 && callback != null) {
+                callback();
+            }
+        };
+
         var y = 0;
         var prevCard;
         //distribute height
         for (i = 0; i < length; i++) {
+            expectedCallbacks++;
+            if (i === length - 1) {
+                stillLooping = false;
+            }
             if (i > 0) {
                 prevCard = this.cards[i - 1];
                 if (prevCard.isFaceUp() === true) {
@@ -510,26 +533,37 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
                     y += padTopFaceDown;
                 }
             }
-            this.cards[i].setPosition(0, y, settings);
+            this.cards[i].setPosition(0, y, settings, onCallback);
         }
         var height = y + PlayingCard.CARD_DIM.h;
 
         this.group.setHeight(height);
     };
 
-    TableauPile.prototype.resetCardFaces = function (settings) {
+    TableauPile.prototype.resetCardFaces = function (settings, callback) {
         if (settings == null) {
             settings = {};
         }
+
+        var stillLooping = true;
+        var expectedCallbacks = 0;
+        var onCallback = function () {
+            expectedCallbacks--;
+            if (stillLooping !== true && expectedCallbacks <= 0 && callback != null) {
+                callback();
+            }
+        };
 
         var card;
         var length = this.getSize();
         for (var i = 0; i < length; i++) {
             card = this.cards[i];
+            expectedCallbacks++;
             if (i === length - 1) { //if last card
-                card.setFaceUp(true, settings);
+                stillLooping = false;
+                card.setFaceUp(true, settings, onCallback);
             } else { //otherwise
-                card.setFaceUp(false, settings);
+                card.setFaceUp(false, settings, onCallback);
             }
         }
     };
@@ -577,10 +611,19 @@ fSpider.StockPile = (function (StockPile, undefined) {
     //getters/setters
 
     //public methods
-    StockPile.prototype.arrangeCards = function (settings) {
+    StockPile.prototype.arrangeCards = function (settings, callback) {
         if (settings == null) {
             settings = {};
         }
+
+        var stillLooping = true;
+        var expectedCallbacks = 0;
+        var onCallback = function () {
+            expectedCallbacks--;
+            if (stillLooping !== true && expectedCallbacks <= 0 && callback != null) {
+                callback();
+            }
+        };
 
         var tableauPiles = 10;
         var length = this.getSize();
@@ -597,19 +640,37 @@ fSpider.StockPile = (function (StockPile, undefined) {
 
         for (var i = 0; i < length; i++) {
             card = this.cards[i];
-            card.setPosition(Math.floor((length - i - 1) / tableauPiles) * paddingRight, 0, settings);
+            expectedCallbacks++;
+            if (i === length - 1) {
+                stillLooping = false;
+            }
+            card.setPosition(Math.floor((length - i - 1) / tableauPiles) * paddingRight, 0, settings, onCallback);
         }
 
         this.setWidth(paddingRight * nSets + PlayingCard.CARD_DIM.w);
     };
 
-    StockPile.prototype.resetCardFaces = function (settings) {
+    StockPile.prototype.resetCardFaces = function (settings, callback) {
         if (settings == null) {
             settings = {};
         }
 
-        this.cards.forEach(function (card) {
-            card.setFaceUp(false, settings);
+        var stillLooping = true;
+        var expectedCallbacks = 0;
+        var onCallback = function () {
+            expectedCallbacks--;
+            if (stillLooping !== true && expectedCallbacks <= 0 && callback != null) {
+                callback();
+            }
+        };
+
+        var self = this;
+        this.cards.forEach(function (card, i) {
+            expectedCallbacks++;
+            if (i === self.cards.length - 1) {
+                stillLooping = false;
+            }
+            card.setFaceUp(false, settings, onCallback);
         });
     };
 
@@ -629,10 +690,19 @@ fSpider.StockPile = (function (StockPile, undefined) {
         });
     };
 
-    StockPile.prototype.drawCards = function (piles, setFaceUp, settings) {
+    StockPile.prototype.drawCards = function (piles, setFaceUp, settings, callback) {
         if (settings == null) {
             settings = {};
         }
+
+        var stillLooping = true;
+        var expectedCallbacks = 0;
+        var onCallback = function () {
+            expectedCallbacks--;
+            if (stillLooping !== true && expectedCallbacks <= 0 && callback != null) {
+                callback();
+            }
+        };
 
         var delay = 0;
         if (settings.animate === true) {
@@ -648,9 +718,14 @@ fSpider.StockPile = (function (StockPile, undefined) {
             pile = piles[i];
             card = this.getLastCard();
             if (setFaceUp === true) {
-                card.setFaceUp(true, Utils.extendProps({ animDelay: delay * i }, settings));
+                expectedCallbacks++;
+                card.setFaceUp(true, Utils.extendProps({ animDelay: delay * i }, settings), onCallback);
             }
-            pile.transferCards([card], Utils.extendProps({ animDelay: delay * i }, settings));
+            expectedCallbacks++;
+            if (i === pLength - 1) {
+                stillLooping = false;
+            }
+            pile.transferCards([card], Utils.extendProps({ animDelay: delay * i }, settings), onCallback);
             pile.resetDraggable();
             pile.resetListening();
         }
@@ -679,23 +754,51 @@ fSpider.FoundationPile = (function (FoundationPile, undefined) {
     //getters/setters
 
     //public methods
-    FoundationPile.prototype.arrangeCards = function (settings) {
+    FoundationPile.prototype.arrangeCards = function (settings, callback) {
         if (settings == null) {
             settings = {};
         }
 
-        this.cards.forEach(function (card) {
-            card.setPosition(0, 0, settings);
+        var stillLooping = true;
+        var expectedCallbacks = 0;
+        var onCallback = function () {
+            expectedCallbacks--;
+            if (stillLooping !== true && expectedCallbacks <= 0 && callback != null) {
+                callback();
+            }
+        };
+
+        var self = this;
+        this.cards.forEach(function (card, i) {
+            expectedCallbacks++;
+            if (i === self.cards.length - 1) {
+                stillLooping = false;
+            }
+            card.setPosition(0, 0, settings, onCallback);
         });
     };
 
-    FoundationPile.prototype.resetCardFaces = function (settings) {
+    FoundationPile.prototype.resetCardFaces = function (settings, callback) {
         if (settings == null) {
             settings = {};
         }
 
-        this.cards.forEach(function (card) {
-            card.setFaceUp(true, settings);
+        var stillLooping = true;
+        var expectedCallbacks = 0;
+        var onCallback = function () {
+            expectedCallbacks--;
+            if (stillLooping !== true && expectedCallbacks <= 0 && callback != null) {
+                callback();
+            }
+        };
+
+        var self = this;
+        this.cards.forEach(function (card, i) {
+            expectedCallbacks++;
+            if (i === self.cards.length - 1) {
+                stillLooping = false;
+            }
+            card.setFaceUp(true, settings, onCallback);
         });
     };
 

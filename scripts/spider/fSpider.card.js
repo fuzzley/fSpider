@@ -109,7 +109,7 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
     Card.prototype.isFaceUp = function () {
         return this.faceUp;
     };
-    Card.prototype.setFaceUp = function (faceUp, settings) {
+    Card.prototype.setFaceUp = function (faceUp, settings, callback) {
         if (settings == null) {
             settings = {};
         }
@@ -120,6 +120,9 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
         }
 
         if (this.faceUp === faceUp) {
+            if (callback != null) {
+                callback(this);
+            }
             return;
         }
 
@@ -134,7 +137,7 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
             if (settings.animDelay != null) {
                 delay = settings.animDelay;
             }
-            this.flipAnimatorContext = this.prepareFlipAnimationContext(faceUp, animTime);
+            this.flipAnimatorContext = this.prepareFlipAnimationContext(faceUp, animTime, callback);
         }
         var sound = false;
         if (settings.volume != null && this.cardFlipSound != null) {
@@ -149,6 +152,9 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
                 self.startFlipAnimation();
             } else {
                 self.refresh();
+                if (callback != null) {
+                    callback(self);
+                }
             }
             if (sound === true) {
                 self.cardFlipSound.play();
@@ -167,7 +173,7 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
         }
     };
 
-    Card.prototype.setPosition = function (x, y, settings) {
+    Card.prototype.setPosition = function (x, y, settings, callback) {
         if (settings == null) {
             settings = {};
         }
@@ -178,6 +184,9 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
         }
 
         if (Math.abs(this.group.getX() - x) < .001 && Math.abs(this.group.getY() - y) < .001) {
+            if (callback != null) {
+                callback(this);
+            }
             return;
         }
 
@@ -190,7 +199,7 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
             if (settings.animDelay != null) {
                 delay = settings.animDelay;
             }
-            this.positionAnimatorContext = this.preparePositionAnimationContext(x, y, animTime);
+            this.positionAnimatorContext = this.preparePositionAnimationContext(x, y, animTime, callback);
         }
         var sound = settings.volume != null && settings.volume > 0;
 
@@ -200,6 +209,9 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
                 self.startPositionAnimation();
             } else {
                 self.group.setPosition(x, y);
+                if (callback != null) {
+                    callback(self);
+                }
             }
         };
 
@@ -455,7 +467,7 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
         return this.positionAnimationTimeout != null || (this.positionAnimator != null && this.positionAnimator.isRunning() === true);
     };
 
-    Card.prototype.preparePositionAnimationContext = function (x, y, animTime) {
+    Card.prototype.preparePositionAnimationContext = function (x, y, animTime, callback) {
         //find absolute positions for ourselves and our parent
         var scale = this.group.getScaleX();
         var absPos = this.group.getAbsolutePosition();
@@ -479,6 +491,7 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
 
         //build context
         var context = {};
+        context.callback = callback;
         context.originalLayer = layer;
         context.animTime = animTime;
         context.intendedPos = { x: x, y: y };
@@ -548,6 +561,10 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
         //cleanup
         this.positionAnimator = null;
         this.positionAnimatorContext = null;
+
+        if (context.callback != null) {
+            context.callback(this);
+        }
     };
 
     Card.prototype.stepPositionAnimation = function (frame) {
@@ -566,9 +583,10 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
         return this.flipAnimationTimeout != null || (this.flipAnimator != null && this.flipAnimator.isRunning() === true);
     };
 
-    Card.prototype.prepareFlipAnimationContext = function (faceUp, animTime) {
+    Card.prototype.prepareFlipAnimationContext = function (faceUp, animTime, callback) {
         //build context
         var context = {};
+        context.callback = callback;
         context.originalLayer = this.group.getLayer();
         context.animTime = animTime;
         context.originalScaleX = this.group.getScaleX();
@@ -646,6 +664,10 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
         //cleanup
         this.flipAnimator = null;
         this.flipAnimatorContext = null;
+
+        if (context.callback != null) {
+            context.callback(this);
+        }
     };
 
     Card.prototype.stepFlipAnimation = function (frame) {

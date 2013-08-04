@@ -377,7 +377,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
     };
 
     //game logic
-    SpiderBoard.prototype.tryHandleCompleteSequence = function (tPile) {
+    SpiderBoard.prototype.tryHandleCompleteSequence = function (tPile, callback) {
         var completeSequence = tPile.getCompleteSequence();
         if (completeSequence != null && completeSequence.length > 0) {
             var fPiles = this.foundationPiles;
@@ -391,9 +391,15 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
                     var scoreChangeAction = new ScoreChangeAction(this, SpiderBoard.SCORE_INCREMENT_BY_AFTER_COMPLETE_SEQUENCE);
                     this.history.registerAction(scoreChangeAction);
 
+                    var self = this;
                     //transfer cards
-                    this.transferCardsFromTableauToFoundation(completeSequence, tPile, fPile);
-                    fPile.reverseCards();
+                    this.transferCardsFromTableauToFoundation(completeSequence, tPile, fPile, function () {
+                        fPile.reverseCards();
+                        self.redraw();
+                        if (callback != null) {
+                            callback(true);
+                        }
+                    });
 
                     //merge last 3 actionsets in history (move to tableau, score increase, move to foundation)
                     this.history.mergeActionSets(this.history.cursor - 3, 3);
@@ -401,6 +407,10 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
                     return true;
                 }
             }
+        }
+
+        if (callback != null) {
+            callback(false);
         }
 
         return false; //either no sequence or no empty foundation piles
@@ -419,55 +429,80 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         return true;
     };
 
-    SpiderBoard.prototype.transferCardsFromTableau = function (cards, fromPile, toPile, updateStats) {
+    SpiderBoard.prototype.transferCardsFromTableau = function (cards, fromPile, toPile, updateStats, callback) {
         if (cards == null || cards.length <= 0) {
-            return;
-        }
-
-        //move cards to new pile
-        toPile.transferCards(cards, this.settings);
-
-        //flip over last card of original pile and refresh
-        var flipped = fromPile.setLastCardFaceUp(true, this.settings);
-        fromPile.resetListening();
-        fromPile.resetDraggable();
-
-        //refresh new pile
-        toPile.resetListening();
-        toPile.resetDraggable();
-
-        if (updateStats === true) {
-            //modify statistics
-            this.reduceScore();
-            this.increaseMoves();
-        }
-
-        this.registerTransferInHistory(cards, fromPile, toPile, flipped);
-    };
-
-    SpiderBoard.prototype.transferCardsFromTableauToTableau = function (cards, fromPile, toPile) {
-        if (cards == null || cards.length <= 0) {
-            return;
-        }
-
-        //transfer cards
-        this.transferCardsFromTableau(cards, fromPile, toPile, true);
-
-        //check for a complete sequence
-        if (this.tryHandleCompleteSequence(toPile) === true) {
-            if (this.checkForWin() === true) {
-                this.win();
+            if (callback != null) {
+                callback();
             }
+            return;
         }
+
+        var self = this;
+
+        var flipped = cards.length > 0
+            && fromPile.getSize() - cards.length > 0
+            && fromPile.getCardAt(fromPile.getCards().indexOf(cards[0]) - 1).isFaceUp() !== true;
+        //move cards to new pile
+        toPile.transferCards(cards, this.settings, function () {
+            //flip over last card of original pile and refresh
+            fromPile.resetListening();
+            fromPile.resetDraggable();
+
+            //refresh new pile
+            toPile.resetListening();
+            toPile.resetDraggable();
+
+            if (updateStats === true) {
+                //modify statistics
+                self.reduceScore();
+                self.increaseMoves();
+            }
+
+            self.registerTransferInHistory(cards, fromPile, toPile, flipped);
+
+            if (callback != null) {
+                callback();
+            }
+        });
+        fromPile.setLastCardFaceUp(true, this.settings);
     };
 
-    SpiderBoard.prototype.transferCardsFromTableauToFoundation = function (cards, fromPile, toPile) {
+    SpiderBoard.prototype.transferCardsFromTableauToTableau = function (cards, fromPile, toPile, callback) {
         if (cards == null || cards.length <= 0) {
+            if (callback != null) {
+                callback();
+            }
+            return;
+        }
+
+        var self = this;
+
+        //transfer cards
+        this.transferCardsFromTableau(cards, fromPile, toPile, true, function () {
+
+            //check for a complete sequence
+            self.tryHandleCompleteSequence(toPile, function (result) {
+                if (result === true && self.checkForWin() === true) {
+                    self.win();
+                }
+                if (callback != null) {
+                    callback();
+                }
+            });
+
+        });
+    };
+
+    SpiderBoard.prototype.transferCardsFromTableauToFoundation = function (cards, fromPile, toPile, callback) {
+        if (cards == null || cards.length <= 0) {
+            if (callback != null) {
+                callback();
+            }
             return;
         }
 
         //transfer cards
-        this.transferCardsFromTableau(cards, fromPile, toPile, true);
+        this.transferCardsFromTableau(cards, fromPile, toPile, true, callback);
     };
 
     SpiderBoard.prototype.registerTransferInHistory = function (cards, fromPile, toPile, cardFlipped) {
@@ -505,9 +540,9 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         }
 
         var settings = Utils.extendProps({
-                    animDelay: delayFraction,
-                    animTime: SpiderBoard.STOCK_ANIM_TIME },
-                this.settings);
+                animDelay: delayFraction,
+                animTime: SpiderBoard.STOCK_ANIM_TIME },
+            this.settings);
         this.stockPile.drawCards(transferTo, true, settings);
 
         if (actionSet.actions.length > 0) {
@@ -885,7 +920,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         this.settings.volume = 0;
         if (shuffle === true) {
             this.setupDeck(this.getSuitsForDifficulty(difficulty));
-            this.deck.shuffle();
+//            this.deck.shuffle();
         }
 
         this.setupPiles();
