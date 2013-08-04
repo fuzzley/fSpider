@@ -173,3 +173,117 @@
 }
 
 /* MODAL */
+
+/* Global Options Dlg */
+
+#global-settings-open-wrap {
+    position: absolute;
+    background: black;
+    opacity: 0.8;
+    border-radius: .5em;
+    pointer-events: auto;
+    bottom: 1em;
+    right: 1em;
+}
+
+#global-settings-open-wrap:hover {
+    opacity: 1;
+}
+
+#global-settings-open-btn {
+    font-size: 1.5em;
+}
+
+#dim-overlay {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: black;
+    opacity: 0.5;
+    z-index: 1000;
+    pointer-events: auto;
+}
+
+#global-options-dlg {
+    opacity: 0.9;
+    position: absolute;
+    width: 11em;
+    height: 23em;
+    z-index: 1001;
+    background: black;
+    border-radius: .75em;
+    padding: .3em;
+    color: white;
+    border: #191919 solid .15em;
+    box-shadow: #3b3b3b .1em .1em;
+    pointer-events: auto;
+}
+
+#global-options-header {
+    width: 100%;
+    height: 1.5em;
+    position: relative;
+    background-color: #161600;
+    border-top-left-radius: .75em;
+    border-top-right-radius: .75em;
+    padding: 0 .2em;
+    margin: -.2em -.2em -.2em -.2em;
+    cursor: grab;
+    cursor: -moz-grab;
+    cursor: -webkit-grab;
+}
+
+#global-options-header:active {
+    cursor: grabbing;
+    cursor: -moz-grabbing;
+    cursor: -webkit-grabbing;
+}
+
+#global-options-close-btn {
+    cursor: default;
+    border-radius: .3em;
+    padding: 0.1em;
+}
+
+#global-options-close-btn:hover {
+    background: white;
+    color: black;
+}
+
+.global-options-section {
+    border-radius: .5em;
+    margin-bottom: -.25em;
+    padding: .4em;
+}
+
+.global-options-section legend {
+    font-size: 1em;
+}
+
+.global-options-section button {
+    width: 100%;
+}
+
+/* Global Options Dlg */
+
+/* Custom Buttons */
+/* http://www.bestcssbuttongenerator.com/ */
+button {
+    border-radius: .3em;
+    background-color: #191919;
+    color: white;
+    border: gray solid .1em;
+}
+
+button:hover {
+    background-color: black;
+}
+
+button:disabled {
+    background-color: #4e4e4e;
+    color: #797979;
+}
+
+/* Custom Buttons */

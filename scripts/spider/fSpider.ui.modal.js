@@ -13,19 +13,15 @@ fSpider.Modal = (function (Modal, $, undefined) {
         if (this.options.draggable === true) {
             this.applyDraggable(this.$modal);
         }
-        this.applyState(this.options.startState);
-        if (this.options.startVisible !== true) {
-            this.$modal.hide();
-        }
+        this.applyState(this.options.startState, true);
     };
 
     //static fields
     Modal.prototype.STATES = {
-        'none': 0,
-        'expanded': 1,
-        'minimized': 2,
-        'pinned': 3,
-        'closed': 4
+        'EXPANDED': 0,
+        'MINIMIZED': 1,
+        'PINNED': 2,
+        'CLOSED': 3
     };
     Modal.prototype.defaultOptions = {
         draggable: true,
@@ -40,24 +36,23 @@ fSpider.Modal = (function (Modal, $, undefined) {
         controls: {
             pin: false,
             minimize: false,
-            restore: false,
+            expand: false,
             close: true,
             dragHandle: false
         },
-        startState: Modal.prototype.STATES.expanded,
+        startState: Modal.prototype.STATES.EXPANDED,
         startPosition: {
             top: '',
             left: '',
             bottom: '',
             right: ''
         },
-        startVisible: true,
         //events
         pinned: function () {
         },
         minimized: function () {
         },
-        restored: function () {
+        expanded: function () {
         },
         closed: function () {
         },
@@ -66,7 +61,7 @@ fSpider.Modal = (function (Modal, $, undefined) {
     };
 
     //fields
-    Modal.prototype.$element = null;
+    Modal.prototype.$modal = null;
     Modal.prototype.options = null;
     Modal.prototype.state = Modal.prototype.STATES.none;
 
@@ -77,6 +72,8 @@ fSpider.Modal = (function (Modal, $, undefined) {
     };
 
     Modal.prototype.wrapElement = function (el) {
+        var self = this;
+
         var opts = this.options || {};
         var ctrls = opts.controls || {};
 
@@ -100,7 +97,10 @@ fSpider.Modal = (function (Modal, $, undefined) {
         var $controls = $('<div />').addClass('modal-controls');
         //pin
         var $pin = $('<div />').addClass('modal-pin').addClass('modal-control')
-            .append($('<i />').addClass('icon-pushpin').addClass('modal-btn'));
+            .append($('<i />').addClass('icon-pushpin').addClass('modal-btn'))
+            .on('click', function () {
+                self.pin();
+            });
         if (ctrls.pin !== true) {
             $pin.hide();
         }
@@ -108,22 +108,33 @@ fSpider.Modal = (function (Modal, $, undefined) {
 
         //minimize
         var $minimize = $('<div />').addClass('modal-minimize').addClass('modal-control')
-            .append($('<i />').addClass('icon-minus').addClass('modal-btn'));
-        if (ctrls.pin !== true) {
+            .append($('<i />').addClass('icon-minus').addClass('modal-btn'))
+            .on('click', function () {
+                self.minimize();
+            });
+        if (ctrls.minimize !== true) {
             $minimize.hide();
         }
         $controls.append($minimize);
 
         //restore
         var $restore = $('<div />').addClass('modal-restore').addClass('modal-control')
-            .append($('<i />').addClass('icon-external-link').addClass('modal-btn'));
-        $restore.hide();
+            .append($('<i />').addClass('icon-external-link').addClass('modal-btn'))
+            .on('click', function () {
+                self.expand();
+            });
+        if (ctrls.expand !== true) {
+            $restore.hide();
+        }
         $controls.append($restore);
 
         //close
         var $close = $('<div />').addClass('modal-close').addClass('modal-control')
-            .append($('<i />').addClass('icon-remove').addClass('modal-btn'));
-        if (ctrls.pin !== true) {
+            .append($('<i />').addClass('icon-remove').addClass('modal-btn'))
+            .on('click', function () {
+                self.close();
+            });
+        if (ctrls.close !== true) {
             $minimize.hide();
         }
         $controls.append($close);
@@ -164,17 +175,23 @@ fSpider.Modal = (function (Modal, $, undefined) {
         return $modal;
     };
 
-    Modal.prototype.applyState = function (state) {
+    Modal.prototype.applyState = function (state, force) {
+        if (force !== true && this.state === state) {
+            return;
+        }
         switch (state) {
-            case this.STATES.expanded:
+            case this.STATES.EXPANDED:
+                this.expand();
                 break;
-            case this.STATES.minimized:
+            case this.STATES.MINIMIZED:
+                this.minimize();
                 break;
-            case this.STATES.pinned:
+            case this.STATES.PINNED:
+                this.pin();
                 break;
-            case this.STATES.closed:
+            case this.STATES.CLOSED:
+                this.close();
                 break;
-            default: break;
         }
     };
 
@@ -184,19 +201,25 @@ fSpider.Modal = (function (Modal, $, undefined) {
     };
 
     Modal.prototype.expand = function () {
-
+        this.state = this.STATES.EXPANDED;
+        this.$modal.show();
+        this.options.expanded(this);
     };
 
     Modal.prototype.minimize = function () {
-
+        this.state = this.STATES.MINIMIZED;
+        this.options.minimized(this);
     };
 
     Modal.prototype.pin = function () {
-
+        this.state = this.STATES.PINNED;
+        this.options.pinned(this);
     };
 
     Modal.prototype.close = function () {
-
+        this.state = this.STATES.CLOSED;
+        this.$modal.hide();
+        this.options.closed(this);
     };
 
     return Modal;

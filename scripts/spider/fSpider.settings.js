@@ -25,23 +25,23 @@ fSpider.SpiderSettings = (function (SpiderSettings, $, undefined) {
     SpiderSettings.prototype.windows = {
         options: {
             position: { top: '', bottom: '56px', left: '5px', right: '' },
-            visible: true
+            modalState: 0
         },
         score: {
             position: { top: '', bottom: '60px', left: '95px', right: '' },
-            visible: true
+            modalState: 0
         },
         moves: {
             position: { top: '', bottom: '60px', left: '150px', right: '' },
-            visible: true
+            modalState: 0
         },
         time: {
             position: { top: '', bottom: '60px', left: '210px', right: '' },
-            visible: true
+            modalState: 0
         },
         game: {
             position: { top: '', bottom: '5px', left: '5px', right: '' },
-            visible: true
+            modalState: 0
         }
     };
 
@@ -67,6 +67,13 @@ fSpider.SpiderSettings = (function (SpiderSettings, $, undefined) {
         this.windows[windowName].position.bottom = $element.css('bottom');
         this.windows[windowName].position.left = $element.css('left');
         this.windows[windowName].position.right = $element.css('right');
+    };
+
+    SpiderSettings.prototype.setWindowModalState = function (windowName, state) {
+        if (this.windows[windowName] == null || state == null) {
+            return;
+        }
+        this.windows[windowName].modalState = state;
     };
 
     SpiderSettings.prototype.filter = function (props) {
