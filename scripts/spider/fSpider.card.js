@@ -135,7 +135,7 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
                 animTime = settings.animTime;
             }
             if (settings.animDelay != null) {
-                delay = settings.animDelay;
+                delay = settings.animDelay + 0;
             }
             this.flipAnimatorContext = this.prepareFlipAnimationContext(faceUp, animTime, callback);
         }

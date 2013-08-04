@@ -103,6 +103,9 @@ fSpider.Pile = (function (Pile, undefined) {
         }
 
         if (cards == null || cards.length <= 0) {
+            if (callback != null) {
+                callback();
+            }
             return;
         }
 
@@ -124,7 +127,11 @@ fSpider.Pile = (function (Pile, undefined) {
             pile.resetDraggable();
         });
 
-        this.arrangeCards(settings, callback);
+        var fromIndex = this.cards.indexOf(cards[0]) - 1;
+        if (fromIndex < 0) {
+            fromIndex = 0;
+        }
+        this.arrangeCards(settings, callback, fromIndex);
     };
 
     Pile.prototype.addCard = function (card, absPos) {
@@ -164,7 +171,7 @@ fSpider.Pile = (function (Pile, undefined) {
         }
     };
 
-    Pile.prototype.arrangeCards = function (settings, callback) {
+    Pile.prototype.arrangeCards = function (settings, callback, fromIndex) {
         //specific to pile type
     };
 
@@ -467,9 +474,12 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
         return true;
     };
 
-    TableauPile.prototype.arrangeCards = function (settings, callback) {
+    TableauPile.prototype.arrangeCards = function (settings, callback, fromIndex) {
         if (settings == null) {
             settings = {};
+        }
+        if (fromIndex == null || fromIndex < 0) {
+            fromIndex = 0;
         }
 
         var cards = this.cards;
@@ -533,7 +543,11 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
                     y += padTopFaceDown;
                 }
             }
-            this.cards[i].setPosition(0, y, settings, onCallback);
+            if (i >= fromIndex) {
+                this.cards[i].setPosition(0, y, settings, onCallback);
+            } else {
+                expectedCallbacks--;
+            }
         }
         var height = y + PlayingCard.CARD_DIM.h;
 
@@ -699,8 +713,18 @@ fSpider.StockPile = (function (StockPile, undefined) {
         var expectedCallbacks = 0;
         var onCallback = function () {
             expectedCallbacks--;
-            if (stillLooping !== true && expectedCallbacks <= 0 && callback != null) {
-                callback();
+            if (stillLooping !== true && expectedCallbacks <= 0) {
+                var uniquePiles = [];
+                piles.forEach(function (pile) {
+                    if (uniquePiles.indexOf(pile) < 0) {
+                        pile.resetListening();
+                        pile.resetDraggable();
+                        uniquePiles.push(pile);
+                    }
+                });
+                if (callback != null) {
+                    callback();
+                }
             }
         };
 
@@ -726,8 +750,6 @@ fSpider.StockPile = (function (StockPile, undefined) {
                 stillLooping = false;
             }
             pile.transferCards([card], Utils.extendProps({ animDelay: delay * i }, settings), onCallback);
-            pile.resetDraggable();
-            pile.resetListening();
         }
     };
 
