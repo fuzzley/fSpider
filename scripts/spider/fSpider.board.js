@@ -401,14 +401,15 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
                     this.transferCardsFromTableauToFoundation(completeSequence, tPile, fPile, function () {
                         fPile.resetListening();
                         fPile.reverseCards();
+
+                        //merge last 3 actionsets in history (move to tableau, score increase, move to foundation)
+                        self.history.mergeActionSets(self.history.cursor - 3, 3);
+
                         self.redraw();
                         if (callback != null) {
                             callback(true);
                         }
                     });
-
-                    //merge last 3 actionsets in history (move to tableau, score increase, move to foundation)
-                    this.history.mergeActionSets(this.history.cursor - 3, 3);
 
                     return true;
                 }
