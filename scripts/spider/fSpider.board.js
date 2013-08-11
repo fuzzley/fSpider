@@ -397,7 +397,9 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
 
                     var self = this;
                     //transfer cards
+                    this.stopAllAnimations();
                     this.transferCardsFromTableauToFoundation(completeSequence, tPile, fPile, function () {
+                        fPile.resetListening();
                         fPile.reverseCards();
                         self.redraw();
                         if (callback != null) {
@@ -555,8 +557,8 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         }
 
         settings = settings.extend({
-                animDelay: delayFraction,
-                animTime: SpiderBoard.STOCK_ANIM_TIME
+            animDelay: delayFraction,
+            animTime: SpiderBoard.STOCK_ANIM_TIME
         });
         this.stockPile.drawCards(transferTo, flip === true, settings, callback);
 
@@ -949,13 +951,20 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         var self = this;
         this.cancelDrawAnimation = false;
         this.drawFromStockPile(0, 44, false, false, null, function () {
-            self.drawFromStockPile(0, 10, true, false, self.settings.extendAnimate(self.cancelDrawAnimation !== true), function () {
-                piles.forEach(function (pile) {
-                    pile.moveAllCardsToGroup();
-                    pile.arrangeCards(self.settings.extendAnimate(false));
-                });
-                self.redraw();
-            });
+            var cancel = self.cancelDrawAnimation === true;
+            var volume = self.settings.volume;
+            if (cancel === true) {
+                volume = 0;
+            }
+            self.drawFromStockPile(0, 10, true, false, self.settings.extend({ animate: !cancel, volume: volume }),
+                function () {
+                    piles.forEach(function (pile) {
+                        pile.moveAllCardsToGroup();
+                        pile.arrangeCards(self.settings.extend({ animate: false, volume: 0 }));
+                    });
+                    self.redraw();
+                }
+            );
         });
 
         this.gameInProgress = true;
