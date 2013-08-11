@@ -127,7 +127,7 @@ fSpider.Pile = (function (Pile, undefined) {
             pile.resetDraggable();
         });
 
-        var fromIndex = this.cards.indexOf(cards[0]) - 1;
+        var fromIndex = this.cards.indexOf(cards[0]);
         if (fromIndex < 0) {
             fromIndex = 0;
         }

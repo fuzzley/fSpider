@@ -131,6 +131,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
     SpiderBoard.prototype.settings = null;
     SpiderBoard.prototype.history = null;
     SpiderBoard.prototype.gameInProgress = false;
+    SpiderBoard.prototype.cancelDrawAnimation = false;
     SpiderBoard.prototype.scale = 1;
     SpiderBoard.prototype.score = 0;
     SpiderBoard.prototype.moves = 0;
@@ -520,9 +521,12 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         this.history.registerActionSet(actionSet);
     };
 
-    SpiderBoard.prototype.drawFromStockPile = function (flipAlso, firstPileN, amount, registerHistory, callback) {
+    SpiderBoard.prototype.drawFromStockPile = function (firstPileN, amount, flip, registerHistory, settings, callback) {
         if (amount <= 0) {
             return;
+        }
+        if (settings == null) {
+            settings = this.settings;
         }
 
         var actionSet = new ActionSet();
@@ -539,20 +543,22 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
             card = this.stockPile.getCardAt(nCards - i - 1);
 
             if (registerHistory === true) {
-                flipAction = new FlipCardAction(card, true);
+                if (flip === true) {
+                    flipAction = new FlipCardAction(card, true);
+                    actionSet.addAction(flipAction);
+                }
                 transferAction = new TransferCardsAction([card], this.stockPile, pile);
-                actionSet.addAction(flipAction);
                 actionSet.addAction(transferAction);
             }
 
             transferTo.push(pile);
         }
 
-        var settings = this.settings.extend({
+        settings = settings.extend({
                 animDelay: delayFraction,
                 animTime: SpiderBoard.STOCK_ANIM_TIME
         });
-        this.stockPile.drawCards(transferTo, flipAlso === true, settings, callback);
+        this.stockPile.drawCards(transferTo, flip === true, settings, callback);
 
         if (actionSet.actions.length > 0) {
             this.history.registerActionSet(actionSet);
@@ -778,6 +784,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
                 this.redraw();
             }
         } else {
+            this.cancelDrawAnimation = true;
             this.stopAllAnimations();
         }
     };
@@ -839,7 +846,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         } else {
             if (pile === this.stockPile) {
                 if (this.canTakeFromStockPile() === true) {
-                    this.drawFromStockPile(true, 0, this.tableauPiles.length, true);
+                    this.drawFromStockPile(0, this.tableauPiles.length, true, true);
                     evt.handledByCardTouch = true; //prevent bubbled event to trigger "deselect card"
                 }
             } else {
@@ -940,9 +947,15 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         });
         this.arrangePiles(this.settings.extendAnimate(false));
         var self = this;
-        this.drawFromStockPile(false, 0, 44, false, function () {
-            self.drawFromStockPile(true, 0, 10, false);
-            self.redraw();
+        this.cancelDrawAnimation = false;
+        this.drawFromStockPile(0, 44, false, false, null, function () {
+            self.drawFromStockPile(0, 10, true, false, self.settings.extendAnimate(self.cancelDrawAnimation !== true), function () {
+                piles.forEach(function (pile) {
+                    pile.moveAllCardsToGroup();
+                    pile.arrangeCards(self.settings.extendAnimate(false));
+                });
+                self.redraw();
+            });
         });
 
         this.gameInProgress = true;
