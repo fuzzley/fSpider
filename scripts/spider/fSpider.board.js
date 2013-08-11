@@ -16,6 +16,7 @@ fSpider.History = fSpider.History || {};
 fSpider.ActionSet = fSpider.ActionSet || {};
 fSpider.TransferCardsAction = fSpider.TransferCardsAction || {};
 fSpider.FlipCardAction = fSpider.FlipCardAction || {};
+fSpider.ReverseCardsAction = fSpider.ReverseCardsAction || {};
 fSpider.ScoreChangeAction = fSpider.ScoreChangeAction || {};
 
 fSpider.SpiderSettings = fSpider.SpiderSettings || {};
@@ -37,6 +38,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
     var ActionSet = fSpider.ActionSet;
     var TransferCardsAction = fSpider.TransferCardsAction;
     var FlipCardAction = fSpider.FlipCardAction;
+    var ReverseCardsAction = fSpider.ReverseCardsAction;
     var ScoreChangeAction = fSpider.ScoreChangeAction;
     var SpiderSettings = fSpider.SpiderSettings;
     var Utils = fSpider.Utils;
@@ -402,8 +404,11 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
                         fPile.resetListening();
                         fPile.reverseCards();
 
+                        var reverseCardsAction = new ReverseCardsAction(fPile);
+                        self.history.registerAction(reverseCardsAction);
+
                         //merge last 3 actionsets in history (move to tableau, score increase, move to foundation)
-                        self.history.mergeActionSets(self.history.cursor - 3, 3);
+                        self.history.mergeActionSets(self.history.cursor - 4, 4);
 
                         self.redraw();
                         if (callback != null) {
@@ -940,7 +945,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
 
         if (shuffle === true) {
             this.setupDeck(this.getSuitsForDifficulty(difficulty));
-            this.deck.shuffle();
+//            this.deck.shuffle();
         }
 
         this.setupPiles();

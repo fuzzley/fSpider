@@ -4,8 +4,8 @@ fSpider.ActionSet = (function (ActionSet, undefined) {
     'use strict';
 
     //constructor
-    ActionSet = function () {
-        this.actions = [];
+    ActionSet = function (actions) {
+        this.actions = actions || [];
     };
 
     //fields
@@ -123,7 +123,7 @@ fSpider.History = (function (History, undefined) {
     };
 
     History.prototype.registerAction = function (action) {
-        this.registerActionSet(new ActionSet(action));
+        this.registerActionSet(new ActionSet([action]));
     };
 
     History.prototype.registerActionSet = function (actionSet) {
@@ -250,6 +250,30 @@ fSpider.FlipCardAction = (function (FlipCardAction, undefined) {
 
     return FlipCardAction;
 })(fSpider.FlipCardAction || {});
+
+fSpider.ReverseCardsAction = (function (ReverseCardsAction, undefined) {
+    'use strict';
+
+    //constructor
+    ReverseCardsAction = function (pile) {
+        this.pile = pile;
+    };
+
+    //fields
+    ReverseCardsAction.prototype.board = null;
+    ReverseCardsAction.prototype.amount = 0;
+
+    //public functions
+    ReverseCardsAction.prototype.undo = function () {
+        this.pile.reverseCards();
+    };
+
+    ReverseCardsAction.prototype.redo = function () {
+        this.pile.reverseCards();
+    };
+
+    return ReverseCardsAction;
+})(fSpider.ReverseCardsAction || {});
 
 fSpider.ScoreChangeAction = (function (ScoreChangeAction, undefined) {
     'use strict';
