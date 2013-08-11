@@ -625,9 +625,13 @@ fSpider.StockPile = (function (StockPile, undefined) {
     //getters/setters
 
     //public methods
-    StockPile.prototype.arrangeCards = function (settings, callback) {
+    StockPile.prototype.arrangeCards = function (settings, callback, fromIndex) {
         if (settings == null) {
             settings = {};
+        }
+
+        if (fromIndex == null) {
+            fromIndex = 0;
         }
 
         var stillLooping = true;

@@ -945,7 +945,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
 
         if (shuffle === true) {
             this.setupDeck(this.getSuitsForDifficulty(difficulty));
-//            this.deck.shuffle();
+            this.deck.shuffle();
         }
 
         this.setupPiles();
