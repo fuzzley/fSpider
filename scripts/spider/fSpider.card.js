@@ -26,6 +26,7 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
     Card.prototype.hoverBorder = null;
 
     Card.prototype.cardFlipSound = null;
+    Card.prototype.cardMoveSound = null;
 
     Card.prototype.animationLayer = null;
     Card.prototype.positionAnimator = null;
@@ -97,6 +98,10 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
 
     Card.prototype.setCardFlipSound = function (cardFlipSound) {
         this.cardFlipSound = cardFlipSound;
+    };
+
+    Card.prototype.setCardMoveSound = function (cardMoveSound) {
+        this.cardMoveSound = cardMoveSound;
     };
 
     Card.prototype.getPile = function () {
@@ -201,7 +206,11 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
             }
             this.positionAnimatorContext = this.preparePositionAnimationContext(x, y, animTime, callback);
         }
-        var sound = settings.volume != null && settings.volume > 0;
+        var sound = false;
+        if (settings.volume != null && this.cardMoveSound != null) {
+            this.cardMoveSound.volume(settings.volume);
+            sound = true;
+        }
 
         var self = this;
         var setPos = function () {
@@ -212,6 +221,10 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
                 if (callback != null) {
                     callback(self);
                 }
+            }
+
+            if (sound === true) {
+                self.cardMoveSound.play();
             }
         };
 

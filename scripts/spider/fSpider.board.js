@@ -193,6 +193,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         var length = cards.length;
         for (var i = 0; i < length; i++) {
             cards[i].setCardFlipSound(sounds.cardFlip);
+            cards[i].setCardMoveSound(sounds.cardMove);
         }
     };
 
@@ -327,10 +328,10 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
             card.on('touchend mouseup', function (evt) {
                 self._cardTouch(evt, card);
             });
-            card.on('mouseover', function (evt) {
+            card.on('mouseenter', function (evt) {
                 self._cardMouseOver(evt, card);
             });
-            card.on('mouseout', function (evt) {
+            card.on('mouseleave', function (evt) {
                 self._cardMouseOut(evt, card);
             });
         });
@@ -344,10 +345,10 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
                 ph.on('touchend mouseup', function (evt) {
                     self._tableauPlaceHolderTouch(evt, tPile);
                 });
-                ph.on('mouseover', function (evt) {
+                ph.on('mouseenter', function (evt) {
                     self._tableauPlaceHolderMouseOver(evt, tPile);
                 });
-                ph.on('mouseout', function (evt) {
+                ph.on('mouseleave', function (evt) {
                     self._tableauPlaceHolderMouseOut(evt, tPile);
                 });
             }
