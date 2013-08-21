@@ -264,7 +264,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
     };
 
     SpiderBoard.prototype.setupPiles = function () {
-        var i, j, pile;
+        var i;
 
         var cards = this.deck.getCards();
 
@@ -274,31 +274,8 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
             piles[i].removeAllCards();
         }
 
-        //TABLEAU PILES
-        var k = 0;
-
-//        //4 piles with 6 cards
-//        for (i = 0; i < 4; i++) {
-//            pile = this.tableauPiles[i];
-//            //6 cards
-//            for (j = 0; j < 6; j++) {
-//                pile.addCard(cards[k]);
-//                k++;
-//            }
-//        }
-//
-//        //6 piles with 5 cards
-//        for (i = 4; i < 10; i++) {
-//            pile = this.tableauPiles[i];
-//            //5 cards
-//            for (j = 0; j < 5; j++) {
-//                pile.addCard(cards[k]);
-//                k++;
-//            }
-//        }
-
-        //STOCK PILE
         //rest of cards go into stock pile
+        var k = 0;
         while (k < cards.length) {
             this.stockPile.addCard(cards[k]);
             k++;
