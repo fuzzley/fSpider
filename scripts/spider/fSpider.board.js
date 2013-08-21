@@ -344,8 +344,8 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
             card.off('dragmove');
             card.off('dragend');
             card.off('touchend mouseup');
-            card.off('mouseover');
-            card.off('mouseout');
+            card.off('mouseenter');
+            card.off('mouseleave');
         });
     };
 
@@ -354,8 +354,8 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
             var ph = tPile.getPlaceHolderImg();
             if (ph !== undefined) {
                 ph.off('touchend mouseup');
-                ph.off('mouseover');
-                ph.off('mouseout');
+                ph.off('mouseenter');
+                ph.off('mouseleave');
             }
         });
     };
