@@ -36,6 +36,21 @@ fSpider.Debug = (function (Debug, undefined) {
         b.tableauPiles[0].arrangeCards(fSpider.board.settings.extendAnimate(false));
         b.tableauPiles[0].resetListening();
         b.tableauPiles[0].resetDraggable();
+        b.stockPile.cards.splice(b.stockPile.cards.indexOf(cards[12]), 1);
+        b.stockPile.cards.push(cards[12]);
+        b.stockPile.resetCardFaces();
+        b.stockPile.resetListening();
+        b.stockPile.resetDraggable();
+        b.stockPile.arrangeCards();
+        b.stockPile.moveAllCardsToGroup();
+        b.tableauPiles.forEach(function (tPile, index) {
+            if (index != 0) {
+                tPile.transferCards([b.stockPile.cards[0]]);
+                tPile.resetCardFaces();
+                tPile.resetListening();
+                tPile.resetDraggable();
+            }
+        });
         b.redraw();
     };
 

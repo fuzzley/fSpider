@@ -111,7 +111,8 @@ fSpider.Pile = (function (Pile, undefined) {
 
         var self = this;
         var piles = [];
-        cards.forEach(function (card) {
+        var clndCards = cards.slice(0, cards.length);
+        clndCards.forEach(function (card) {
             var absPos = { x: card.getAbsolutePosition().x, y: card.getAbsolutePosition().y };
             var pile = card.getPile();
             if (pile != null) {
