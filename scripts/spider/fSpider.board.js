@@ -802,6 +802,8 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
     };
 
     SpiderBoard.prototype._cardTouch = function (evt, card) {
+        var self = this;
+
         var pile = card.getPile();
         var sCard = this.selectedCard;
         var sPile;
@@ -832,7 +834,11 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         } else {
             if (pile === this.stockPile) {
                 if (this.canTakeFromStockPile() === true) {
-                    this.drawFromStockPile(0, this.tableauPiles.length, true, true);
+                    this.drawFromStockPile(0, this.tableauPiles.length, true, true, function () {
+                        this.tableauPiles.forEach(function (tPile) {
+                            self.tryHandleCompleteSequence(tPile);
+                        });
+                    });
                     evt.handledByCardTouch = true; //prevent bubbled event to trigger "deselect card"
                 }
             } else {
