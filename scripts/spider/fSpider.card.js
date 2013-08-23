@@ -512,6 +512,8 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
         context.originalAbsPos = from;
         context.msStep = { x: delta.x / animTime, y: delta.y / animTime };
 
+        this.group.setListening(false);
+
         return context;
     };
 
@@ -562,6 +564,8 @@ fSpider.Card = (function (Card, Kinetic, undefined) {
             var animating = this.pile.countCardsAnimating();
             if (animating < 1) {
                 this.pile.moveAllCardsToGroup();
+                this.pile.resetListening();
+                this.pile.resetDraggable();
                 this.group.getLayer().draw();
                 if (layer !== this.group.getLayer()) {
                     layer.draw();
