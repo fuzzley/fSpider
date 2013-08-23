@@ -834,8 +834,8 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         } else {
             if (pile === this.stockPile) {
                 if (this.canTakeFromStockPile() === true) {
-                    this.drawFromStockPile(0, this.tableauPiles.length, true, true, function () {
-                        this.tableauPiles.forEach(function (tPile) {
+                    this.drawFromStockPile(0, this.tableauPiles.length, true, true, fSpider.settings, function () {
+                        self.tableauPiles.forEach(function (tPile) {
                             self.tryHandleCompleteSequence(tPile);
                         });
                     });

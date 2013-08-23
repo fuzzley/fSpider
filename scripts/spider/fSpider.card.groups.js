@@ -194,6 +194,7 @@ fSpider.Pile = (function (Pile, undefined) {
         });
     };
 
+
     Pile.prototype.reverseCards = function () {
         var cards = this.cards.reverse();
         cards.forEach(function (card) {
