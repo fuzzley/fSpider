@@ -475,6 +475,27 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
         return true;
     };
 
+    TableauPile.prototype.getFirstCardThatCanRemove = function () {
+        var length = this.getSize();
+        var card = null;
+        var cardT;
+        var i = length - 1;
+        while (length >= 0) {
+            cardT = this.cards[i];
+            //has to be face up
+            if (cardT.isFaceUp() !== true) {
+                break;
+            }
+            //if not last card and has same suit and type is one more than last one, can remove
+            if (i < length - 1 && (cardT.getSuit() !== card.getSuit() || cardT.getType() !== card.getType() + 1)) {
+                break;
+            } //else
+            card = cardT;
+            i--;
+        }
+        return card;
+    };
+
     TableauPile.prototype.arrangeCards = function (settings, callback, fromIndex) {
         if (settings == null) {
             settings = {};
