@@ -1,5 +1,5 @@
 /*!
- *  howler.js v1.1.11
+ *  howler.js v1.1.12
  *  howlerjs.com
  *
  *  (c) 2013, James Simpson of GoldFire Studios
@@ -22,6 +22,11 @@
     ctx = new webkitAudioContext();
   } else if (typeof Audio !== 'undefined') {
     usingWebAudio = false;
+    try {
+      new Audio();
+    } catch(e) {
+      noAudio = true;
+    }
   } else {
     usingWebAudio = false;
     noAudio = true;
@@ -154,6 +159,7 @@
     self._pos3d = o.pos3d || [0, 0, -0.5];
     self._volume = o.volume || 1;
     self._urls = o.urls || [];
+    self._rate = o.rate || 1;
 
     // setup event functions
     self._onload = [o.onload || function() {}];
@@ -242,7 +248,7 @@
         newNode._pos = 0;
         newNode.preload = 'auto';
         newNode.volume = (Howler._muted) ? 0 : self._volume * Howler.volume();
-
+       
         // add this sound to the cache
         cache[url] = self;
 
@@ -1160,22 +1166,25 @@
         node.bufferSource.loopStart = loop[1];
         node.bufferSource.loopEnd = loop[1] + loop[2];
       }
+      node.bufferSource.playbackRate.value = obj._rate;
     };
 
   }
 
   /**
-   * Add support for AMD (Async Module Definition) libraries such as require.js.
+   * Add support for AMD (Asynchronous Module Definition) libraries such as require.js.
    */
   if (typeof define === 'function' && define.amd) {
-    define('Howler', function() {
+    define(function() {
       return {
         Howler: Howler,
         Howl: Howl
       };
     });
-  } else {
-    window.Howler = Howler;
-    window.Howl = Howl;
   }
+  
+  // define globally in case AMD is not available or available but not used
+  window.Howler = Howler;
+  window.Howl = Howl;
+  
 })();
