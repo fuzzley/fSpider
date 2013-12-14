@@ -25,7 +25,7 @@ fSpider.Utils = (function (Utils, undefined) {
         return childObj;
     };
 
-    Utils.filterOutProperties = function (obj, ignoreProps, ignoreValues) {
+    Utils.filterOutProperties = function (obj, ignoreProps, ignoreValues, allowFunctions) {
         obj = obj || {};
         ignoreProps = ignoreProps || {};
         ignoreValues = ignoreValues || {};
@@ -35,7 +35,7 @@ fSpider.Utils = (function (Utils, undefined) {
 
         for (var option in obj) {
             //check for function
-            if (typeof (obj[option]) === 'function') {
+            if (typeof (obj[option]) === 'function' && allowFunctions !== true) {
                 continue;
             }
 
@@ -77,33 +77,11 @@ fSpider.Utils = (function (Utils, undefined) {
         ignoreValues = ignoreValues || {};
 
         var newObj = {};
-        var valid;
-
-        for (var option in obj) {
-            valid = true;
-
-            //check for requested property
-            for (var propIndex in props) {
-                if (option === props[propIndex]) {
-
-                    //check ignore values
-                    for (var valIndex in ignoreValues) {
-                        if (obj[option] === ignoreValues[valIndex]) {
-                            valid = false;
-                            break;
-                        }
-                    }
-
-                    if (valid !== true) {
-                        continue;
-                    }
-
-                    //property is wanted and value is valid, so add it
-                    newObj[option] = obj[option];
-                }
+        for (var i = 0; i < props.length; i++) {
+            if (obj.hasOwnProperty(props[i]) && ignoreValues.indexOf(obj[props[i]]) < 0) {
+                newObj[props[i]] = obj[props[i]];
             }
         }
-
         return newObj;
     };
 

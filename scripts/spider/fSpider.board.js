@@ -19,7 +19,8 @@ fSpider.FlipCardAction = fSpider.FlipCardAction || {};
 fSpider.ReverseCardsAction = fSpider.ReverseCardsAction || {};
 fSpider.ScoreChangeAction = fSpider.ScoreChangeAction || {};
 
-fSpider.SpiderSettings = fSpider.SpiderSettings || {};
+fSpider.Settings = fSpider.Settings || {};
+fSpider.GameSettings = fSpider.GameSettings || {};
 
 fSpider.Utils = fSpider.Utils || {};
 //externals
@@ -40,7 +41,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
     var FlipCardAction = fSpider.FlipCardAction;
     var ReverseCardsAction = fSpider.ReverseCardsAction;
     var ScoreChangeAction = fSpider.ScoreChangeAction;
-    var SpiderSettings = fSpider.SpiderSettings;
+    var GameSettings = fSpider.GameSettings;
     var Utils = fSpider.Utils;
 
     //constructor
@@ -48,7 +49,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         this.stage = stage;
         this.deck = new Deck();
         this.history = new History();
-        this.settings = new SpiderSettings();
+        this.settings = new GameSettings();
         this.cardAssetsImage = cardAssetsImage;
         this.cardImgDim = cardImgDim;
         this.draggingCards = [];
@@ -105,6 +106,67 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         this.stockPile.setVisible(false);
         this.pilesLayer.add(this.stockPile.getGroup());
         this.attachPileEventHandlers();
+
+        //view model proxies
+        this.vm = new SpiderBoard.VM();
+        Object.defineProperty(this, 'score', {
+            get: function () {
+                return this.vm.score();
+            },
+            set: function (value) {
+                this.vm.score(value);
+            }
+        });
+        Object.defineProperty(this, 'moves', {
+            get: function () {
+                return this.vm.moves();
+            },
+            set: function (value) {
+                this.vm.moves(value);
+            }
+        });
+        Object.defineProperty(this, 'timeElapsed', {
+            get: function () {
+                return this.vm.timeElapsed();
+            },
+            set: function (value) {
+                this.vm.timeElapsed(value);
+            }
+        });
+        Object.defineProperty(this, 'gameInProgress', {
+            get: function () {
+                return this.vm.gameInProgress();
+            },
+            set: function (value) {
+                this.vm.gameInProgress(value);
+            }
+        });
+    };
+
+    //view model
+    SpiderBoard.VM = function () {
+        this.build();
+        this.reset();
+    };
+
+    SpiderBoard.VM.prototype.build = function () {
+        this.score = ko.observable();
+        this.moves = ko.observable();
+        this.timeElapsed = ko.observable();
+        this.gameInProgress = ko.observable();
+        this.playerAction = ko.observable();
+    };
+
+    SpiderBoard.VM.prototype.reset = function () {
+        this.score(SpiderBoard.START_SCORE);
+        this.moves(0);
+        this.timeElapsed(0);
+        this.gameInProgress(false);
+        this.playerAction(SpiderBoard.PLAYER_ACTIONS.none);
+    };
+
+    SpiderBoard.VM.prototype.bind = function (element) {
+        ko.applyBindings(this, element);
     };
 
     //static fields
@@ -132,14 +194,10 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
     SpiderBoard.prototype.deck = null;
     SpiderBoard.prototype.settings = null;
     SpiderBoard.prototype.history = null;
-    SpiderBoard.prototype.gameInProgress = false;
     SpiderBoard.prototype.cancelDrawAnimation = false;
     SpiderBoard.prototype.scale = 1;
-    SpiderBoard.prototype.score = 0;
-    SpiderBoard.prototype.moves = 0;
-    SpiderBoard.prototype.timeElapsed = 0;
-    SpiderBoard.prototype.winText = null;
     SpiderBoard.prototype.playerAction = SpiderBoard.PLAYER_ACTIONS.none;
+    SpiderBoard.prototype.winText = null;
     SpiderBoard.prototype.selectedCard = null;
     SpiderBoard.prototype.draggingCards = null;
     SpiderBoard.prototype.tableauPiles = null;
@@ -147,28 +205,9 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
     SpiderBoard.prototype.stockPile = null;
     SpiderBoard.prototype.cardAssetsImage = null;
     SpiderBoard.prototype.cardImgDim = null;
-    SpiderBoard.prototype._onScoreChanged = null;
-    SpiderBoard.prototype._onMovesChanged = null;
-    SpiderBoard.prototype._onTimeElapsedChanged = null;
     SpiderBoard.prototype._timeElapsedTimer = null;
 
     //getters/setters
-    SpiderBoard.prototype.getDeck = function () {
-        return this.deck;
-    };
-
-    SpiderBoard.prototype.getSettings = function () {
-        return this.settings;
-    };
-
-    SpiderBoard.prototype.getHistory = function () {
-        return this.history;
-    };
-
-    SpiderBoard.prototype.getStage = function () {
-        return this.stage;
-    };
-
     SpiderBoard.prototype.setTableauPlaceHolderImage = function (img, cropSqr) {
         var tPile;
         if (this.tableauPiles != null) {
@@ -198,10 +237,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
     };
 
     SpiderBoard.prototype.getPiles = function () {
-        var piles = [];
-
-        piles = piles.concat(this.tableauPiles || [], this.foundationPiles || []);
-
+        var piles = (this.tableauPiles || []).concat(this.foundationPiles || []);
         if (this.stockPile != null) {
             piles = piles.concat([this.stockPile]);
         }
@@ -209,38 +245,14 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         return piles;
     };
 
-    SpiderBoard.prototype.getLayer = function () {
-        return this.pilesLayer;
-    };
-
-    SpiderBoard.prototype.getGlobalScale = function () {
-        return this.scale;
-    };
-
-    SpiderBoard.prototype.getStockPile = function () {
-        return this.stockPile;
-    };
-
-    SpiderBoard.prototype.getTableauPiles = function () {
-        return this.tableauPiles || [];
-    };
-
-    SpiderBoard.prototype.getFoundationPiles = function () {
-        return this.foundationPiles || [];
-    };
-
     //"private" methods
     //build
     SpiderBoard.prototype.resetStatistics = function () {
-        var self = this;
-
-        this.setScore(SpiderBoard.START_SCORE);
-        this.setMoves(0);
-        this.setTimeElapsed(0);
+        this.vm.reset();
         clearInterval(this._timeElapsedTimer);
         this._timeElapsedTimer = setInterval(function () {
-            self._timeElapsedTick(SpiderBoard.TIME_ELAPSED_INTERVAL);
-        }, SpiderBoard.TIME_ELAPSED_INTERVAL);
+            this._timeElapsedTick(SpiderBoard.TIME_ELAPSED_INTERVAL);
+        }.bind(this), SpiderBoard.TIME_ELAPSED_INTERVAL);
     };
 
     SpiderBoard.prototype.setupDeck = function (suits) {
@@ -265,7 +277,6 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
 
     SpiderBoard.prototype.setupPiles = function () {
         var i;
-
         var cards = this.deck.getCards();
 
         //remove all cards from piles first
@@ -283,51 +294,48 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
     };
 
     SpiderBoard.prototype.attachLayerEventHandlers = function () {
-        var self = this;
         this.pilesLayer.on('touchend mouseup', function (evt) {
-            self._layerTouch(evt);
-        });
+            this._layerTouch(evt);
+        }.bind(this));
     };
 
     SpiderBoard.prototype.attachCardEventHandlers = function () {
-        var self = this;
         var cards = this.deck.getCards();
         cards.forEach(function (card) {
             card.on('dragstart', function (evt) {
-                self._cardDragStart(evt, card);
-            });
+                this._cardDragStart(evt, card);
+            }.bind(this));
             card.on('dragmove', function (evt) {
-                self._cardDragMove(evt, card);
-            });
+                this._cardDragMove(evt, card);
+            }.bind(this));
             card.on('dragend', function (evt) {
-                self._cardDragEnd(evt, card);
-            });
+                this._cardDragEnd(evt, card);
+            }.bind(this));
             card.on('touchend mouseup', function (evt) {
-                self._cardTouch(evt, card);
-            });
+                this._cardTouch(evt, card);
+            }.bind(this));
             card.on('mouseenter', function (evt) {
-                self._cardMouseOver(evt, card);
-            });
+                this._cardMouseOver(evt, card);
+            }.bind(this));
             card.on('mouseleave', function (evt) {
-                self._cardMouseOut(evt, card);
-            });
-        });
+                this._cardMouseOut(evt, card);
+            }.bind(this));
+        }.bind(this));
     };
 
     SpiderBoard.prototype.attachPileEventHandlers = function () {
-        var self = this;
         this.tableauPiles.forEach(function (tPile) {
             var ph = tPile.getPlaceHolderImg();
             if (ph != null) {
                 ph.on('touchend mouseup', function (evt) {
-                    self._tableauPlaceHolderTouch(evt, tPile);
-                });
+                    this._tableauPlaceHolderTouch(evt, tPile);
+                }.bind(this));
                 ph.on('mouseenter', function (evt) {
-                    self._tableauPlaceHolderMouseOver(evt, tPile);
-                });
+                    this._tableauPlaceHolderMouseOver(evt, tPile);
+                }.bind(this));
                 ph.on('mouseleave', function (evt) {
-                    self._tableauPlaceHolderMouseOut(evt, tPile);
-                });
+                    this._tableauPlaceHolderMouseOut(evt, tPile);
+                }.bind(this));
             }
         });
     };
@@ -375,7 +383,6 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
                     var scoreChangeAction = new ScoreChangeAction(this, SpiderBoard.SCORE_INCREMENT_BY_AFTER_COMPLETE_SEQUENCE);
                     this.history.registerAction(scoreChangeAction);
 
-                    var self = this;
                     //transfer cards
                     this.stopAllAnimations();
                     this.transferCardsFromTableauToFoundation(completeSequence, tPile, fPile, function () {
@@ -383,16 +390,16 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
                         fPile.reverseCards();
 
                         var reverseCardsAction = new ReverseCardsAction(fPile);
-                        self.history.registerAction(reverseCardsAction);
+                        this.history.registerAction(reverseCardsAction);
 
                         //merge last 3 actionsets in history (move to tableau, score increase, move to foundation)
-                        self.history.mergeActionSets(self.history.cursor - 4, 4);
+                        this.history.mergeActionSets(this.history.cursor - 4, 4);
 
-                        self.redraw();
+                        this.redraw();
                         if (callback != null) {
                             callback(true);
                         }
-                    });
+                    }.bind(this));
 
                     return true;
                 }
@@ -427,8 +434,6 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
             return;
         }
 
-        var self = this;
-
         var flipped = cards.length > 0
             && fromPile.getSize() - cards.length > 0
             && fromPile.getCardAt(fromPile.getCards().indexOf(cards[0]) - 1).isFaceUp() !== true;
@@ -444,16 +449,16 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
 
             if (updateStats === true) {
                 //modify statistics
-                self.reduceScore();
-                self.increaseMoves();
+                this.reduceScore();
+                this.increaseMoves();
             }
 
-            self.registerTransferInHistory(cards, fromPile, toPile, flipped);
+            this.registerTransferInHistory(cards, fromPile, toPile, flipped);
 
             if (callback != null) {
                 callback();
             }
-        });
+        }.bind(this));
         fromPile.setLastCardFaceUp(true, this.settings);
     };
 
@@ -465,22 +470,20 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
             return;
         }
 
-        var self = this;
-
         //transfer cards
         this.transferCardsFromTableau(cards, fromPile, toPile, true, function () {
 
             //check for a complete sequence
-            self.tryHandleCompleteSequence(toPile, function (result) {
-                if (result === true && self.checkForWin() === true) {
-                    self.win();
+            this.tryHandleCompleteSequence(toPile, function (result) {
+                if (result === true && this.checkForWin() === true) {
+                    this.win();
                 }
                 if (callback != null) {
                     callback();
                 }
-            });
+            }.bind(this));
 
-        });
+        }.bind(this));
     };
 
     SpiderBoard.prototype.transferCardsFromTableauToFoundation = function (cards, fromPile, toPile, callback) {
@@ -643,13 +646,13 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         var diamonds = PlayingCard.CARD_SUITS.diamonds;
 
         switch (difficulty) {
-            case SpiderSettings.prototype.DIFFICULTIES.ONE_SUIT:
+            case GameSettings.prototype.DIFFICULTIES.ONE_SUIT:
                 suits = [spades, spades, spades, spades, spades, spades, spades, spades];
                 break;
-            case SpiderSettings.prototype.DIFFICULTIES.TWO_SUIT:
+            case GameSettings.prototype.DIFFICULTIES.TWO_SUIT:
                 suits = [spades, spades, spades, spades, hearts, hearts, hearts, hearts];
                 break;
-            case SpiderSettings.prototype.DIFFICULTIES.FOUR_SUIT:
+            case GameSettings.prototype.DIFFICULTIES.FOUR_SUIT:
                 suits = [spades, spades, clubs, clubs, hearts, hearts, diamonds, diamonds];
                 break;
         }
@@ -732,24 +735,6 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
 
         card.setSelected(true, tellParent, settings);
         this.selectedCard = card;
-    };
-
-    SpiderBoard.prototype._fireScoreChanged = function () {
-        if (this._onScoreChanged != null) {
-            this._onScoreChanged(this.score);
-        }
-    };
-
-    SpiderBoard.prototype._fireMovesChanged = function () {
-        if (this._onMovesChanged != null) {
-            this._onMovesChanged(this.moves);
-        }
-    };
-
-    SpiderBoard.prototype._fireTimeElapsedChanged = function () {
-        if (this._onTimeElapsedChanged != null) {
-            this._onTimeElapsedChanged(this.timeElapsed);
-        }
     };
 
     //event handlers
@@ -916,7 +901,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
 
     SpiderBoard.prototype.startGame = function (shuffle, difficulty) {
         if (difficulty == null) {
-            difficulty = SpiderSettings.prototype.ONE_SUIT;
+            difficulty = GameSettings.prototype.ONE_SUIT;
         }
 
         var piles = this.getPiles();
@@ -941,21 +926,21 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         var self = this;
         this.cancelDrawAnimation = false;
         this.drawFromStockPile(0, 44, false, false, null, function () {
-            var cancel = self.cancelDrawAnimation === true;
-            var volume = self.settings.volume;
+            var cancel = this.cancelDrawAnimation === true;
+            var volume = this.settings.volume;
             if (cancel === true) {
                 volume = 0;
             }
-            self.drawFromStockPile(0, 10, true, false, self.settings.extend({ animate: !cancel, volume: volume }),
+            this.drawFromStockPile(0, 10, true, false, self.settings.extend({ animate: !cancel, volume: volume }),
                 function () {
                     piles.forEach(function (pile) {
                         pile.moveAllCardsToGroup();
-                        pile.arrangeCards(self.settings.extend({ animate: false, volume: 0 }));
-                    });
-                    self.redraw();
-                }
+                        pile.arrangeCards(this.settings.extend({ animate: false, volume: 0 }));
+                    }.bind(this));
+                    this.redraw();
+                }.bind(this)
             );
-        });
+        }.bind(this));
 
         this.gameInProgress = true;
     };
@@ -1141,10 +1126,6 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         });
     };
 
-    SpiderBoard.prototype.isGameInProgress = function () {
-        return this.gameInProgress;
-    };
-
     SpiderBoard.prototype.recalculateGlobalScale = function () {
         var origScale = this.scale;
         var scaleX = this.stage.getWidth() / SpiderBoard.ORIGINAL_DIMENSIONS.w;
@@ -1163,74 +1144,26 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         }
     };
 
-    SpiderBoard.prototype.onMovesChanged = function (callback) {
-        this._onMovesChanged = callback;
-    };
-
     SpiderBoard.prototype.increaseMoves = function (amount) {
         if (amount == null) {
             amount = SpiderBoard.MOVES_INCREMENT_BY;
         }
-        if (amount !== 0) {
-            this.moves += amount;
-            this._fireMovesChanged();
-        }
-    };
-
-    SpiderBoard.prototype.setMoves = function (moves) {
-        if (this.moves !== moves) {
-            this.moves = moves;
-            this._fireMovesChanged();
-        }
-    };
-
-    SpiderBoard.prototype.onScoreChanged = function (callback) {
-        this._onScoreChanged = callback;
+        this.moves += amount;
     };
 
     SpiderBoard.prototype.reduceScore = function (amount) {
         if (amount == null) {
             amount = SpiderBoard.SCORE_DECREMENT_BY;
         }
-        if (amount !== 0) {
-            this.score -= amount;
-            this._fireScoreChanged();
-        }
+        this.score -= amount;
     };
 
     SpiderBoard.prototype.increaseScore = function (amount) {
-        if (amount != null && amount !== 0) {
-            this.score += amount;
-            this._fireScoreChanged();
-        }
-    };
-
-    SpiderBoard.prototype.setScore = function (score) {
-        if (this.score !== score) {
-            this.score = score;
-            this._fireScoreChanged();
-        }
-    };
-
-    SpiderBoard.prototype.onTimeElapsedChanged = function (callback) {
-        this._onTimeElapsedChanged = callback;
-    };
-
-    SpiderBoard.prototype.setTimeElapsed = function (time) {
-        if (this.timeElapsed !== time) {
-            this.timeElapsed = time;
-            this._fireTimeElapsedChanged();
-        }
+        this.score += amount;
     };
 
     SpiderBoard.prototype.incrementTimeElapsed = function (amount) {
-        if (amount == null) {
-            amount = SpiderBoard.TIME_ELAPSED_INTERVAL;
-        }
-        if (amount !== 0) {
-            this.timeElapsed += amount;
-            this._fireTimeElapsedChanged();
-        }
+        this.timeElapsed += amount;
     };
 
     return SpiderBoard;

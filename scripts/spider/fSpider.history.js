@@ -68,7 +68,7 @@ fSpider.ActionSet = (function (ActionSet, undefined) {
     return ActionSet;
 })(fSpider.ActionSet || {});
 
-fSpider.History = (function (History, undefined) {
+fSpider.History = (function (History, ko, undefined) {
     'use strict';
 
     var ActionSet = fSpider.ActionSet;
@@ -76,16 +76,50 @@ fSpider.History = (function (History, undefined) {
     //constructor
     History = function () {
         this.actionSets = [];
+
+        this.vm = new History.VM();
+        Object.defineProperty(this, 'cursor', {
+            get: function () {
+                return this.vm.cursor();
+            },
+            set: function (value) {
+                this.vm.cursor(value);
+            }
+        });
+    };
+
+    //view model
+    History.VM = function () {
+        this.build();
+        this.reset();
+    };
+
+    History.VM.prototype.build = function () {
+        this.actionSets = ko.observable();
+        this.cursor = ko.observable();
+        this.canUndo = ko.computed(function () {
+            return this.cursor() > 0;
+        }, this);
+        this.canRedo = ko.computed(function () {
+            return this.cursor() < this.actionSets();
+        }, this);
+    };
+
+    History.VM.prototype.reset = function () {
+        this.actionSets(0);
+        this.cursor(0);
+    };
+
+    History.VM.prototype.bind = function (element) {
+        ko.applyBindings(this, element);
     };
 
     //fields
     History.prototype.actionSets = null;
-    History.prototype.cursor = 0;
-    History.prototype._onHistoryChangedCallback = null;
 
     //public functions
     History.prototype.canUndo = function () {
-        return this.cursor > 0;
+        return this.vm.canUndo();
     };
 
     History.prototype.undo = function (settings) {
@@ -104,7 +138,7 @@ fSpider.History = (function (History, undefined) {
     };
 
     History.prototype.canRedo = function () {
-        return this.cursor < this.actionSets.length;
+        return this.vm.canRedo();
     };
 
     History.prototype.redo = function (settings) {
@@ -117,7 +151,6 @@ fSpider.History = (function (History, undefined) {
             actionSet = this.actionSets[this.cursor];
             actionSet.redo(settings);
             this.cursor++;
-            this._fireOnHistoryChanged();
         }
         return actionSet;
     };
@@ -132,8 +165,8 @@ fSpider.History = (function (History, undefined) {
             this.actionSets = this.actionSets.splice(0, this.cursor);
         }
         this.actionSets.push(actionSet);
+        this.vm.actionSets(this.actionSets.length);
         this.cursor++;
-        this._fireOnHistoryChanged();
     };
 
     History.prototype.mergeActionSets = function (start, amount) {
@@ -149,6 +182,7 @@ fSpider.History = (function (History, undefined) {
         }
         var newActionSet = ActionSet.mergeActionSets(this.actionSets.slice(start, start + amount));
         this.actionSets.splice(start, amount, newActionSet);
+        this.vm.actionSets(this.actionSets.length);
         if (this.cursor > start) {
             this.cursor -= amount;
             this.cursor++;
@@ -157,22 +191,12 @@ fSpider.History = (function (History, undefined) {
 
     History.prototype.clear = function () {
         this.actionSets = [];
+        this.vm.actionSets(this.actionSets.length);
         this.cursor = 0;
-        this._fireOnHistoryChanged();
-    };
-
-    History.prototype.onHistoryChanged = function (callback) {
-        this._onHistoryChangedCallback = callback;
-    };
-
-    History.prototype._fireOnHistoryChanged = function () {
-        if (this._onHistoryChangedCallback != null) {
-            this._onHistoryChangedCallback(this);
-        }
     };
 
     return History;
-})(fSpider.History || {});
+})(fSpider.History || {}, window.ko);
 
 fSpider.TransferCardsAction = (function (TransferCardsAction, undefined) {
     'use strict';

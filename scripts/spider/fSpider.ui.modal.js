@@ -1,6 +1,6 @@
 var fSpider = fSpider || {};
 
-fSpider.Modal = (function (Modal, $, undefined) {
+fSpider.Modal = (function (Modal, $, ko, undefined) {
     'use strict';
 
     //constructor
@@ -13,15 +13,18 @@ fSpider.Modal = (function (Modal, $, undefined) {
         if (this.options.draggable === true) {
             this.applyDraggable(this.$modal);
         }
-        this.applyState(this.options.startState, true);
+
+        this.vm = new Modal.VM(this);
+
+        this.setState(this.options.modalState, true);
     };
 
     //static fields
     Modal.prototype.STATES = {
-        'EXPANDED': 0,
-        'MINIMIZED': 1,
-        'PINNED': 2,
-        'CLOSED': 3
+        'CLOSED': 0,
+        'EXPANDED': 1,
+        'MINIMIZED': 2,
+        'PINNED': 3
     };
     Modal.prototype.defaultOptions = {
         draggable: true,
@@ -29,7 +32,10 @@ fSpider.Modal = (function (Modal, $, undefined) {
             ignoreClasses: [
                 'modal-control',
                 'modal-btn'
-            ]
+            ],
+            dragend: function (evt) {
+
+            }
         },
         title: '',
         id: '',
@@ -40,8 +46,8 @@ fSpider.Modal = (function (Modal, $, undefined) {
             close: true,
             dragHandle: false
         },
-        startState: Modal.prototype.STATES.EXPANDED,
-        startPosition: {
+        modalState: Modal.prototype.STATES.EXPANDED,
+        position: {
             top: '',
             left: '',
             bottom: '',
@@ -63,11 +69,13 @@ fSpider.Modal = (function (Modal, $, undefined) {
     //fields
     Modal.prototype.$modal = null;
     Modal.prototype.options = null;
-    Modal.prototype.state = Modal.prototype.STATES.none;
 
     //"private" functions
     Modal.prototype.applyDraggable = function (el) {
         var opts = this.options || {};
+        if (opts.draggableOptions != null && opts.draggableOptions.owner == null) {
+            opts.draggableOptions.owner = this;
+        }
         el.draggable(opts.draggableOptions || {});
     };
 
@@ -81,7 +89,7 @@ fSpider.Modal = (function (Modal, $, undefined) {
         $el.addClass('modal-content');
 
         var $modal = $('<div />').addClass('modal');
-        $modal.css(this.options.startPosition);
+        $modal.css(this.options.position);
         $el.parent().append($modal);
 
         //LEFT
@@ -175,22 +183,19 @@ fSpider.Modal = (function (Modal, $, undefined) {
         return $modal;
     };
 
-    Modal.prototype.applyState = function (state, force) {
-        if (force !== true && this.state === state) {
-            return;
-        }
+    Modal.prototype.applyState = function (state, noNotify) {
         switch (state) {
             case this.STATES.EXPANDED:
-                this.expand();
+                this.expand(noNotify);
                 break;
             case this.STATES.MINIMIZED:
-                this.minimize();
+                this.minimize(noNotify);
                 break;
             case this.STATES.PINNED:
-                this.pin();
+                this.pin(noNotify);
                 break;
             case this.STATES.CLOSED:
-                this.close();
+                this.close(noNotify);
                 break;
         }
     };
@@ -200,27 +205,149 @@ fSpider.Modal = (function (Modal, $, undefined) {
         return this.state;
     };
 
-    Modal.prototype.expand = function () {
+    Modal.prototype.setState = function (state, noNotify) {
+        if (noNotify === true) {
+            this.vm.setStateQuiet(state);
+        } else {
+            this.vm.state(state);
+        }
+    };
+
+    Modal.prototype.expand = function (noNotify) {
         this.state = this.STATES.EXPANDED;
         this.$modal.show();
-        this.options.expanded(this);
+        if (noNotify !== true) {
+            this.options.expanded.call(this);
+        }
     };
 
-    Modal.prototype.minimize = function () {
+    Modal.prototype.minimize = function (noNotify) {
         this.state = this.STATES.MINIMIZED;
-        this.options.minimized(this);
+        if (noNotify !== true) {
+            this.options.minimized.call(this);
+        }
     };
 
-    Modal.prototype.pin = function () {
+    Modal.prototype.pin = function (noNotify) {
         this.state = this.STATES.PINNED;
-        this.options.pinned(this);
+        if (noNotify !== true) {
+            this.options.pinned.call(this);
+        }
     };
 
-    Modal.prototype.close = function () {
+    Modal.prototype.close = function (noNotify) {
         this.state = this.STATES.CLOSED;
         this.$modal.hide();
-        this.options.closed(this);
+        if (noNotify !== true) {
+            this.options.closed.call(this);
+        }
     };
 
+    Modal.prototype.save = function (prefix) {
+        if (prefix == null) {
+            prefix = 'fModal';
+        }
+
+        var key = [prefix, '.', this.options.id].join('');
+        if (localStorage != null) {
+            localStorage.setItem(key, this.toJSON());
+            return true;
+        }
+        return false;
+    };
+
+    Modal.prototype.load = function (prefix) {
+        if (prefix == null) {
+            prefix = 'fModal';
+        }
+
+        var key = [prefix, '.', this.options.id].join('');
+        if (localStorage != null) {
+            try {
+                var data = localStorage.getItem(key);
+                if (data != null && data != '') {
+                    var attributes = JSON.parse(data);
+                    this.set(attributes, true);
+                }
+                return true;
+            } catch (ex) {
+                console.log(ex);
+            }
+        }
+        return false;
+    };
+
+    Modal.prototype.attributes = function () {
+        return {
+            state: this.getState(),
+            position: {
+                top: this.$modal.css('top'),
+                bottom: this.$modal.css('bottom'),
+                left: this.$modal.css('left'),
+                right: this.$modal.css('right')
+            }
+        }
+    };
+
+    Modal.prototype.set = function (attributes, noNotify) {
+        if (attributes == null) {
+            return this;
+        }
+
+        if (attributes.state != null) {
+            this.setState(attributes.state, noNotify);
+        }
+        if (attributes.position != null) {
+            if (attributes.position.top != null) {
+                this.$modal.css('top', attributes.position.top);
+            }
+            if (attributes.position.bottom != null) {
+                this.$modal.css('bottom', attributes.position.bottom);
+            }
+            if (attributes.position.left != null) {
+                this.$modal.css('left', attributes.position.left);
+            }
+            if (attributes.position.right != null) {
+                this.$modal.css('right', attributes.position.right);
+            }
+        }
+
+        return this;
+    };
+
+    Modal.prototype.toJSON = function () {
+        return JSON.stringify(this.attributes());
+    };
+
+    Modal.VM = function (modal) {
+        this.modal = modal;
+
+        this.nextSetStateQuiet = false;
+        this.state = ko.observable(0);
+
+        this.isOpen = ko.observable(false);
+        this.isOpen.subscribe(function (newIsOpen) {
+            if (newIsOpen == true) {
+                this.state(Modal.prototype.STATES.EXPANDED);
+            } else {
+                this.state(Modal.prototype.STATES.CLOSED);
+            }
+        }, this);
+
+        this.state.subscribe(function (newState) {
+            this.modal.applyState(newState, this.nextSetStateQuiet);
+            this.nextSetStateQuiet = false;
+
+            this.isOpen(newState == Modal.prototype.STATES.EXPANDED);
+        }, this);
+    };
+
+    Modal.VM.prototype.setStateQuiet = function (state) {
+        this.nextSetStateQuiet = true;
+        this.state(state);
+    };
+
+    Modal.VM.prototype.STATES = Modal.prototype.STATES;
+
     return Modal;
-})(fSpider.Modal || {}, window.jQuery);
+})(fSpider.Modal || {}, window.jQuery, window.ko);

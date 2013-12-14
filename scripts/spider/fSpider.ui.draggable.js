@@ -66,7 +66,7 @@
 
                 $(document.body).css({ 'user-select': 'none' });
 
-                opts.dragstart.call(evt);
+                opts.dragstart.call(opts.owner || this);
             }
 
             function onMouseUp(evt) {
@@ -79,7 +79,7 @@
 
                 $(document.body).css({ 'user-select': 'auto' });
 
-                opts.dragend.call(evt);
+                opts.dragend.call(opts.owner || this, evt);
             }
 
             function onMouseMove(evt) {
@@ -90,7 +90,7 @@
                 positionMe(pos);
                 fixOverDrag();
 
-                opts.dragging.call(evt);
+                opts.dragging.call(opts.owner || this, evt);
             }
 
             function positionMe(pos) {
@@ -181,6 +181,7 @@
     };
 
     $.fn.draggable.defaults = {
+        owner: null,
         containment: 'body',
         cursor: 'move',
         scroll: false,
@@ -194,6 +195,6 @@
         ],
         dragstart: function () {},
         dragging: function () {},
-        dragend: function () {}
+        dragend: function ($el) {}
     };
 })(window.jQuery, window, window.document);

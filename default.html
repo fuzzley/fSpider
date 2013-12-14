@@ -12,32 +12,30 @@
 <div id="canvas-wrap">
 </div>
 <div id="ui-container">
-    <div id="score-display" class="lite-green" style="display: none;">0</div>
-    <div id="moves-display" class="lite-red" style="display: none;">0</div>
-    <div id="time-elapsed-display" class="lite-yellow" style="display: none;">00:00</div>
+    <div id="score-display" class="lite-green" style="display: none;" data-bind="text: board.score"></div>
+    <div id="moves-display" class="lite-red" style="display: none;" data-bind="text: board.moves"></div>
+    <div id="time-display" class="lite-yellow" style="display: none;" data-bind="timeShortText: board.timeElapsed"></div>
     <div id="options-wrap" style="display: none;">
         <div>
             <label for="animate-checkbox" style="float: left;">Animate</label>
-            <input id="animate-checkbox" name="animate-checkbox" style="float: right;" type="checkbox" checked/>
+            <input id="animate-checkbox" name="animate-checkbox" style="float: right;" type="checkbox" data-bind="checked: gameSettings.animate" />
         </div>
         <div class="clear"></div>
         <div>
             <label for="sound-checkbox" style="float: left;">Sound</label>
-            <input id="sound-checkbox" name="sound-checkbox" style="float: right;" type="checkbox" checked/>
+            <input id="sound-checkbox" name="sound-checkbox" style="float: right;" type="checkbox" data-bind="checked: gameSettings.volume" />
         </div>
         <div class="clear"></div>
     </div>
     <div id="game-ctrls-wrap" style="display: none;">
         <button id="new-game-btn">New Game</button>
         <label for="difficulty-select"></label>
-        <select id="difficulty-select" name="difficulty-select">
-            <option value="0">1 Suit</option>
-            <option value="1">2 Suits</option>
-            <option value="2">4 Suits</option>
+        <select id="difficulty-select" name="difficulty-select"
+                data-bind="options: gameSettings.difficultyOptions, optionsText: 'text', optionsValue: 'value', value: gameSettings.difficulty">
         </select>
-        <button id="restart-btn" disabled>Restart</button>
-        <button id="undo-btn" disabled>Undo (Ctrl+Z)</button>
-        <button id="redo-btn" disabled>Redo (Ctrl+Y)</button>
+        <button id="restart-btn" data-bind="enable: board.gameInProgress">Restart</button>
+        <button id="undo-btn" data-bind="enable: gameHistory.canUndo">Undo (Ctrl+Z)</button>
+        <button id="redo-btn" data-bind="enable: gameHistory.canRedo">Redo (Ctrl+Y)</button>
     </div>
     <div id="global-settings-open-wrap">
         <button id="global-settings-open-btn"><i class="icon-cogs"></i></button>
@@ -56,7 +54,7 @@
             </div>
             <div class="clear"></div>
             <div style="text-align: center;">
-                <button id="glbl-game-restart-btn">Restart Game</button>
+                <button id="glbl-game-restart-btn" data-bind="enable: board.gameInProgress">Restart Game</button>
             </div>
             <div class="clear"></div>
         </fieldset>
@@ -64,23 +62,22 @@
             <legend>Settings</legend>
             <div>
                 <label for="glbl-game-difficulty-select" style="float: left;">Difficulty</label>
-                <select id="glbl-game-difficulty-select" name="glbl-game-difficulty-select" style="float: right;">
-                    <option value="0">1 Suit</option>
-                    <option value="1">2 Suits</option>
-                    <option value="2">4 Suits</option>
+                <select id="glbl-game-difficulty-select" name="glbl-game-difficulty-select" style="float: right;"
+                        data-bind="options: gameSettings.difficultyOptions, optionsText: 'text',
+                        optionsValue: 'value', value: gameSettings.difficulty">
                 </select>
             </div>
             <div class="clear"></div>
             <div>
                 <label for="glbl-stng-animate-chk" style="float: left;">Animate</label>
                 <input id="glbl-stng-animate-chk" name="glbl-stng-animate-chk" style="float: right;" type="checkbox"
-                       checked/>
+                       data-bind="checked: gameSettings.animate" />
             </div>
             <div class="clear"></div>
             <div>
                 <label for="glbl-stng-sound-chk" style="float: left;">Sound</label>
                 <input id="glbl-stng-sound-chk" name="glbl-stng-sound-chk" style="float: right;" type="checkbox"
-                       checked/>
+                       data-bind="checked: gameSettings.volume" />
             </div>
             <div class="clear"></div>
         </fieldset>
@@ -88,28 +85,28 @@
             <legend>Windows</legend>
             <div>
                 <label for="glbl-wnd-score-chk" style="float: left;">Score</label>
-                <input id="glbl-wnd-score-chk" name="glbl-wnd-score-chk" style="float: right;" type="checkbox" checked/>
+                <input id="glbl-wnd-score-chk" name="glbl-wnd-score-chk" style="float: right;" type="checkbox" data-bind="checked: uiSettings.windows.score.vm.isOpen"/>
             </div>
             <div class="clear"></div>
             <div>
                 <label for="glbl-wnd-moves-chk" style="float: left;">Moves</label>
-                <input id="glbl-wnd-moves-chk" name="glbl-wnd-moves-chk" style="float: right;" type="checkbox" checked/>
+                <input id="glbl-wnd-moves-chk" name="glbl-wnd-moves-chk" style="float: right;" type="checkbox"  data-bind="checked: uiSettings.windows.moves.vm.isOpen"/>
             </div>
             <div class="clear"></div>
             <div>
                 <label for="glbl-wnd-time-chk" style="float: left;">Time</label>
-                <input id="glbl-wnd-time-chk" name="glbl-wnd-time-chk" style="float: right;" type="checkbox" checked/>
+                <input id="glbl-wnd-time-chk" name="glbl-wnd-time-chk" style="float: right;" type="checkbox"  data-bind="checked: uiSettings.windows.time.vm.isOpen"/>
             </div>
             <div class="clear"></div>
             <div>
                 <label for="glbl-wnd-options-chk" style="float: left;">Options</label>
                 <input id="glbl-wnd-options-chk" name="glbl-wnd-options-chk" style="float: right;" type="checkbox"
-                       checked/>
+                       data-bind="checked: uiSettings.windows.options.vm.isOpen"/>
             </div>
             <div class="clear"></div>
             <div>
                 <label for="glbl-wnd-game-chk" style="float: left;">Game</label>
-                <input id="glbl-wnd-game-chk" name="glbl-wnd-game-chk" style="float: right;" type="checkbox" checked/>
+                <input id="glbl-wnd-game-chk" name="glbl-wnd-game-chk" style="float: right;" type="checkbox"  data-bind="checked: uiSettings.windows.game.vm.isOpen"/>
             </div>
             <div class="clear"></div>
         </fieldset>
@@ -132,7 +129,7 @@
 <script src="scripts/spider/fSpider.ui.modal.js"></script>
 
 <script src="scripts/spider/fSpider.utils.js"></script>
-<script src="scripts/spider/fSpider.vm.js"></script>
+<script src="scripts/spider/fSpider.vmHub.js"></script>
 <script src="scripts/spider/fSpider.history.js"></script>
 <script src="scripts/spider/fSpider.settings.js"></script>
 <script src="scripts/spider/fSpider.card.js"></script>
@@ -143,31 +140,37 @@
 
 <script type="text/javascript">
 var fSpider = fSpider || {};
-fSpider.board = {};
-fSpider.deck = {};
-fSpider.stage = {};
+fSpider.board = null;
+fSpider.deck = null;
+fSpider.stage = null;
 fSpider.ctrlKeyCode = 17;
 fSpider.ctrlDown = false;
 fSpider.undoKey = 'Z';
 fSpider.redoKey = 'Y';
 
 fSpider.init = function () {
-    //prepare stage
+    var stage = fSpider.initStage();
+    var board = fSpider.initBoard(stage);
+    fSpider.initUI(stage, board);
+};
+
+fSpider.initStage = function () {
     var canvasWrap = $('#canvas-wrap');
     fSpider.stage = new Kinetic.Stage({
         container: 'canvas-wrap',
         width: canvasWrap.width(),
         height: canvasWrap.height()
     });
-    var stage = fSpider.stage;
+    return fSpider.stage;
+};
 
-    //prepare assets
+fSpider.initBoard = function (stage) {
+    //load assets
     var cardAssetsImg = $('#playing-card-assets-large').get(0);
     var cardDim = {
         width: cardAssetsImg.naturalWidth / 13, // number of types
         height: cardAssetsImg.naturalHeight / 5 // number of suits + back images row
     };
-    var tableauPlaceHolderImage = $('#tableau-ph').get(0);
 
     var soundFolder = 'content/sound_assets/card_sounds/';
     var sounds = {};
@@ -175,11 +178,11 @@ fSpider.init = function () {
         urls: [soundFolder + 'cardflip.ogg', soundFolder + 'cardflip.mp3', soundFolder + 'cardflip.wav']
     });
 
-    //prepare board
+    //build new board
     fSpider.board = new fSpider.SpiderBoard(stage, cardAssetsImg, cardDim);
     var board = fSpider.board;
-    board.getSettings().load();
     board.recalculateGlobalScale();
+
     ////set image assets
     board.setCardBackImage(cardAssetsImg, {
         x: 0,
@@ -187,22 +190,29 @@ fSpider.init = function () {
         width: cardDim.width,
         height: cardDim.height
     });
-    board.setTableauPlaceHolderImage(tableauPlaceHolderImage);
+    board.setTableauPlaceHolderImage($('#tableau-ph').get(0));
     ////set sound assets
     board.setSounds(sounds);
-    ////hook into events
-    board.getHistory().onHistoryChanged(fSpider.onHistoryChanged);
-    board.onScoreChanged(fSpider.onScoreChanged);
-    board.onMovesChanged(fSpider.onMovesChanged);
-    board.onTimeElapsedChanged(fSpider.onTimeElapsedTick);
+
+    return board;
+};
+
+fSpider.initUI = function (stage, board) {
+    fSpider.uiSettings = new fSpider.UISettings();
 
     //setup external ui
-    fSpider.initGameControls(board.getSettings());
-    fSpider.initOptionsPane(board.getSettings());
+    fSpider.initGameControls(fSpider.uiSettings);
+    fSpider.initOptionsPane();
+
+    fSpider.vmHub.registerVM('board', board.vm);
+    fSpider.vmHub.registerVM('gameSettings', board.settings.vm);
+    fSpider.vmHub.registerVM('gameHistory', board.history.vm);
+    fSpider.vmHub.registerVM('uiSettings', fSpider.uiSettings);
+    fSpider.vmHub.bind($('#ui-container').get(0));
 
     //in case of resize, notify board
     $(window).resize(function () {
-        canvasWrap = $('#canvas-wrap');
+        var canvasWrap = $('#canvas-wrap');
         stage.setWidth(canvasWrap.width());
         stage.setHeight(canvasWrap.height());
         board.recalculateGlobalScale();
@@ -231,149 +241,21 @@ fSpider.init = function () {
 };
 
 fSpider.initGameControls = function (settings) {
-    fSpider.windows = {};
-
-    fSpider.windows.options = new fSpider.Modal('#options-wrap', {
-        id: 'options-modal',
-        title: 'Options',
-        startPosition: settings.windows.options.position,
-        startState: settings.windows.options.modalState,
-        draggableOptions: { containment: '#ui-container',
-            dragend: function () {
-                settings.setWindowPosFromElement('options', $('#options-modal'));
-                settings.save();
-            }
-        },
-        closed: function (modal) {
-            settings.setWindowModalState('options', modal.getState());
-            settings.save();
-        },
-        expanded: function (modal) {
-            settings.setWindowModalState('options', modal.getState());
-            settings.save();
-        }
-    });
-    fSpider.windows.score = new fSpider.Modal('#score-display', {
-        id: 'score-display-modal',
-        title: 'Score',
-        startPosition: settings.windows.score.position,
-        startState: settings.windows.score.modalState,
-        draggableOptions: { containment: '#ui-container',
-            dragend: function () {
-                settings.setWindowPosFromElement('score', $('#score-display-modal'));
-                settings.save();
-            }
-        },
-        closed: function (modal) {
-            settings.setWindowModalState('score', modal.getState());
-            settings.save();
-        },
-        expanded: function (modal) {
-            settings.setWindowModalState('score', modal.getState());
-            settings.save();
-        }
-    });
-    fSpider.windows.moves = new fSpider.Modal('#moves-display', {
-        id: 'moves-display-modal',
-        title: 'Moves',
-        startPosition: settings.windows.moves.position,
-        startState: settings.windows.moves.modalState,
-        draggableOptions: { containment: '#ui-container',
-            dragend: function () {
-                settings.setWindowPosFromElement('moves', $('#moves-display-modal'));
-                settings.save();
-            }
-        },
-        closed: function (modal) {
-            settings.setWindowModalState('moves', modal.getState());
-            settings.save();
-        },
-        expanded: function (modal) {
-            settings.setWindowModalState('moves', modal.getState());
-            settings.save();
-        }
-    });
-    fSpider.windows.time = new fSpider.Modal('#time-elapsed-display', {
-        id: 'time-elapsed-display-modal',
-        title: 'Time',
-        startPosition: settings.windows.time.position,
-        startState: settings.windows.time.modalState,
-        draggableOptions: { containment: '#ui-container',
-            dragend: function () {
-                settings.setWindowPosFromElement('time', $('#time-elapsed-display-modal'));
-                settings.save();
-            }
-        },
-        closed: function (modal) {
-            settings.setWindowModalState('time', modal.getState());
-            settings.save();
-        },
-        expanded: function (modal) {
-            settings.setWindowModalState('time', modal.getState());
-            settings.save();
-        }
-    });
-    fSpider.windows.game = new fSpider.Modal('#game-ctrls-wrap', {
-        id: 'game-ctrls-modal',
-        title: 'Game',
-        startPosition: settings.windows.game.position,
-        startState: settings.windows.game.modalState,
-        draggableOptions: {
-            containment: '#ui-container',
-            dragend: function () {
-                settings.setWindowPosFromElement('game', $('#game-ctrls-modal'));
-                settings.save();
-            }
-        },
-        closed: function (modal) {
-            settings.setWindowModalState('game', modal.getState());
-            settings.save();
-        },
-        expanded: function (modal) {
-            settings.setWindowModalState('game', modal.getState());
-            settings.save();
-        }
-    });
+    fSpider.windows = settings.loadWindows();
 
     $('.modal-content').show();
-
     $('#new-game-btn').on('click', function () {
         fSpider.startNewGame();
     });
-    $('#difficulty-select').val(settings.difficulty).on('change', function () {
-        settings.set({ difficulty: +$('#difficulty-select').val() });
-        settings.save();
-    });
-    $('#restart-btn').prop('enabled', fSpider.board.isGameInProgress()).on('click', function () {
+    $('#restart-btn').on('click', function () {
         fSpider.restartGame();
     });
     $('#undo-btn').on('click', function () {
-        if ($('#undo-btn').is(':disabled') !== true) {
-            fSpider.board.undo();
-        }
+        fSpider.board.undo();
     });
     $('#redo-btn').on('click', function () {
-        if ($('#redo-btn').is(':disabled') !== true) {
-            fSpider.board.redo();
-        }
+        fSpider.board.redo();
     });
-
-    $('#animate-checkbox').prop('checked', settings.animate).on('click', function () {
-        settings.set({ animate: $('#animate-checkbox').is(':checked') });
-        settings.save();
-    });
-    $('#sound-checkbox').prop('checked', settings.volume > 0).on('click', function () {
-        settings.set({ volume: $('#sound-checkbox').is(':checked') ? 1 : 0 });
-        settings.save();
-    });
-};
-
-fSpider.refreshGameControls = function (settings) {
-    $('#difficulty-select').val(settings.difficulty);
-    $('#restart-btn').prop('disabled', !fSpider.board.isGameInProgress());
-
-    $('#animate-checkbox').prop('checked', settings.animate);
-    $('#sound-checkbox').prop('checked', settings.volume > 0);
 };
 
 fSpider.initOptionsPane = function (settings) {
@@ -390,61 +272,9 @@ fSpider.initOptionsPane = function (settings) {
             fSpider.closeOptionsPane();
         }
     });
-    $('#glbl-game-difficulty-select').val(settings.difficulty).on('change', function () {
-        settings.set({ difficulty: +$('#glbl-game-difficulty-select').val() });
-        settings.save();
-        fSpider.refreshGameControls(settings);
-    });
-    $('#glbl-game-restart-btn').prop('enabled', fSpider.board.isGameInProgress()).on('click', function () {
+    $('#glbl-game-restart-btn').on('click', function () {
         if (fSpider.restartGame() === true) {
             fSpider.closeOptionsPane();
-        }
-    });
-
-    $('#glbl-stng-animate-chk').prop('checked', settings.animate).on('click', function () {
-        settings.set({ animate: $('#glbl-stng-animate-chk').is(':checked') });
-        settings.save();
-        fSpider.refreshGameControls(settings);
-    });
-    $('#glbl-stng-sound-chk').prop('checked', settings.volume > 0).on('click', function () {
-        settings.set({ volume: $('#glbl-stng-sound-chk').is(':checked') ? 1 : 0 });
-        settings.save();
-        fSpider.refreshGameControls(settings);
-    });
-
-    $('#glbl-wnd-score-chk').on('click', function () {
-        if ($('#glbl-wnd-score-chk').is(':checked')) {
-            fSpider.windows.score.expand();
-        } else {
-            fSpider.windows.score.close();
-        }
-    });
-    $('#glbl-wnd-moves-chk').on('click', function () {
-        if ($('#glbl-wnd-moves-chk').is(':checked')) {
-            fSpider.windows.moves.expand();
-        } else {
-            fSpider.windows.moves.close();
-        }
-    });
-    $('#glbl-wnd-time-chk').on('click', function () {
-        if ($('#glbl-wnd-time-chk').is(':checked')) {
-            fSpider.windows.time.expand();
-        } else {
-            fSpider.windows.time.close();
-        }
-    });
-    $('#glbl-wnd-options-chk').on('click', function () {
-        if ($('#glbl-wnd-options-chk').is(':checked')) {
-            fSpider.windows.options.expand();
-        } else {
-            fSpider.windows.options.close();
-        }
-    });
-    $('#glbl-wnd-game-chk').on('click', function () {
-        if ($('#glbl-wnd-game-chk').is(':checked')) {
-            fSpider.windows.game.expand();
-        } else {
-            fSpider.windows.game.close();
         }
     });
 
@@ -461,20 +291,7 @@ fSpider.initOptionsPane = function (settings) {
     dlg.draggable();
 };
 
-fSpider.openOptionsPane = function (settings) {
-    $('#glbl-game-difficulty-select').val(settings.difficulty);
-    $('#glbl-game-restart-btn').prop('disabled', !fSpider.board.isGameInProgress());
-
-    $('#glbl-stng-animate-chk').prop('checked', settings.animate);
-    $('#glbl-stng-sound-chk').prop('checked', settings.volume > 0);
-
-    var Modal = fSpider.Modal;
-    $('#glbl-wnd-score-chk').prop('checked', settings.windows.score.modalState != Modal.prototype.STATES.CLOSED);
-    $('#glbl-wnd-moves-chk').prop('checked', settings.windows.moves.modalState != Modal.prototype.STATES.CLOSED);
-    $('#glbl-wnd-time-chk').prop('checked', settings.windows.time.modalState != Modal.prototype.STATES.CLOSED);
-    $('#glbl-wnd-options-chk').prop('checked', settings.windows.options.modalState != Modal.prototype.STATES.CLOSED);
-    $('#glbl-wnd-game-chk').prop('checked', settings.windows.game.modalState != Modal.prototype.STATES.CLOSED);
-
+fSpider.openOptionsPane = function () {
     $('#dim-overlay').show();
     $('#global-options-dlg').show();
 };
@@ -485,45 +302,19 @@ fSpider.closeOptionsPane = function () {
 };
 
 fSpider.startNewGame = function () {
-    if (fSpider.board.isGameInProgress() !== true || confirm("Are you sure you want to start a new game? Your current game will be replaced.") === true) {
+    if (fSpider.board.gameInProgress !== true || confirm("Are you sure you want to start a new game? Your current game will be replaced.") === true) {
         fSpider.board.startNewGame();
-        fSpider.refreshGameControls(fSpider.board.getSettings());
         return true;
     }
     return false;
 };
 
 fSpider.restartGame = function () {
-    if (fSpider.board.isGameInProgress() === true && confirm("Are you sure you want to restart this game? Your progress will be lost.") === true) {
+    if (fSpider.board.gameInProgress === true && confirm("Are you sure you want to restart this game? Your progress will be lost.") === true) {
         fSpider.board.restartGame();
         return true;
     }
     return false;
-};
-
-fSpider.onHistoryChanged = function (history) {
-    if (history.canUndo() === true) {
-        $('#undo-btn').removeAttr('disabled');
-    } else {
-        $('#undo-btn').attr('disabled', 'disabled');
-    }
-    if (history.canRedo() === true) {
-        $('#redo-btn').removeAttr('disabled');
-    } else {
-        $('#redo-btn').attr('disabled', 'disabled');
-    }
-};
-
-fSpider.onScoreChanged = function (score) {
-    $('#score-display').text(score);
-};
-
-fSpider.onMovesChanged = function (moves) {
-    $('#moves-display').text(moves);
-};
-
-fSpider.onTimeElapsedTick = function (time) {
-    $('#time-elapsed-display').text(fSpider.Utils.formatTime(time));
 };
 
 $(window).load(function () {
