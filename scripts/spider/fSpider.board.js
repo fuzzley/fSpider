@@ -337,7 +337,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
                     this._tableauPlaceHolderMouseOut(evt, tPile);
                 }.bind(this));
             }
-        });
+        }.bind(this));
     };
 
     //destroy
@@ -926,12 +926,12 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         var self = this;
         this.cancelDrawAnimation = false;
         this.drawFromStockPile(0, 44, false, false, null, function () {
-            var cancel = this.cancelDrawAnimation === true;
-            var volume = this.settings.volume;
-            if (cancel === true) {
-                volume = 0;
+            var extraSettings = {};
+            if (this.cancelDrawAnimation === true) {
+                extraSettings.volume = 0;
+                extraSettings.animate = false;
             }
-            this.drawFromStockPile(0, 10, true, false, self.settings.extend({ animate: !cancel, volume: volume }),
+            this.drawFromStockPile(0, 10, true, false, this.settings.extend(extraSettings),
                 function () {
                     piles.forEach(function (pile) {
                         pile.moveAllCardsToGroup();

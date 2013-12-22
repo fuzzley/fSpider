@@ -85,13 +85,15 @@ fSpider.GameSettings = (function (GameSettings, $, ko, undefined) {
         this.vm.changed.subscribe(function() {
             this.save();
         }.bind(this));
+
         Object.defineProperty(this, 'animate', {
             get: function () {
                 return this.vm.animate();
             },
             set: function (value) {
                 this.vm.animate(value);
-            }
+            },
+            enumerable: true
         });
         Object.defineProperty(this, 'volume', {
             get: function () {
@@ -99,7 +101,8 @@ fSpider.GameSettings = (function (GameSettings, $, ko, undefined) {
             },
             set: function (value) {
                 this.vm.volume(value > 0);
-            }
+            },
+            enumerable: true
         });
         Object.defineProperty(this, 'difficulty', {
             get: function () {
@@ -107,7 +110,8 @@ fSpider.GameSettings = (function (GameSettings, $, ko, undefined) {
             },
             set: function (value) {
                 this.vm.difficulty(value);
-            }
+            },
+            enumerable: true
         });
         Object.defineProperty(this, 'animTime', {
             get: function () {
@@ -115,7 +119,8 @@ fSpider.GameSettings = (function (GameSettings, $, ko, undefined) {
             },
             set: function (value) {
                 this.vm.animTime(value);
-            }
+            },
+            enumerable: true
         });
         Object.defineProperty(this, 'animDelay', {
             get: function () {
@@ -123,7 +128,8 @@ fSpider.GameSettings = (function (GameSettings, $, ko, undefined) {
             },
             set: function (value) {
                 this.vm.animDelay(value);
-            }
+            },
+            enumerable: true
         });
 
         if (this.load() !== true) {
@@ -152,8 +158,8 @@ fSpider.GameSettings = (function (GameSettings, $, ko, undefined) {
         this.animTime = ko.observable();
         this.animDelay = ko.observable();
 
-        this.changed = ko.dependentObservable(function () {
-           ko.toJS(fSpider.Utils.filterOutProperties(this, ['changed'], [], true));
+        this.changed = ko.computed(function () {
+           return ko.toJS(fSpider.Utils.filterOutProperties(this, ['changed'], [], true));
         }.bind(this));
     };
 
