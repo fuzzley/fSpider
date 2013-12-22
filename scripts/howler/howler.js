@@ -1,5 +1,5 @@
 /*!
- *  howler.js v1.1.12
+ *  howler.js v1.1.14
  *  howlerjs.com
  *
  *  (c) 2013, James Simpson of GoldFire Studios
@@ -134,12 +134,12 @@
   if (!noAudio) {
     audioTest = new Audio();
     var codecs = {
-      mp3: !!audioTest.canPlayType('audio/mpeg;').replace(/^no$/,''),
-      opus: !!audioTest.canPlayType('audio/ogg; codecs="opus"').replace(/^no$/,''),
-      ogg: !!audioTest.canPlayType('audio/ogg; codecs="vorbis"').replace(/^no$/,''),
-      wav: !!audioTest.canPlayType('audio/wav; codecs="1"').replace(/^no$/,''),
-      m4a: !!(audioTest.canPlayType('audio/x-m4a;') || audioTest.canPlayType('audio/aac;')).replace(/^no$/,''),
-      webm: !!audioTest.canPlayType('audio/webm; codecs="vorbis"').replace(/^no$/,'')
+      mp3: !!audioTest.canPlayType('audio/mpeg;').replace(/^no$/, ''),
+      opus: !!audioTest.canPlayType('audio/ogg; codecs="opus"').replace(/^no$/, ''),
+      ogg: !!audioTest.canPlayType('audio/ogg; codecs="vorbis"').replace(/^no$/, ''),
+      wav: !!audioTest.canPlayType('audio/wav; codecs="1"').replace(/^no$/, ''),
+      m4a: !!(audioTest.canPlayType('audio/x-m4a;') || audioTest.canPlayType('audio/aac;')).replace(/^no$/, ''),
+      weba: !!audioTest.canPlayType('audio/webm; codecs="vorbis"').replace(/^no$/, '')
     };
   }
 
@@ -202,29 +202,28 @@
         return;
       }
 
-      var canPlay = {
-        mp3: codecs.mp3,
-        opus: codecs.opus,
-        ogg: codecs.ogg,
-        wav: codecs.wav,
-        m4a: codecs.m4a,
-        weba: codecs.webm
-      };
-
       // loop through source URLs and pick the first one that is compatible
-      for (var i=0; i<self._urls.length; i++) {
-        var ext;
+      for (var i=0; i<self._urls.length; i++) {        
+        var ext, urlItem;
 
         if (self._format) {
           // use specified audio format if available
           ext = self._format;
         } else {
           // figure out the filetype (whether an extension or base64 data)
-          ext = self._urls[i].toLowerCase().match(/.+\.([^?]+)(\?|$)/);
-          ext = (ext && ext.length >= 2) ? ext[1] : self._urls[i].toLowerCase().match(/data\:audio\/([^?]+);/)[1];
+          urlItem = self._urls[i].toLowerCase().split('?')[0];
+          ext = urlItem.match(/.+\.([^?]+)(\?|$)/);
+          ext = (ext && ext.length >= 2) ? ext : urlItem.match(/data\:audio\/([^?]+);/);
+
+          if (ext) {
+            ext = ext[1];
+          } else {
+            self.on('loaderror');
+            return;
+          }
         }
 
-        if (canPlay[ext]) {
+        if (codecs[ext]) {
           url = self._urls[i];
           break;
         }

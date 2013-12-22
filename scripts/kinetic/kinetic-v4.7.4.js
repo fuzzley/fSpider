@@ -1,9 +1,9 @@
 /*
- * KineticJS JavaScript Framework v4.7.0
+ * KineticJS JavaScript Framework v4.7.4
  * http://www.kineticjs.com/
  * Copyright 2013, Eric Rowell
  * Licensed under the MIT or GPL Version 2 licenses.
- * Date: 2013-09-16
+ * Date: 2013-11-08
  *
  * Copyright (C) 2011 - 2013 by Eric Rowell
  *
@@ -32,7 +32,7 @@ var Kinetic = {};
 (function() {
     Kinetic = {
         // public
-        version: '4.7.0',
+        version: '4.7.4',
 
         // private
         stages: [],
@@ -198,14 +198,13 @@ var Kinetic = {};
          *   y: 10,<br>
          *   fill: 'red',<br>
          *   // a Kinetic.Canvas renderer is passed into the drawFunc function<br>
-         *   drawFunc: function(canvas) {<br>
-         *     var context = canvas.getContext();<br>
+         *   drawFunc: function(context) {<br>
          *     context.beginPath();<br>
          *     context.moveTo(200, 50);<br>
          *     context.lineTo(420, 80);<br>
          *     context.quadraticCurveTo(300, 100, 260, 170);<br>
          *     context.closePath();<br>
-         *     canvas.fillStroke(this);<br>
+         *     context.fillStrokeShape(this);<br>
          *   }<br>
          *});
          */
@@ -815,17 +814,21 @@ var Kinetic = {};
             }
             return false;
         },
-        _roundArrValues: function(arr) {
+        _simplifyArray: function(arr) {
             var retArr = [],
                 len = arr.length,
-                _isNumber = Kinetic.Util._isNumber,
+                util = Kinetic.Util,
                 n, val;
 
             for (n=0; n<len; n++) {
                 val = arr[n];
-                if (_isNumber(val)) {
+                if (util._isNumber(val)) {
                     val = Math.round(val * 1000) / 1000;
                 }
+                else if (!util._isString(val)) {
+                    val = val.toString();
+                }
+
                 retArr.push(val);
             }
 
@@ -1048,12 +1051,7 @@ var Kinetic = {};
                 canvas.height = arg.height;
                 _context = canvas.getContext(CONTEXT_2D);
                 _context.putImageData(arg, 0, 0);
-                dataUrl = canvas.toDataURL();
-                imageObj = new Image();
-                imageObj.onload = function() {
-                    callback(imageObj);
-                };
-                imageObj.src = dataUrl;
+                this._getImage(canvas.toDataURL(), callback);
             }
             else {
                 callback(null);
@@ -1515,6 +1513,43 @@ var Kinetic = {};
             }
         },
         /**
+         * fill shape
+         * @method
+         * @memberof Kinetic.Context.prototype
+         * @param {Kinetic.Shape} shape
+         */
+        fillShape: function(shape) {
+            if(shape.getFillEnabled()) {
+                this._fill(shape);
+            }
+        },
+        /**
+         * stroke shape
+         * @method
+         * @memberof Kinetic.Context.prototype
+         * @param {Kinetic.Shape} shape
+         */
+        strokeShape: function(shape) {
+            if(shape.getStrokeEnabled()) {
+                this._stroke(shape);
+            }
+        },
+        /**
+         * fill then stroke
+         * @method
+         * @memberof Kinetic.Context.prototype
+         * @param {Kinetic.Shape} shape
+         */
+        fillStrokeShape: function(shape) {
+            var fillEnabled = shape.getFillEnabled();
+            if(fillEnabled) {
+                this._fill(shape);
+            }
+            if(shape.getStrokeEnabled()) {
+                this._stroke(shape);
+            }
+        },
+        /**
          * get context trace if trace is enabled
          * @method
          * @memberof Kinetic.Context.prototype
@@ -1604,57 +1639,18 @@ var Kinetic = {};
          * @method
          * @memberof Kinetic.Context.prototype
          */
-        clear: function(clip) {
-            var canvas = this.getCanvas(),
+        clear: function() {
+            var args = [].slice.call(arguments),
+                canvas = this.getCanvas(),
                 pos, size;
             
-            if (clip) {
-                pos = Kinetic.Util._getXY(clip);
-                size = Kinetic.Util._getSize(clip);
+            if (args.length) {
+                pos = Kinetic.Util._getXY(args);
+                size = Kinetic.Util._getSize(args);
                 this.clearRect(pos.x || 0, pos.y || 0, size.width, size.height);
             }
             else {
                 this.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
-            }
-        },
-        /**
-         * fill shape
-         * @method
-         * @memberof Kinetic.Context.prototype
-         * @param {Kinetic.Shape} shape
-         */
-        fillShape: function(shape) {
-            if(shape.getFillEnabled()) {
-                this._fill(shape);
-            }
-        },
-        /**
-         * stroke shape
-         * @method
-         * @memberof Kinetic.Context.prototype
-         * @param {Kinetic.Shape} shape
-         */
-        strokeShape: function(shape) {
-            if(shape.getStrokeEnabled()) {
-                this._stroke(shape);
-            }
-        },
-        /**
-         * fill, stroke, and apply shadows to shape.  Shadows 
-         *  will only be applied to either the fill or stroke.&nbsp; Fill
-         *  is given priority over stroke.
-         * @method
-         * @memberof Kinetic.Context.prototype
-         * @param {Kinetic.Shape} shape
-         */
-        fillStrokeShape: function(shape) {
-            var fillEnabled = shape.getFillEnabled();
-            if(fillEnabled) {
-                this._fill(shape);
-            }
-
-            if(shape.getStrokeEnabled()) {
-                this._stroke(shape, shape.hasShadow() && shape.hasFill() && fillEnabled);
             }
         },
         _applyLineCap: function(shape) {
@@ -1833,7 +1829,7 @@ var Kinetic = {};
         _enableTrace: function() {
             var that = this,
                 len = CONTEXT_METHODS.length,
-                _roundArrValues = Kinetic.Util._roundArrValues,
+                _simplifyArray = Kinetic.Util._simplifyArray,
                 origSetter = this.setAttr,
                 n, args;
 
@@ -1844,7 +1840,7 @@ var Kinetic = {};
                         ret;
 
                     that[methodName] = function() {
-                        args = _roundArrValues(Array.prototype.slice.call(arguments, 0));
+                        args = _simplifyArray(Array.prototype.slice.call(arguments, 0));
                         ret = origMethod.apply(that, arguments);
            
                         that._trace({
@@ -1934,17 +1930,12 @@ var Kinetic = {};
             this.setAttr('fillStyle', grd);
             this.fill();
         },
-        _fill: function(shape, skipShadow) {
+        _fill: function(shape) {
             var hasColor = shape.getFill(),
                 hasPattern = shape.getFillPatternImage(),
                 hasLinearGradient = shape.getFillLinearGradientColorStops(),
                 hasRadialGradient = shape.getFillRadialGradientColorStops(),
                 fillPriority = shape.getFillPriority();
-
-            if(!skipShadow && shape.hasShadow()) {
-                this.save();
-                this._applyShadow(shape);
-            }
 
             // priority fills
             if(hasColor && fillPriority === 'color') {
@@ -1972,19 +1963,14 @@ var Kinetic = {};
             else if(hasRadialGradient) {
                 this._fillRadialGradient(shape);
             }
-            
-            if(!skipShadow && shape.hasShadow()) {
-                this.restore();
-                this._fill(shape, true);
-            }
         },
-        _stroke: function(shape, skipShadow) {
+        _stroke: function(shape) {
             var stroke = shape.getStroke(),
                 strokeWidth = shape.getStrokeWidth(),
                 dashArray = shape.getDashArray(),
                 strokeScaleEnabled = shape.getStrokeScaleEnabled();
 
-            if(stroke || strokeWidth) {
+            if(shape.hasStroke()) {
                 if (!strokeScaleEnabled) {
                     this.save();
                     this.setTransform(1, 0, 0, 1, 0, 0);
@@ -1995,53 +1981,36 @@ var Kinetic = {};
                 if(dashArray && shape.getDashArrayEnabled()) {
                     this.setLineDash(dashArray);
                 }
-                if(!skipShadow && shape.hasShadow()) {
-                    this._applyShadow(shape);
-                }
+
                 this.setAttr('lineWidth', strokeWidth || 2);
                 this.setAttr('strokeStyle', stroke || 'black');
                 shape._strokeFunc(this);
                 
-                if(!skipShadow && shape.hasShadow()) {
-                    this._stroke(shape, true);
-                }
-                /////////////////////
-
                 if (!strokeScaleEnabled) {
                     this.restore();
                 }
             }
         },
-        applyShadow: function(shape, drawFunc) {
-            this.save();
-            this._applyShadow(shape);
-            drawFunc();
-            this.restore();
-            drawFunc();
-        },
         _applyShadow: function(shape) {
-            var util, absOpacity, color, blur, offset, shadowOpacity;
-
-            if(shape.hasShadow() && shape.getShadowEnabled()) {
-                util = Kinetic.Util;
-                absOpacity = shape.getAbsoluteOpacity();
-                color = util.get(shape.getShadowColor(), 'black');
-                blur = util.get(shape.getShadowBlur(), 5);
-                shadowOpacity = util.get(shape.getShadowOpacity(), 0);
+            var util = Kinetic.Util,
+                absOpacity = shape.getAbsoluteOpacity(),
+                color = util.get(shape.getShadowColor(), 'black'),
+                blur = util.get(shape.getShadowBlur(), 5),
+                shadowOpacity = util.get(shape.getShadowOpacity(), 0),
                 offset = util.get(shape.getShadowOffset(), {
                     x: 0,
                     y: 0
                 });
 
-                if(shadowOpacity) {
-                    this.setAttr('globalAlpha', shadowOpacity * absOpacity);
-                }
-
-                this.setAttr('shadowColor', color);
-                this.setAttr('shadowBlur', blur);
-                this.setAttr('shadowOffsetX', offset.x);
-                this.setAttr('shadowOffsetY', offset.y);
+            if(shadowOpacity) {
+                this.setAttr('globalAlpha', shadowOpacity * absOpacity);
             }
+
+            this.setAttr('shadowColor', color);
+            this.setAttr('shadowBlur', blur);
+            this.setAttr('shadowOffsetX', offset.x);
+            this.setAttr('shadowOffsetY', offset.y);
+        
         }
     };
     Kinetic.Util.extend(Kinetic.SceneContext, Kinetic.Context);
@@ -2497,8 +2466,10 @@ var Kinetic = {};
         /**
          * bind events to the node. KineticJS supports mouseover, mousemove,
          *  mouseout, mouseenter, mouseleave, mousedown, mouseup, click, dblclick, touchstart, touchmove,
-         *  touchend, tap, dbltap, dragstart, dragmove, and dragend events. Pass in a string
-         *  of events delimmited by a space to bind multiple events at once
+         *  touchend, tap, dbltap, dragstart, dragmove, and dragend events. The Kinetic Stage supports
+         *  contentMouseover, contentMousemove, contentMouseout, contentMousedown, contentMouseup,
+         *  contentClick, contentDblclick, contentTouchstart, contentTouchmove, contentTouchend, contentTap,
+         *  and contentDblTap.  Pass in a string of events delimmited by a space to bind multiple events at once
          *  such as 'mousedown mouseup mousemove'. Include a namespace to bind an
          *  event by name such as 'click.foobar'.
          * @method
@@ -3589,16 +3560,15 @@ var Kinetic = {};
         },
         _fire: function(eventType, evt) {
             var events = this.eventListeners[eventType],
-                len, i;
+                i;
 
             if (events) {
-                len = events.length;
-                for(i = 0; i < len; i++) {
+                for(i = 0; i < events.length; i++) {
                     events[i].handler.call(this, evt);
                 }
             }
         },
-        /*
+        /**
          * draw both scene and hit graphs.  If the node being drawn is the stage, all of the layers will be cleared and redra
          * @method
          * @memberof Kinetic.Node.prototype
@@ -4241,7 +4211,7 @@ var Kinetic = {};
             that._animationLoop();
         }
     };
-    RAF = (function() {
+    var RAF = (function() {
         return window.requestAnimationFrame
             || window.webkitRequestAnimationFrame
             || window.mozRequestAnimationFrame
@@ -4255,7 +4225,7 @@ var Kinetic = {};
     }
 
     Kinetic.Animation.requestAnimFrame = function(callback) {
-        var raf = Kinetic.DD && Kinetic.DD.isDragging ? FRAF : RAF;
+        var raf = Kinetic.isDragging ? FRAF : RAF;
         raf(callback);
     };
 
@@ -5063,13 +5033,24 @@ var Kinetic = {};
     };
 
     Kinetic.Node.prototype._listenDrag = function() {
-        this._dragCleanup();
         var that = this;
-        this.on('mousedown.kinetic touchstart.kinetic', function(evt) {
-            if(!Kinetic.DD.node) {
-                that.startDrag(evt);
-            }
-        });
+
+        this._dragCleanup();
+
+        if (this.getClassName() === 'Stage') {
+            this.on('contentMousedown.kinetic contentTouchstart.kinetic', function(evt) {
+                if(!Kinetic.DD.node) {
+                    that.startDrag(evt);
+                }
+            });
+        }
+        else {
+            this.on('mousedown.kinetic touchstart.kinetic', function(evt) {
+                if(!Kinetic.DD.node) {
+                    that.startDrag(evt);
+                }
+            });
+        }
     };
 
     Kinetic.Node.prototype._dragChange = function() {
@@ -5134,7 +5115,7 @@ var Kinetic = {};
 
     Kinetic.Node.prototype.isDraggable = Kinetic.Node.prototype.getDraggable;
 
-    var html = document.getElementsByTagName('html')[0];
+    var html = document.documentElement;
     html.addEventListener('mouseup', Kinetic.DD._endDragBefore, true);
     html.addEventListener('touchend', Kinetic.DD._endDragBefore, true);
 
@@ -5232,21 +5213,21 @@ var Kinetic = {};
          * @param {String} selector
          * @example
          * // select node with id foo<br>
-         * var node = stage.get('#foo');<br><br>
+         * var node = stage.find('#foo');<br><br>
          *
          * // select nodes with name bar inside layer<br>
-         * var nodes = layer.get('.bar');<br><br>
+         * var nodes = layer.find('.bar');<br><br>
          *
          * // select all groups inside layer<br>
-         * var nodes = layer.get('Group');<br><br>
+         * var nodes = layer.find('Group');<br><br>
          *
          * // select all rectangles inside layer<br>
-         * var nodes = layer.get('Rect');<br><br>
+         * var nodes = layer.find('Rect');<br><br>
          *
          * // select node with an id of foo or a name of bar inside layer<br>
-         * var nodes = layer.get('#foo, .bar');
+         * var nodes = layer.find('#foo, .bar');
          */
-        get: function(selector) {
+        find: function(selector) {
             var retArr = [],
                 selectorArr = selector.replace(/ /g, '').split(','),
                 len = selectorArr.length,
@@ -5281,7 +5262,7 @@ var Kinetic = {};
         },
         _getNodeById: function(key) {
             var node = Kinetic.ids[key];
-                
+
             if(node !== undefined && this.isAncestorOf(node)) {
                 return node;
             }
@@ -5366,7 +5347,7 @@ var Kinetic = {};
         getAllIntersections: function() {
             var pos = Kinetic.Util._getXY(Array.prototype.slice.call(arguments));
             var arr = [];
-            var shapes = this.get('Shape');
+            var shapes = this.find('Shape');
 
             var len = shapes.length;
             for(var n = 0; n < len; n++) {
@@ -5437,6 +5418,8 @@ var Kinetic = {};
     });
 
     Kinetic.Util.extend(Kinetic.Container, Kinetic.Node);
+    // deprecated methods
+    Kinetic.Container.prototype.get = Kinetic.Container.prototype.find;
 
     // add getters setters
     Kinetic.Factory.addBoxGetterSetter(Kinetic.Container, 'clip');
@@ -5576,7 +5559,7 @@ var Kinetic = {};
 
             this._setDrawFuncs();
 
-            this.on('shadowColorChange.kinetic shadowBlurChange.kinetic shadowOffsetChange.kinetic shadowOpacityChange.kinetic', _clearHasShadowCache);
+            this.on('shadowColorChange.kinetic shadowBlurChange.kinetic shadowOffsetChange.kinetic shadowOpacityChange.kinetic shadowEnabledChanged.kinetic', _clearHasShadowCache);
         },
         hasChildren: function() {
             return false;
@@ -5609,15 +5592,23 @@ var Kinetic = {};
             return this._getCache(HAS_SHADOW, this._hasShadow);  
         },
         _hasShadow: function() {
-            return (this.getShadowOpacity() !== 0 && !!(this.getShadowColor() || this.getShadowBlur() || this.getShadowOffsetX() || this.getShadowOffsetY()));
+            return this.getShadowEnabled() && (this.getShadowOpacity() !== 0 && !!(this.getShadowColor() || this.getShadowBlur() || this.getShadowOffsetX() || this.getShadowOffsetY()));
         },
         /**
-         * returns whether or not a fill is present
+         * returns whether or not the shape will be filled
          * @method
          * @memberof Kinetic.Shape.prototype
          */
         hasFill: function() {
             return !!(this.getFill() || this.getFillPatternImage() || this.getFillLinearGradientColorStops() || this.getFillRadialGradientColorStops());
+        },
+        /**
+         * returns whether or not the shape will be stroked
+         * @method
+         * @memberof Kinetic.Shape.prototype
+         */
+        hasStroke: function() {
+            return !!(this.getStroke() || this.getStrokeWidth());
         },
         _get: function(selector) {
             return this.className === selector || this.nodeType === selector ? [this] : [];
@@ -5635,12 +5626,14 @@ var Kinetic = {};
          *  element is the y component
          */
         intersects: function() {
-            var pos = Kinetic.Util._getXY(Array.prototype.slice.call(arguments));
-            var stage = this.getStage();
-            var hitCanvas = stage.hitCanvas;
-            hitCanvas.getContext().clear();
-            this.drawScene(hitCanvas);
-            var p = hitCanvas.context.getImageData(pos.x | 0, pos.y | 0, 1, 1).data;
+            var pos = Kinetic.Util._getXY(Array.prototype.slice.call(arguments)),
+                stage = this.getStage(),
+                bufferHitCanvas = stage.bufferHitCanvas,
+                p;
+
+            bufferHitCanvas.getContext().clear();
+            this.drawScene(bufferHitCanvas);
+            p = bufferHitCanvas.context.getImageData(pos.x | 0, pos.y | 0, 1, 1).data;
             return p[3] > 0;
         },
         /**
@@ -5739,20 +5732,60 @@ var Kinetic = {};
             delete Kinetic.shapes[this.colorKey];
             return this;
         },
-        drawScene: function(canvas) {
-            canvas = canvas || this.getLayer().getCanvas();
+        _useBufferCanvas: function() {
+            return (this.hasShadow() || this.getAbsoluteOpacity() !== 1) && this.hasFill() && this.hasStroke();
+        },
+        drawScene: function(can) {
+            var canvas = can || this.getLayer().getCanvas(),
+                context = canvas.getContext(),
+                drawFunc = this.getDrawFunc(),
+                hasShadow = this.hasShadow(),
+                stage, bufferCanvas, bufferContext;
 
-            var drawFunc = this.getDrawFunc(),
-                context = canvas.getContext();
+            if(drawFunc && this.isVisible()) { 
+                // if buffer canvas is needed
+                if (this._useBufferCanvas()) {
+                    stage = this.getStage();
+                    bufferCanvas = stage.bufferCanvas;
+                    bufferContext = bufferCanvas.getContext();
+                    bufferContext.clear();
+                    bufferContext.save();
+                    bufferContext._applyLineJoin(this);
+                    bufferContext._applyAncestorTransforms(this);
+                    drawFunc.call(this, bufferContext);
+                    bufferContext.restore();
 
-            if(drawFunc && this.isVisible()) {
-                context.save();
-                context._applyOpacity(this);
-                context._applyLineJoin(this);
-                context._applyAncestorTransforms(this);
-                drawFunc.call(this, context);
-                context.restore();
+                    context.save();
+                    if (hasShadow) {
+                        context.save();
+                        context._applyShadow(this);
+                        context.drawImage(bufferCanvas._canvas, 0, 0); 
+                        context.restore();
+                    }
+
+                    context._applyOpacity(this);
+                    context.drawImage(bufferCanvas._canvas, 0, 0);
+                    context.restore();
+                }
+                // if buffer canvas is not needed
+                else {
+                    context.save();
+                    context._applyLineJoin(this);
+                    context._applyAncestorTransforms(this);
+
+                    if (hasShadow) {
+                        context.save();
+                        context._applyShadow(this);
+                        drawFunc.call(this, context);
+                        context.restore();
+                    }   
+
+                    context._applyOpacity(this);
+                    drawFunc.call(this, context);
+                    context.restore();
+                }
             }
+
             return this;
         },
         drawHit: function() {
@@ -6880,6 +6913,7 @@ var Kinetic = {};
     var STAGE = 'Stage',
         STRING = 'string',
         PX = 'px',
+
         MOUSEOUT = 'mouseout',
         MOUSELEAVE = 'mouseleave',
         MOUSEOVER = 'mouseover',
@@ -6894,6 +6928,22 @@ var Kinetic = {};
         TAP = 'tap',
         DBL_TAP = 'dbltap',
         TOUCHMOVE = 'touchmove',
+
+        CONTENT_MOUSEOUT = 'contentMouseout',
+        CONTENT_MOUSELEAVE = 'contentMouseleave',
+        CONTENT_MOUSEOVER = 'contentMouseover',
+        CONTENT_MOUSEENTER = 'contentMouseenter',
+        CONTENT_MOUSEMOVE = 'contentMousemove',
+        CONTENT_MOUSEDOWN = 'contentMousedown',
+        CONTENT_MOUSEUP = 'contentMouseup',
+        CONTENT_CLICK = 'contentClick',
+        CONTENT_DBL_CLICK = 'contentDblclick',
+        CONTENT_TOUCHSTART = 'contentTouchstart',
+        CONTENT_TOUCHEND = 'contentTouchend',
+        CONTENT_TAP = 'contentTap',
+        CONTENT_DBL_TAP = 'contentDbltap',
+        CONTENT_TOUCHMOVE = 'contentTouchmove',
+
         DIV = 'div',
         RELATIVE = 'relative',
         INLINE_BLOCK = 'inline-block',
@@ -6915,9 +6965,9 @@ var Kinetic = {};
 
     Kinetic.Util.addMethods(Kinetic.Stage, {
         ___init: function(config) {
+            this.nodeType = STAGE;
             // call super constructor
             Kinetic.Container.call(this, config);
-            this.nodeType = STAGE;
             this._id = Kinetic.idCounter++;
             this._buildDOM();
             this._bindContentEvents();
@@ -7010,28 +7060,12 @@ var Kinetic = {};
             }
         },
         /**
-         * get mouse position for desktop apps
-         * @method
-         * @memberof Kinetic.Stage.prototype
-         */
-        getMousePosition: function() {
-            return this.mousePos;
-        },
-        /**
-         * get touch position for mobile apps
-         * @method
-         * @memberof Kinetic.Stage.prototype
-         */
-        getTouchPosition: function() {
-            return this.touchPos;
-        },
-        /**
-         * get pointer position which can be a touc position or mouse position
+         * get pointer position which can be a touch position or mouse position
          * @method
          * @memberof Kinetic.Stage.prototype
          */
         getPointerPosition: function() {
-            return this.getTouchPosition() || this.getMousePosition();
+            return this.pointerPos;
         },
         getStage: function() {
             return this;
@@ -7160,10 +7194,10 @@ var Kinetic = {};
                 this.content.style.width = width + PX;
                 this.content.style.height = height + PX;
 
-                this.bufferCanvas.setSize(width, height, 1);
-                this.hitCanvas.setSize(width, height);
+                this.bufferCanvas.setSize(width, height);
+                this.bufferHitCanvas.setSize(width, height);
 
-                // set pointer defined layer dimensions
+                // set layer dimensions
                 for(n = 0; n < len; n++) {
                     layer = layers[n];
                     layer.getCanvas().setSize(width, height);
@@ -7204,13 +7238,6 @@ var Kinetic = {};
         getLayers: function() {
             return this.getChildren();
         },
-        _setPointerPosition: function(evt) {
-            if(!evt) {
-                evt = window.event;
-            }
-            this._setMousePosition(evt);
-            this._setTouchPosition(evt);
-        },
         _bindContentEvents: function() {
             var that = this,
                 n;
@@ -7220,7 +7247,7 @@ var Kinetic = {};
             }
         },
         _mouseover: function(evt) {
-            this._fire(MOUSEOVER, evt);
+            this._fire(CONTENT_MOUSEOVER, evt);
         },
         _mouseout: function(evt) {
             this._setPointerPosition(evt);
@@ -7231,31 +7258,28 @@ var Kinetic = {};
                 targetShape._fireAndBubble(MOUSELEAVE, evt);
                 this.targetShape = null;
             }
-            this.mousePos = undefined;
+            this.pointerPos = undefined;
 
-            this._fire(MOUSEOUT, evt);
+            this._fire(CONTENT_MOUSEOUT, evt);
         },
         _mousemove: function(evt) {
             this._setPointerPosition(evt);
             var dd = Kinetic.DD,
                 obj = this.getIntersection(this.getPointerPosition()),
-                shape;
+                shape = obj && obj.shape ? obj.shape : undefined;
 
-            if(obj) {
-                shape = obj.shape;
-                if(shape) {
-                    if(!Kinetic.isDragging() && obj.pixel[3] === 255 && (!this.targetShape || this.targetShape._id !== shape._id)) {
-                        if(this.targetShape) {
-                            this.targetShape._fireAndBubble(MOUSEOUT, evt, shape);
-                            this.targetShape._fireAndBubble(MOUSELEAVE, evt, shape);
-                        }
-                        shape._fireAndBubble(MOUSEOVER, evt, this.targetShape);
-                        shape._fireAndBubble(MOUSEENTER, evt, this.targetShape);
-                        this.targetShape = shape;
+            if(shape) {
+                if(!Kinetic.isDragging() && obj.pixel[3] === 255 && (!this.targetShape || this.targetShape._id !== shape._id)) {
+                    if(this.targetShape) {
+                        this.targetShape._fireAndBubble(MOUSEOUT, evt, shape);
+                        this.targetShape._fireAndBubble(MOUSELEAVE, evt, shape);
                     }
-                    else {
-                        shape._fireAndBubble(MOUSEMOVE, evt);
-                    }
+                    shape._fireAndBubble(MOUSEOVER, evt, this.targetShape);
+                    shape._fireAndBubble(MOUSEENTER, evt, this.targetShape);
+                    this.targetShape = shape;
+                }
+                else {
+                    shape._fireAndBubble(MOUSEMOVE, evt);
                 }
             }
             /*
@@ -7263,13 +7287,16 @@ var Kinetic = {};
              * to run mouseout from previous target shape
              */
             else {
-              this._fire(MOUSEMOVE, evt);
               if(this.targetShape && !Kinetic.isDragging()) {
                 this.targetShape._fireAndBubble(MOUSEOUT, evt);
                 this.targetShape._fireAndBubble(MOUSELEAVE, evt);
                 this.targetShape = null;
               }
+
             }
+
+            // content event
+            this._fire(CONTENT_MOUSEMOVE, evt);
 
             if(dd) {
                 dd._drag(evt);
@@ -7284,11 +7311,17 @@ var Kinetic = {};
         _mousedown: function(evt) {
             this._setPointerPosition(evt);
             var obj = this.getIntersection(this.getPointerPosition()),
-                shape = obj && obj.shape ? obj.shape : this;
+                shape = obj && obj.shape ? obj.shape : undefined;
 
             Kinetic.listenClickTap = true;
-            this.clickStartShape = shape;
-            shape._fireAndBubble(MOUSEDOWN, evt);
+
+            if (shape) {
+                this.clickStartShape = shape;
+                shape._fireAndBubble(MOUSEDOWN, evt);
+            }
+
+            // content event
+            this._fire(CONTENT_MOUSEDOWN, evt);
 
             // always call preventDefault for desktop events because some browsers
             // try to drag and drop the canvas element
@@ -7300,25 +7333,40 @@ var Kinetic = {};
             this._setPointerPosition(evt);
             var that = this,
                 obj = this.getIntersection(this.getPointerPosition()),
-                shape = obj && obj.shape ? obj.shape : this;
+                shape = obj && obj.shape ? obj.shape : undefined,
+                fireDblClick = false;
 
-            shape._fireAndBubble(MOUSEUP, evt);
+            if(Kinetic.inDblClickWindow) {
+                fireDblClick = true;
+                Kinetic.inDblClickWindow = false;
+            }
+            else {
+                Kinetic.inDblClickWindow = true;
+            }
 
-            // detect if click or double click occurred
-            if(Kinetic.listenClickTap && shape._id === this.clickStartShape._id) {
-                shape._fireAndBubble(CLICK, evt);
+            setTimeout(function() {
+                Kinetic.inDblClickWindow = false;
+            }, Kinetic.dblClickWindow);
 
-                if(Kinetic.inDblClickWindow) {
-                    shape._fireAndBubble(DBL_CLICK, evt);
-                    Kinetic.inDblClickWindow = false;
+            if (shape) {
+                shape._fireAndBubble(MOUSEUP, evt);
+
+                // detect if click or double click occurred
+                if(Kinetic.listenClickTap && shape._id === this.clickStartShape._id) {
+                    shape._fireAndBubble(CLICK, evt);
+
+                    if(fireDblClick) {
+                        shape._fireAndBubble(DBL_CLICK, evt);
+                    }
                 }
-                else {
-                    Kinetic.inDblClickWindow = true;
+            }
+            // content events
+            this._fire(CONTENT_MOUSEUP, evt);
+            if (Kinetic.listenClickTap) {
+                this._fire(CONTENT_CLICK, evt);
+                if(fireDblClick) {
+                    this._fire(CONTENT_DBL_CLICK, evt);
                 }
-
-                setTimeout(function() {
-                    Kinetic.inDblClickWindow = false;
-                }, Kinetic.dblClickWindow);
             }
 
             Kinetic.listenClickTap = false;
@@ -7332,31 +7380,31 @@ var Kinetic = {};
         _touchstart: function(evt) {
             this._setPointerPosition(evt);
             var obj = this.getIntersection(this.getPointerPosition()),
-                shape = obj && obj.shape ? obj.shape : this;
+                shape = obj && obj.shape ? obj.shape : undefined;
 
             Kinetic.listenClickTap = true;
-            this.tapStartShape = shape;
-            shape._fireAndBubble(TOUCHSTART, evt);
 
-            // only call preventDefault if the shape is listening for events
-            if (shape.isListening() && evt.preventDefault) {
-                evt.preventDefault();
+            if (shape) {
+                this.tapStartShape = shape;
+                shape._fireAndBubble(TOUCHSTART, evt);
+
+                // only call preventDefault if the shape is listening for events
+                if (shape.isListening() && evt.preventDefault) {
+                    evt.preventDefault();
+                }
             }
+            // content event
+            this._fire(CONTENT_TOUCHSTART, evt);
         },
         _touchend: function(evt) {
             this._setPointerPosition(evt);
             var that = this,
                 obj = this.getIntersection(this.getPointerPosition()),
-                shape = obj && obj.shape ? obj.shape : this;
-
-            shape._fireAndBubble(TOUCHEND, evt);
-
-            // detect if tap or double tap occurred
-            if(Kinetic.listenClickTap && shape._id === this.tapStartShape._id) {
-                shape._fireAndBubble(TAP, evt);
+                shape = obj && obj.shape ? obj.shape : undefined,
+                fireDblClick = false;
 
                 if(Kinetic.inDblClickWindow) {
-                    shape._fireAndBubble(DBL_TAP, evt);
+                    fireDblClick = true;
                     Kinetic.inDblClickWindow = false;
                 }
                 else {
@@ -7366,62 +7414,106 @@ var Kinetic = {};
                 setTimeout(function() {
                     Kinetic.inDblClickWindow = false;
                 }, Kinetic.dblClickWindow);
+
+            if (shape) {
+                shape._fireAndBubble(TOUCHEND, evt);
+
+                // detect if tap or double tap occurred
+                if(Kinetic.listenClickTap && shape._id === this.tapStartShape._id) {
+                    shape._fireAndBubble(TAP, evt);
+
+                    if(fireDblClick) {
+                        shape._fireAndBubble(DBL_TAP, evt);
+                    }
+                }
+                // only call preventDefault if the shape is listening for events
+                if (shape.isListening() && evt.preventDefault) {
+                    evt.preventDefault();
+                }
+            }
+            // content events
+            if (Kinetic.listenClickTap) {
+                this._fire(CONTENT_TOUCHEND, evt);
+                if(fireDblClick) {
+                    this._fire(CONTENT_DBL_TAP, evt);
+                }
             }
 
             Kinetic.listenClickTap = false;
-
-            // only call preventDefault if the shape is listening for events
-            if (shape.isListening() && evt.preventDefault) {
-                evt.preventDefault();
-            }
         },
         _touchmove: function(evt) {
             this._setPointerPosition(evt);
             var dd = Kinetic.DD,
                 obj = this.getIntersection(this.getPointerPosition()),
-                shape = obj && obj.shape ? obj.shape : this;
+                shape = obj && obj.shape ? obj.shape : undefined;
 
-            shape._fireAndBubble(TOUCHMOVE, evt);
+            if (shape) {
+                shape._fireAndBubble(TOUCHMOVE, evt);
+
+                // only call preventDefault if the shape is listening for events
+                if (shape.isListening() && evt.preventDefault) {
+                    evt.preventDefault();
+                }
+            }
+            this._fire(CONTENT_TOUCHMOVE, evt);
 
             // start drag and drop
             if(dd) {
                 dd._drag(evt);
             }
+        },
+        _setPointerPosition: function(evt) {
+            var evt = evt ? evt : window.event,
+                contentPosition = this._getContentPosition(),
+                offsetX = evt.offsetX,
+                clientX = evt.clientX,
+                x = null,
+                y = null,
+                touch;
 
-            // only call preventDefault if the shape is listening for events
-            if (shape.isListening() && evt.preventDefault) {
-                evt.preventDefault();
+            // touch events
+            if(evt.touches !== undefined) {
+                // currently, only handle one finger
+                if (evt.touches.length === 1) {
+
+                    touch = evt.touches[0];
+
+                    // get the information for finger #1
+                    x = touch.clientX - contentPosition.left;
+                    y = touch.clientY - contentPosition.top; 
+                }
             }
-        },
-        _setMousePosition: function(evt) {
+            // mouse events
+            else {
+                // if offsetX is defined, assume that offsetY is defined as well
+                if (offsetX !== undefined) {
+                    x = offsetX;
+                    y = evt.offsetY;
+                }
+                // we unforunately have to use UA detection here because accessing
+                // the layerX or layerY properties in newer veresions of Chrome
+                // throws a JS warning.  layerX and layerY are required for FF
+                // when the container is transformed via CSS.
+                else if (Kinetic.UA.browser === 'mozilla') {
+                    x = evt.layerX;
+                    y = evt.layerY;
+                }
+                // if clientX is defined, assume that clientY is defined as well
+                else if (clientX !== undefined && contentPosition) {
+                    x = clientX - contentPosition.left;
+                    y = evt.clientY - contentPosition.top;
+                }
+            }
 
-            var mouseX = evt.offsetX !== undefined ? evt.offsetX : evt.layerX || (evt.clientX - this._getContentPosition().left),
-                mouseY = evt.offsetY !== undefined ? evt.offsetY : evt.layerY || (evt.clientY - this._getContentPosition().top);
-                
-            this.mousePos = {
-                x: mouseX,
-                y: mouseY
-            };
-        },
-        _setTouchPosition: function(evt) {
-            var touch, touchX, touchY;
-
-            if(evt.touches !== undefined && evt.touches.length === 1) {
-                // one finger
-                touch = evt.touches[0];
-
-                // get the information for finger #1
-                touchX = touch.clientX - this._getContentPosition().left;
-                touchY = touch.clientY - this._getContentPosition().top;
-
-                this.touchPos = {
-                    x: touchX,
-                    y: touchY
+            if (x !== null && y !== null) {
+                this.pointerPos = {
+                    x: x,
+                    y: y
                 };
             }
         },
         _getContentPosition: function() {
-            var rect = this.content.getBoundingClientRect();
+            var rect = this.content.getBoundingClientRect ? this.content.getBoundingClientRect() : { top: 0, left: 0 };
             return {
                 top: rect.top,
                 left: rect.left
@@ -7438,10 +7530,16 @@ var Kinetic = {};
             this.content.style.position = RELATIVE;
             this.content.style.display = INLINE_BLOCK;
             this.content.className = KINETICJS_CONTENT;
+            this.content.setAttribute('role', 'presentation');
             container.appendChild(this.content);
 
-            this.bufferCanvas = new Kinetic.SceneCanvas();
-            this.hitCanvas = new Kinetic.HitCanvas();
+            // the buffer canvas pixel ratio must be 1 because it is used as an 
+            // intermediate canvas before copying the result onto a scene canvas.
+            // not setting it to 1 will result in an over compensation
+            this.bufferCanvas = new Kinetic.SceneCanvas({
+                pixelRatio: 1
+            });
+            this.bufferHitCanvas = new Kinetic.HitCanvas();
 
             this._resizeDOM();
         },
@@ -7574,15 +7672,20 @@ var Kinetic = {};
             return this.getCanvas().getContext();
         },
         /**
-         * clear canvas tied to the layer
+         * clear scene and hit canvas contexts tied to the layer
          * @method
          * @memberof Kinetic.Node.prototype
-         * @param {Object} [clip] clipping bounds
+         * @param {Array|Object} [bounds]
          * @example
-         * layer.clear([0, 0, 100, 100])
+         * layer.clear();<br>
+         * layer.clear(0, 0, 100, 100);
          */
-        clear: function(clip) {
-            this.getCanvas().clear(clip);
+        clear: function() {
+            var context = this.getContext(),
+                hitContext = this.getHitCanvas().getContext();
+
+            context.clear.apply(context, arguments);
+            hitContext.clear.apply(hitContext, arguments);
             return this;
         },
         // extend Node.prototype.setVisible
@@ -7870,6 +7973,7 @@ var Kinetic = {};
      * @name getCornerRadius
      * @method
      * @memberof Kinetic.Rect.prototype
+     * @returns {Number}
      */
 
 })();
@@ -8001,16 +8105,20 @@ var Kinetic = {};
             context.closePath();
             context.fillStrokeShape(this);
         },
+        // implements Shape.prototype.getWidth()
         getWidth: function() {
             return this.getRadius() * 2;
         },
+        // implements Shape.prototype.getHeight()
         getHeight: function() {
             return this.getRadius() * 2;
         },
+        // implements Shape.prototype.setWidth()
         setWidth: function(width) {
             Kinetic.Node.prototype.setWidth.call(this, width);
             this.setRadius(width / 2);
         },
+        // implements Shape.prototype.setHeight()
         setHeight: function(height) {
             Kinetic.Node.prototype.setHeight.call(this, height);
             this.setRadius(height / 2);
@@ -8023,6 +8131,7 @@ var Kinetic = {};
 
     /**
      * set radius
+     * @name setRadius
      * @method
      * @memberof Kinetic.Circle.prototype
      * @param {Number} radius
@@ -8030,8 +8139,10 @@ var Kinetic = {};
 
     /**
      * get radius
+     * @name getRadius
      * @method
      * @memberof Kinetic.Circle.prototype
+     * @returns {Number}
      */
 })();
 ;(function() {
@@ -8071,18 +8182,22 @@ var Kinetic = {};
             context.closePath();
             context.fillStrokeShape(this);
         },
+        // implements Shape.prototype.getWidth()
         getWidth: function() {
             return this.getRadius().x * 2;
         },
+        // implements Shape.prototype.getHeight()
         getHeight: function() {
             return this.getRadius().y * 2;
         },
+        // implements Shape.prototype.setWidth()
         setWidth: function(width) {
             Kinetic.Node.prototype.setWidth.call(this, width);
             this.setRadius({
                 x: width / 2
             });
         },
+        // implements Shape.prototype.setHeight()
         setHeight: function(height) {
             Kinetic.Node.prototype.setHeight.call(this, height);
             this.setRadius({
@@ -8098,7 +8213,8 @@ var Kinetic = {};
     /**
      * set radius
      * @name setRadius
-     * @methodOf Kinetic.Ellipse.prototype
+     * @method
+     * @memberof Kinetic.Ellipse.prototype
      * @param {Object|Array} radius
      *  radius can be a number, in which the ellipse becomes a circle,
      *  it can be an object with an x and y component, or it
@@ -8111,7 +8227,9 @@ var Kinetic = {};
     /**
      * get radius
      * @name getRadius
-     * @methodOf Kinetic.Ellipse.prototype
+     * @method
+     * @memberof Kinetic.Ellipse.prototype
+     * @returns {Object}
      */
 })();;(function() {
     /**
@@ -8251,6 +8369,7 @@ var Kinetic = {};
      * @name getRadius
      * @method
      * @memberof Kinetic.Wedge.prototype
+     * @returns {Number}
      */
 
     Kinetic.Factory.addRotationGetterSetter(Kinetic.Wedge, 'angle', 0);
@@ -8276,6 +8395,7 @@ var Kinetic = {};
      * @name getAngle
      * @method
      * @memberof Kinetic.Wedge.prototype
+     * @returns {Number}
      */
 
      /**
@@ -8283,6 +8403,7 @@ var Kinetic = {};
      * @name getAngleDeg
      * @method
      * @memberof Kinetic.Wedge.prototype
+     * @returns {Number}
      */
 
     Kinetic.Factory.addGetterSetter(Kinetic.Wedge, 'clockwise', false);
@@ -8301,6 +8422,7 @@ var Kinetic = {};
      * @name getClockwise
      * @method
      * @memberof Kinetic.Wedge.prototype
+     * @returns {Boolean}
      */
 })();
 ;(function() {
@@ -8424,15 +8546,15 @@ var Kinetic = {};
             Kinetic.Shape.call(this, config);
             this.className = IMAGE;
         },
+        _useBufferCanvas: function() {
+            return (this.hasShadow() || this.getAbsoluteOpacity() !== 1) && this.hasStroke();
+        },
         drawFunc: function(context) {
-            var width = this.getWidth(),
-                height = this.getHeight(),
-                params,
-                that = this,
-                cropX = this.getCropX() || 0,
-                cropY = this.getCropY() || 0,
-                cropWidth = this.getCropWidth(),
-                cropHeight = this.getCropHeight(),
+            var width = this.getWidth(), 
+                height = this.getHeight(), 
+                that = this, 
+                crop,
+                params, 
                 image;
 
             //TODO: this logic needs to hook int othe new caching system
@@ -8444,11 +8566,26 @@ var Kinetic = {};
             }
 
             // NOTE: this.filterCanvas may be set by the above code block
+            // In that case, cropping is already applied.
             if (this.filterCanvas) {
                 image = this.filterCanvas._canvas;
+                params = [image, 0, 0, width, height];
             }
             else {
                 image = this.getImage();
+
+                if (image) {
+                    crop = this.getCrop();
+                    if (crop) {
+                        crop.x = crop.x || 0;
+                        crop.y = crop.y || 0;
+                        crop.width = crop.width || image.width - crop.x;
+                        crop.height = crop.height || image.height - crop.y;
+                        params = [image, crop.x, crop.y, crop.width, crop.height, 0, 0, width, height];
+                    } else {
+                        params = [image, 0, 0, width, height];
+                    }
+                }
             }
 
             context.beginPath();
@@ -8456,33 +8593,17 @@ var Kinetic = {};
             context.closePath();
             context.fillStrokeShape(this);
 
-            if(image) {
-                // if cropping
-                if(cropWidth && cropHeight) {
-                    params = [image, cropX, cropY, cropWidth, cropHeight, 0, 0, width, height];
-                }
-                // no cropping
-                else {
-                    params = [image, 0, 0, width, height];
-                }
-
-                if(this.hasShadow()) {
-                    context.applyShadow(this, function() {
-                        context.drawImage.apply(context, params);
-                    });
-                }
-                else {
-                    context.drawImage.apply(context, params);
-                }
+            if (image) {
+                context.drawImage.apply(context, params);
             }
         },
         drawHitFunc: function(context) {
-            var width = this.getWidth(),
-                height = this.getHeight(),
+            var width = this.getWidth(), 
+                height = this.getHeight(), 
                 imageHitRegion = this.imageHitRegion;
 
             if(imageHitRegion) {
-                context.drawImage(imageHitRegion, 0, 0, width, height);
+                context.drawImage(imageHitRegion, 0, 0);
                 context.beginPath();
                 context.rect(0, 0, width, height);
                 context.closePath();
@@ -8501,16 +8622,26 @@ var Kinetic = {};
                 width = this.getWidth(),
                 height = this.getHeight(),
                 filter = this.getFilter(),
+                crop = this.getCrop() || {},
                 filterCanvas, context, imageData;
 
-            if (this.filterCanvas){
+            // Determine the region we are cropping
+            crop.x = crop.x || 0;
+            crop.y = crop.y || 0;
+            crop.width = crop.width || image.width - crop.x;
+            crop.height = crop.height || image.height - crop.y;
+
+            // Make a filterCanvas the same size as the cropped image
+            if (this.filterCanvas &&
+                    this.filterCanvas.getWidth() === crop.width &&
+                    this.filterCanvas.getHeight() === crop.height) {
                 filterCanvas = this.filterCanvas;
                 filterCanvas.getContext().clear();
             }
             else {
                 filterCanvas = this.filterCanvas = new Kinetic.SceneCanvas({
-                    width: width,
-                    height: height,
+                    width: crop.width, 
+                    height: crop.height,
                     pixelRatio: 1
                 });
             }
@@ -8518,8 +8649,10 @@ var Kinetic = {};
             context = filterCanvas.getContext();
 
             try {
-                context.drawImage(image, 0, 0, filterCanvas.getWidth(), filterCanvas.getHeight());
-                imageData = context.getImageData(0, 0, filterCanvas.getWidth(), filterCanvas.getHeight());
+                // Crop the image onto the filterCanvas then apply
+                // the filter to the filterCanvas
+                context.drawImage(image, crop.x, crop.y, crop.width, crop.height, 0,0,crop.width, crop.height);
+                imageData = context.getImageData(0, 0, crop.width, crop.height);
                 filter.call(this, imageData);
                 context.putImageData(imageData, 0, 0);
             }
@@ -8544,6 +8677,10 @@ var Kinetic = {};
          * @memberof Kinetic.Image.prototype
          * @param {Function} [callback] callback function to be called once
          *  the image hit region has been created
+         * @example
+         * image.createImageHitRegion(function() {<br>
+         *   layer.drawHit();<br>
+         * });
          */
         createImageHitRegion: function(callback) {
             var that = this,
@@ -8551,7 +8688,8 @@ var Kinetic = {};
                 height = this.getHeight(),
                 canvas = new Kinetic.SceneCanvas({
                     width: width,
-                    height: height
+                    height: height,
+                    pixelRatio: 1
                 }),
                 _context = canvas.getContext()._context,
                 image = this.getImage(),
@@ -8600,6 +8738,12 @@ var Kinetic = {};
         getHeight: function() {
             var image = this.getImage();
             return this.attrs.height || (image ? image.height : 0);
+        },
+        destroy: function(){
+            Kinetic.Shape.prototype.destroy.call(this);
+            delete this.filterCanvas;
+            delete this.attrs;
+            return this;
         }
     };
     Kinetic.Util.extend(Kinetic.Image, Kinetic.Shape);
@@ -8636,6 +8780,7 @@ var Kinetic = {};
      * @name getImage
      * @method
      * @memberof Kinetic.Image.prototype
+     * @returns {ImageObject}
      */
 
     Kinetic.Factory.addBoxGetterSetter(Kinetic.Image, 'crop');
@@ -8695,7 +8840,7 @@ var Kinetic = {};
      * @name getCrop
      * @method
      * @memberof Kinetic.Image.prototype
-     * @return {Object}
+     * @returns {Object}
      */
 
     /**
@@ -8703,6 +8848,7 @@ var Kinetic = {};
      * @name getCropX
      * @method
      * @memberof Kinetic.Image.prototype
+     * @returns {Number}
      */
 
     /**
@@ -8710,6 +8856,7 @@ var Kinetic = {};
      * @name getCropY
      * @method
      * @memberof Kinetic.Image.prototype
+     * @returns {Number}
      */
 
     /**
@@ -8717,6 +8864,7 @@ var Kinetic = {};
      * @name getCropWidth
      * @method
      * @memberof Kinetic.Image.prototype
+     * @returns {Number}
      */
 
     /**
@@ -8724,6 +8872,7 @@ var Kinetic = {};
      * @name getCropHeight
      * @method
      * @memberof Kinetic.Image.prototype
+     * @returns {Number}
      */
 
      Kinetic.Factory.addFilterGetterSetter(Kinetic.Image, 'filter');
@@ -8741,6 +8890,7 @@ var Kinetic = {};
      * @name getFilter
      * @method
      * @memberof Kinetic.Image.prototype
+     * @returns {Function}
      */
 })();
 ;(function() {
@@ -8869,6 +9019,7 @@ var Kinetic = {};
     Kinetic.Factory.addPointsGetterSetter(Kinetic.Polygon, 'points');
     /**
      * set points array
+     * @name setPoints
      * @method
      * @memberof Kinetic.Polygon.prototype
      * @param {Array} can be an array of point objects or an array
@@ -8877,14 +9028,15 @@ var Kinetic = {};
 
     /**
      * get points array
+     * @name getPoints
      * @method
      * @memberof Kinetic.Polygon.prototype
+     * @returns {Array}
      */
 })();
 ;(function() {
     // constants
     var AUTO = 'auto',
-        CALIBRI = 'Calibri',
         CANVAS = 'canvas',
         CENTER = 'center',
         CHANGE_KINETIC = 'Change.kinetic',
@@ -8916,7 +9068,7 @@ var Kinetic = {};
      * @memberof Kinetic
      * @augments Kinetic.Shape
      * @param {Object} config
-     * @param {String} [config.fontFamily] default is Calibri
+     * @param {String} [config.fontFamily] default is Arial
      * @param {Number} [config.fontSize] in pixels.  Default is 12
      * @param {String} [config.fontStyle] can be normal, bold, or italic.  Default is normal
      * @param {String} config.text
@@ -9112,17 +9264,19 @@ var Kinetic = {};
             this._setAttr(TEXT, str);
         },
         /**
-         * get width
+         * get width of text area, which includes padding
          * @method
          * @memberof Kinetic.Text.prototype
+         * @returns {Number}
          */
         getWidth: function() {
             return this.attrs.width === AUTO ? this.getTextWidth() + this.getPadding() * 2 : this.attrs.width;
         },
         /**
-         * get the height of the text area, which takes into account multi-line text and padding
+         * get the height of the text area, which takes into account multi-line text, line heights, and padding
          * @method
          * @memberof Kinetic.Text.prototype
+         * @returns {Number}
          */
         getHeight: function() {
             return this.attrs.height === AUTO ? (this.getTextHeight() * this.textArr.length * this.getLineHeight()) + this.getPadding() * 2 : this.attrs.height;
@@ -9131,6 +9285,7 @@ var Kinetic = {};
          * get text width
          * @method
          * @memberof Kinetic.Text.prototype
+         * @returns {Number}
          */
         getTextWidth: function() {
             return this.textWidth;
@@ -9139,6 +9294,7 @@ var Kinetic = {};
          * get text height
          * @method
          * @memberof Kinetic.Text.prototype
+         * @returns {Number}
          */
         getTextHeight: function() {
             return this.textHeight;
@@ -9277,7 +9433,7 @@ var Kinetic = {};
     Kinetic.Util.extend(Kinetic.Text, Kinetic.Shape);
 
     // add getters setters
-    Kinetic.Factory.addGetterSetter(Kinetic.Text, 'fontFamily', CALIBRI);
+    Kinetic.Factory.addGetterSetter(Kinetic.Text, 'fontFamily', 'Arial');
 
     /**
      * set font family
@@ -9292,6 +9448,7 @@ var Kinetic = {};
      * @name getFontFamily
      * @method
      * @memberof Kinetic.Text.prototype
+     * @returns {String}
      */
 
     Kinetic.Factory.addGetterSetter(Kinetic.Text, 'fontSize', 12);
@@ -9301,7 +9458,7 @@ var Kinetic = {};
      * @name setFontSize
      * @method
      * @memberof Kinetic.Text.prototype
-     * @param {int} fontSize
+     * @param {Number} fontSize
      */
 
      /**
@@ -9309,6 +9466,7 @@ var Kinetic = {};
      * @name getFontSize
      * @method
      * @memberof Kinetic.Text.prototype
+     * @returns {Number}
      */
 
     Kinetic.Factory.addGetterSetter(Kinetic.Text, 'fontStyle', NORMAL);
@@ -9326,6 +9484,7 @@ var Kinetic = {};
      * @name getFontStyle
      * @method
      * @memberof Kinetic.Text.prototype
+     * @returns {String}
      */
 
     Kinetic.Factory.addGetterSetter(Kinetic.Text, 'padding', 0);
@@ -9343,6 +9502,7 @@ var Kinetic = {};
      * @name getPadding
      * @method
      * @memberof Kinetic.Text.prototype
+     * @returns {Number}
      */
 
     Kinetic.Factory.addGetterSetter(Kinetic.Text, 'align', LEFT);
@@ -9360,6 +9520,7 @@ var Kinetic = {};
      * @name getAlign
      * @method
      * @memberof Kinetic.Text.prototype
+     * @returns {String}
      */
 
     Kinetic.Factory.addGetterSetter(Kinetic.Text, 'lineHeight', 1);
@@ -9377,6 +9538,7 @@ var Kinetic = {};
      * @name getLineHeight
      * @method
      * @memberof Kinetic.Text.prototype
+     * @returns {Number}
      */
 
     Kinetic.Factory.addGetterSetter(Kinetic.Text, 'wrap', WORD);
@@ -9394,6 +9556,7 @@ var Kinetic = {};
      * @name getWrap
      * @method
      * @memberof Kinetic.Text.prototype
+     * @returns {String}
      */
 
     Kinetic.Factory.addGetter(Kinetic.Text, TEXT, EMPTY_STRING);
@@ -9403,6 +9566,7 @@ var Kinetic = {};
      * @name getText
      * @method
      * @memberof Kinetic.Text.prototype
+     * @returns {String}
      */
 
     Kinetic.Factory.addSetter(Kinetic.Text, 'width');
@@ -9568,6 +9732,7 @@ var Kinetic = {};
     Kinetic.Factory.addPointsGetterSetter(Kinetic.Line, 'points');
     /**
      * set points array
+     * @name setPoints
      * @method
      * @memberof Kinetic.Line.prototype
      * @param {Array} can be an array of point objects or an array
@@ -9576,8 +9741,10 @@ var Kinetic = {};
 
     /**
      * get points array
+     * @name getPoints
      * @method
      * @memberof Kinetic.Line.prototype
+     * @returns {Array}
      */
 })();
 ;(function() {
@@ -9745,10 +9912,12 @@ var Kinetic = {};
      * @name getTension
      * @method
      * @memberof Kinetic.Spline.prototype
+     * @returns {Number}
      */
 
     /**
      * set tension
+     * @name setTension
      * @method
      * @memberof Kinetic.Spline.prototype
      * @param {Number} tension
@@ -9757,12 +9926,15 @@ var Kinetic = {};
     Kinetic.Factory.addPointsGetterSetter(Kinetic.Spline, 'points');
     /**
      * get points array
+     * @name getPoints
      * @method
      * @memberof Kinetic.Spline.prototype
+     * @returns {Array}
      */
 
     /**
      * set points array
+     * @name setPoints
      * @method
      * @memberof Kinetic.Spline.prototype
      * @param {Array} can be an array of point objects or an array
@@ -9947,10 +10119,12 @@ var Kinetic = {};
      * @name getTension
      * @method
      * @memberof Kinetic.Blob.prototype
+     * @returns {Number}
      */
 
     /**
      * set tension
+     * @name setTension
      * @method
      * @memberof Kinetic.Blob.prototype
      * @param {Number} tension
@@ -9959,12 +10133,15 @@ var Kinetic = {};
     Kinetic.Factory.addPointsGetterSetter(Kinetic.Blob, 'points');
     /**
      * get points array
+     * @name getPoints
      * @method
      * @memberof Kinetic.Blob.prototype
+     * @returns {Array}
      */
 
     /**
      * set points array
+     * @name setPoints
      * @method
      * @memberof Kinetic.Blob.prototype
      * @param {Array} can be an array of point objects or an array
@@ -10153,7 +10330,10 @@ var Kinetic = {};
             context.beginPath();
             context.rect(0, 0, f.width, f.height);
             context.closePath();
-            context.fill(this);
+            context.fillShape(this);
+        },
+        _useBufferCanvas: function() {
+            return (this.hasShadow() || this.getAbsoluteOpacity() !== 1) && this.hasStroke();
         },
         /**
          * start sprite animation
@@ -10237,6 +10417,7 @@ var Kinetic = {};
      * @name getAnimation
      * @method
      * @memberof Kinetic.Sprite.prototype
+     * @returns {String}
      */
 
     Kinetic.Factory.addGetterSetter(Kinetic.Sprite, 'animations');
@@ -10254,6 +10435,7 @@ var Kinetic = {};
      * @name getAnimations
      * @method
      * @memberof Kinetic.Sprite.prototype
+     * @returns {Object}
      */
 
     Kinetic.Factory.addGetterSetter(Kinetic.Sprite, 'image');
@@ -10271,6 +10453,7 @@ var Kinetic = {};
      * @name getImage
      * @method
      * @memberof Kinetic.Sprite.prototype
+     * @returns {ImageObject}
      */
 
     Kinetic.Factory.addGetterSetter(Kinetic.Sprite, 'index', 0);
@@ -10288,6 +10471,7 @@ var Kinetic = {};
      * @name getIndex
      * @method
      * @memberof Kinetic.Sprite.prototype
+     * @returns {Integer}
      */
 
     Kinetic.Factory.addGetterSetter(Kinetic.Sprite, 'frameRate', 17);
@@ -10306,6 +10490,7 @@ var Kinetic = {};
      * @name getFrameRate
      * @method
      * @memberof Kinetic.Sprite.prototype
+     * @returns {Number}
      */
 
 })();
@@ -11108,7 +11293,9 @@ var Kinetic = {};
             // TODO: shouldn't this be on the prototype?
             this._fillFunc = _fillFunc;
             this._strokeFunc = _strokeFunc;
-
+            this._fillFuncHit = _fillFunc;
+            this._strokeFuncHit = _strokeFunc;
+            
             this.className = 'TextPath';
 
             this.dataArray = Kinetic.Path.parsePathData(this.attrs.data);
@@ -11121,8 +11308,6 @@ var Kinetic = {};
             that._setTextData();
         },
         drawFunc: function(context) {
-            var charArr = this.charArr;
-
             context.setAttr('font', this._getContextFont());
             context.setAttr('textBaseline', 'middle');
             context.setAttr('textAlign', 'left');
@@ -11133,8 +11318,6 @@ var Kinetic = {};
                 context.save();
 
                 var p0 = glyphInfo[i].p0;
-                var p1 = glyphInfo[i].p1;
-                var ht = parseFloat(this.attrs.fontSize);
 
                 context.translate(p0.x, p0.y);
                 context.rotate(glyphInfo[i].rotation);
@@ -11149,11 +11332,12 @@ var Kinetic = {};
                 // context.strokeStyle = 'cyan';
                 // else
                 // context.strokeStyle = 'green';
-
+                // var p1 = glyphInfo[i].p1;
                 // context.moveTo(p0.x, p0.y);
                 // context.lineTo(p1.x, p1.y);
                 // context.stroke();
             }
+            context.restore();
         },
         /**
          * get text width in pixels
@@ -11238,7 +11422,7 @@ var Kinetic = {};
 
                 var currLen = 0;
                 var attempts = 0;
-                var needNextSegment = false;
+
                 p1 = undefined;
                 while(Math.abs(glyphWidth - currLen) / glyphWidth > 0.01 && attempts < 25) {
                     attempts++;
@@ -11879,7 +12063,7 @@ var Kinetic = {};
          * @memberof Kinetic.Label.prototype
          */
         getText: function() {
-            return this.get('Text')[0];
+            return this.find('Text')[0];
         },
         /**
          * get Tag shape for the label.  You need to access the Tag shape in order to update
@@ -11889,7 +12073,7 @@ var Kinetic = {};
          * @memberof Kinetic.Label.prototype
          */
         getTag: function() {
-            return this.get('Tag')[0];
+            return this.find('Tag')[0];
         },
         _addListeners: function(text) {
             var that = this,
