@@ -132,7 +132,6 @@ fSpider.History = (function (History, ko, undefined) {
             this.cursor--;
             actionSet = this.actionSets[this.cursor];
             actionSet.undo(settings);
-            this._fireOnHistoryChanged();
         }
         return actionSet;
     };
