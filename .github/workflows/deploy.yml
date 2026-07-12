@@ -66,31 +66,3 @@ jobs:
             git push origin HEAD
           fi
 
-      - name: Sync built assets to fuzzley/fuzzley.github.io
-        env:
-          PAT_TOKEN: ${{ secrets.MAIN_REPO_DEPLOY_PAT }}
-          FORCE_DEPLOY: ${{ github.event.inputs.force }}
-        run: |
-          # 1. Clone the github.io repository
-          git clone --depth 1 https://x-access-token:${{ env.PAT_TOKEN }}@github.com/fuzzley/fuzzley.github.io.git github-io-website
-
-          # 2. Define the destination folder
-          DEST_DIR="github-io-website/project/spider"
-
-          # 3. Clean out any old files
-          rm -rf "$DEST_DIR"
-          mkdir -p "$DEST_DIR"
-
-          # 4. Copy new build files
-          cp -r dist/* "$DEST_DIR"/
-
-          # 5. Commit and push the updates if there are changes
-          cd github-io-website
-          git add .
-
-          if git diff-index --quiet HEAD && [ "$FORCE_DEPLOY" != "true" ]; then
-            echo "No changes in fSpider production build. Skipping commit."
-          else
-            git commit --allow-empty -m "chore(deploy): sync fSpider production build from fuzzley/fSpider@${{ github.sha }}"
-            git push origin HEAD
-          fi
