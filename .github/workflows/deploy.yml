@@ -46,7 +46,7 @@ jobs:
           git clone --depth 1 https://x-access-token:${{ env.PAT_TOKEN }}@github.com/fuzzley/fuzzley.git main-website
 
           # 2. Define the destination folder in the website repo
-          DEST_DIR="main-website/project/spider"
+          DEST_DIR="main-website/frontend/public/project/spider"
 
           # 3. Clean out any old files
           rm -rf "$DEST_DIR"
