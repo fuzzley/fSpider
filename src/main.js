@@ -35,6 +35,11 @@ fSpider.init = function () {
   var stage = fSpider.initStage();
   var board = fSpider.initBoard(stage);
   fSpider.initUI(stage, board);
+
+  //restore a saved game if one exists, otherwise deal a fresh game
+  if (board.loadState() !== true) {
+    board.startNewGame();
+  }
 };
 
 fSpider.initStage = function () {
@@ -96,6 +101,9 @@ fSpider.initUI = function (stage, board) {
   fSpider.vmHub.registerVM("gameHistory", board.history.vm);
   fSpider.vmHub.registerVM("uiSettings", fSpider.uiSettings);
   fSpider.vmHub.bind($("#ui-container").get(0));
+
+  //auto-save the game state to localStorage whenever it changes
+  board.enableAutoSave();
 
   //in case of resize, notify board
   $(window).resize(function () {

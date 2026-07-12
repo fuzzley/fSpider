@@ -188,6 +188,8 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
     SpiderBoard.SCORE_INCREMENT_BY_AFTER_COMPLETE_SEQUENCE = 100;
     SpiderBoard.SCORE_DECREMENT_BY = 1;
     SpiderBoard.TIME_ELAPSED_INTERVAL = 1000;
+    SpiderBoard.SAVE_KEY = 'SavedGame';
+    SpiderBoard.SAVE_VERSION = 1;
 
     //fields
     SpiderBoard.prototype.stage = null;
@@ -206,6 +208,8 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
     SpiderBoard.prototype.cardAssetsImage = null;
     SpiderBoard.prototype.cardImgDim = null;
     SpiderBoard.prototype._timeElapsedTimer = null;
+    SpiderBoard.prototype._suppressSave = false;
+    SpiderBoard.prototype._saveTrigger = null;
 
     //getters/setters
     SpiderBoard.prototype.setTableauPlaceHolderImage = function (img, cropSqr) {
@@ -900,6 +904,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
     };
 
     SpiderBoard.prototype.startGame = function (shuffle, difficulty) {
+        this._suppressSave = true; //don't persist the half-dealt board mid-deal
         if (difficulty == null) {
             difficulty = GameSettings.prototype.ONE_SUIT;
         }
@@ -938,11 +943,168 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
                         pile.arrangeCards(this.settings.extend({ animate: false, volume: 0 }));
                     }.bind(this));
                     this.redraw();
+                    //deal complete - persist the fresh starting position
+                    this._suppressSave = false;
+                    this.saveState();
                 }.bind(this)
             );
         }.bind(this));
 
         this.gameInProgress = true;
+    };
+
+    //persistence (localStorage) -- mirrors the Settings save/load idiom
+    SpiderBoard.prototype.attributes = function () {
+        var serializePile = function (pile) {
+            return pile.getCards().map(function (card) {
+                return [card.getSuit(), card.getType(), card.isFaceUp() === true ? 1 : 0];
+            });
+        };
+
+        return {
+            version: SpiderBoard.SAVE_VERSION,
+            difficulty: this.settings.difficulty,
+            score: this.score,
+            moves: this.moves,
+            timeElapsed: this.timeElapsed,
+            tableau: this.tableauPiles.map(serializePile),
+            foundation: this.foundationPiles.map(serializePile),
+            stock: serializePile(this.stockPile)
+        };
+    };
+
+    SpiderBoard.prototype.saveState = function () {
+        if (this._suppressSave === true || typeof localStorage === 'undefined' || localStorage == null) {
+            return false;
+        }
+        if (this.gameInProgress !== true) {
+            //no game in progress (e.g. just won) -- drop any stale save so the next load deals fresh
+            localStorage.removeItem(SpiderBoard.SAVE_KEY);
+            return false;
+        }
+        localStorage.setItem(SpiderBoard.SAVE_KEY, JSON.stringify(this.attributes()));
+        return true;
+    };
+
+    SpiderBoard.prototype.clearSavedState = function () {
+        if (typeof localStorage !== 'undefined' && localStorage != null) {
+            localStorage.removeItem(SpiderBoard.SAVE_KEY);
+        }
+    };
+
+    SpiderBoard.prototype.loadState = function () {
+        if (typeof localStorage === 'undefined' || localStorage == null) {
+            return false;
+        }
+        var raw = localStorage.getItem(SpiderBoard.SAVE_KEY);
+        if (raw == null) {
+            return false;
+        }
+        var data;
+        try {
+            data = JSON.parse(raw);
+        } catch (ex) {
+            console.log(ex);
+            this.clearSavedState();
+            return false;
+        }
+        if (data == null || data.version !== SpiderBoard.SAVE_VERSION) {
+            return false;
+        }
+        try {
+            this.restore(data);
+            return true;
+        } catch (ex) {
+            console.log(ex);
+            this.clearSavedState();
+            return false;
+        }
+    };
+
+    SpiderBoard.prototype.restore = function (data) {
+        this._suppressSave = true;
+
+        var noAnim = this.settings.extend({ animate: false, volume: 0 });
+
+        //re-assign canonical suit/type + face images to the 104 deck cards for this difficulty
+        this.settings.difficulty = data.difficulty;
+        this.setupDeck(this.getSuitsForDifficulty(data.difficulty));
+
+        //pool of card objects keyed by "suit,type" (duplicate cards are interchangeable)
+        var pool = {};
+        this.deck.getCards().forEach(function (card) {
+            var key = card.getSuit() + ',' + card.getType();
+            (pool[key] = pool[key] || []).push(card);
+        });
+
+        var piles = this.getPiles();
+        piles.forEach(function (pile) {
+            pile.removeAllCards();
+        });
+
+        var fill = function (pile, savedCards) {
+            (savedCards || []).forEach(function (c) {
+                var key = c[0] + ',' + c[1];
+                var card = pool[key] && pool[key].shift();
+                if (card == null) {
+                    throw new Error('fSpider: saved game card pool underflow for ' + key);
+                }
+                pile.addCard(card);
+                card.setFaceUp(c[2] === 1, noAnim);
+            });
+        };
+
+        data.tableau.forEach(function (savedCards, i) {
+            fill(this.tableauPiles[i], savedCards);
+        }.bind(this));
+        data.foundation.forEach(function (savedCards, i) {
+            fill(this.foundationPiles[i], savedCards);
+        }.bind(this));
+        fill(this.stockPile, data.stock);
+
+        //statistics + timer (reset starts the timer, then override with the saved values)
+        this.resetStatistics();
+        this.score = data.score;
+        this.moves = data.moves;
+        this.timeElapsed = data.timeElapsed;
+
+        //undo history is not persisted -- start fresh
+        this.history.clear();
+        this.winText.setVisible(false);
+
+        //show + lay out (non-animated), mirroring the tail of startGame
+        piles.forEach(function (pile) {
+            pile.setVisible(true);
+        });
+        this.arrangePiles(noAnim);
+        piles.forEach(function (pile) {
+            pile.moveAllCardsToGroup();
+            pile.arrangeCards(noAnim);
+            pile.resetListening();
+            pile.resetDraggable();
+        });
+        this.redraw();
+
+        this.gameInProgress = true;
+        this._suppressSave = false;
+    };
+
+    SpiderBoard.prototype.enableAutoSave = function () {
+        var self = this;
+        //a computed that touches every observable reflecting a state-changing event;
+        //cursor increments on every move/stock-draw/undo/redo. Return a fresh array so ko
+        //notifies subscribers on any dependency change (same trick as GameSettings.changed).
+        this._saveTrigger = ko.computed(function () {
+            return [
+                self.vm.score(),
+                self.vm.moves(),
+                self.vm.gameInProgress(),
+                self.history.vm.cursor()
+            ];
+        });
+        this._saveTrigger.subscribe(function () {
+            self.saveState();
+        });
     };
 
     SpiderBoard.prototype.canUndo = function () {
