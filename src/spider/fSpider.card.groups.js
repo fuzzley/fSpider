@@ -525,13 +525,14 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
         }
         var faceDownTotalPad = faceDownCount * padTopFaceDown;
 
-        var maxPadTopFaceUp = 20;
+        var minPadTopFaceUp = 25;
+        var maxPadTopFaceUp = 28;
         var padTopFaceUp = (this.availHeight - PlayingCard.CARD_DIM.h - faceDownTotalPad) / faceUpCount;
         if (faceUpCount > 12) {
             padTopFaceUp /= 1.5;
         }
-        if (padTopFaceUp < 14) {
-            padTopFaceUp = 14;
+        if (padTopFaceUp < minPadTopFaceUp) {
+            padTopFaceUp = minPadTopFaceUp;
         }
         if (padTopFaceUp > maxPadTopFaceUp) {
             padTopFaceUp = maxPadTopFaceUp;
@@ -559,7 +560,7 @@ fSpider.TableauPile = (function (TableauPile, undefined) {
                 if (prevCard.isFaceUp() === true) {
                     y += padTopFaceUp;
                     if (prevCard.isSelected() === true) {
-                        y += padTopFaceUp;
+                        y += 10;
                     }
                 } else {
                     y += padTopFaceDown;
