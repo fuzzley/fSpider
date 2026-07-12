@@ -1,4 +1,4 @@
-﻿var fSpider = fSpider || {};
+import { fSpider } from "../fSpider.namespace.js";
 
 fSpider.Deck = (function (Deck, undefined) {
     'use strict';

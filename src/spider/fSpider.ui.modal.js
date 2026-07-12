@@ -1,4 +1,4 @@
-var fSpider = fSpider || {};
+import { fSpider } from "../fSpider.namespace.js";
 
 fSpider.Modal = (function (Modal, $, ko, undefined) {
     'use strict';

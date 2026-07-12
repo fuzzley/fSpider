@@ -3,3 +3,9 @@ dist
 public
 src/spider
 node_modules
+
+# Legacy entry markup (kept as-is)
+index.html
+
+# License text
+LICENSE.md
