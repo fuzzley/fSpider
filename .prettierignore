@@ -1,0 +1,5 @@
+# Ignore artifacts and untouched legacy/vendored code:
+dist
+public
+src/spider
+node_modules

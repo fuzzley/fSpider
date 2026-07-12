@@ -70,7 +70,6 @@ typings/
 dist
 
 # VSCode
-
 .vscode
 
 # IntelliJ project files
