@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8"/>
@@ -317,8 +317,20 @@ fSpider.restartGame = function () {
     return false;
 };
 
+fSpider.restoreGame = function () {
+    if(window.localStorage.getItem("myTime")!=undefined)
+      fSpider.board.restoreGame();
+    return true;
+};
+
 $(window).load(function () {
     fSpider.init();
+    fSpider.restoreGame();
+});
+    
+$(window).on("visibilitychange",function () {
+    if (fSpider.board.gameInProgress === true)
+       fSpider.board.saveGame();
 });
 </script>
 </body>
