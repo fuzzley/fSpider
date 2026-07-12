@@ -1,4 +1,4 @@
-﻿var fSpider = fSpider || {};
+var fSpider = fSpider || {};
 
 ////dependencies\\\\
 //fSpider
@@ -634,6 +634,7 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
         clearInterval(this._timeElapsedTimer);
         this.winText.setVisible(true);
         this.redraw();
+        this.clearStorage();
     };
 
     //helpers
@@ -893,10 +894,68 @@ fSpider.SpiderBoard = (function (SpiderBoard, Kinetic, undefined) {
 
     SpiderBoard.prototype.startNewGame = function () {
         this.startGame(true, this.settings.difficulty);
+        this.clearStorage();
     };
 
     SpiderBoard.prototype.restartGame = function () {
         this.startGame(false);
+        this.clearStorage();
+    };
+    
+    SpiderBoard.prototype.clearStorage = function () {
+        window.localStorage.removeItem("myBoard");
+        window.localStorage.removeItem("myScore");
+        window.localStorage.removeItem("myMoves");
+        window.localStorage.removeItem("myTime");
+    };
+    
+    SpiderBoard.prototype.restoreGame = function () {
+        var piles = this.getPiles();
+        this.gameInProgress = false;
+        this.resetStatistics();
+        this.winText.setVisible(false);
+        this.history.clear();
+        this.setupDeck(this.getSuitsForDifficulty(this.settings.difficulty));
+        this.deck.shuffle();
+        this.setupPiles();
+        piles.forEach(function (pile) {
+            pile.setVisible(true);
+            pile.resetCardFaces();
+        });
+        this.arrangePiles(this.settings.extendAnimate(false));
+        var self = this;
+        this.cancelDrawAnimation = false;
+        this.score = Number(window.localStorage.getItem("myScore"));
+        this.moves = Number(window.localStorage.getItem("myMoves"));
+        this.timeElapsed = Number(window.localStorage.getItem("myTime"));
+        var myBoard = JSON.parse(window.localStorage.getItem("myBoard"));
+        for(var b=0; b<myBoard.length; b++) {
+              for(var c=0; c<myBoard[b].cards.length; c++) {
+                var tipo = this.stockPile.getCards()[this.stockPile.getCards().length-1].getType();
+                var suit = this.stockPile.getCards()[this.stockPile.getCards().length-1].suit;
+                while(tipo!=myBoard[b].cards[c].type || suit!=myBoard[b].cards[c].suit) {
+                    this.stockPile.cards.push(this.stockPile.cards.shift());
+                    tipo = this.stockPile.getCards()[this.stockPile.getCards().length-1].getType();
+                    suit = this.stockPile.getCards()[this.stockPile.getCards().length-1].suit;
+                 }
+                 this.stockPile.drawCards([this.getPiles()[b]], myBoard[b].cards[c].faceup, this.settings.extend({animate: false, volume: 0 }));
+              }
+        }
+        this.redraw();
+    };
+    
+    SpiderBoard.prototype.saveGame = function () {
+        var myBoard = [];
+        for(var x=0; x<this.getPiles().length; x++) {
+           myBoard.push({pile:x,cards:[]});
+           for(var y=0; y<this.getPiles()[x].getCards().length; y++) {
+              myBoard[x].cards.push({type:this.getPiles()[x].getCards()[y].getType(),faceup:this.getPiles()[x].getCards()[y].isFaceUp(),suit:this.getPiles()[x].getCards()[y].suit});
+           }
+        }
+        window.localStorage.setItem("myBoard", JSON.stringify(myBoard));
+        window.localStorage.setItem("myScore", this.score);
+        window.localStorage.setItem("myMoves", this.moves);
+        window.localStorage.setItem("myTime", this.timeElapsed);
     };
 
     SpiderBoard.prototype.startGame = function (shuffle, difficulty) {
