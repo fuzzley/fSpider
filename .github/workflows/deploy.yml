@@ -1,20 +1,22 @@
-name: Build and Sync to Main Website
+name: Build and publish to fuzzley.info
+
+# Every push to main builds the game and publishes it to this repository's
+# site-build release. fuzzley/fuzzley fetches it from there: a scheduled
+# workflow in that repository moves its pin to the newest build within about
+# 15 minutes, and fuzzley.info redeploys.
 
 on:
   push:
     branches:
       - main
   workflow_dispatch:
-    inputs:
-      force:
-        description: 'Force deployment even if there are no changes'
-        required: false
-        type: boolean
-        default: false
 
 jobs:
-  build-and-sync:
+  build-and-publish:
     runs-on: ubuntu-latest
+    # Moves the site-build tag and uploads to its release.
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout fSpider
@@ -34,37 +36,56 @@ jobs:
       - name: Build production assets
         run: yarn build
 
-      - name: Configure git credentials
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Sync built assets to fuzzley/fuzzley
+      # fuzzley.info fetches the game from here. The site-build release keeps
+      # recent builds, each named after its commit; latest.json names the
+      # newest, and fuzzley/fuzzley pins one in frontend/games.json, which a
+      # scheduled workflow there moves to the newest every 15 minutes.
+      - name: Publish the build to the site-build release
         env:
-          PAT_TOKEN: ${{ secrets.MAIN_REPO_DEPLOY_PAT }}
-          FORCE_DEPLOY: ${{ github.event.inputs.force }}
+          GH_TOKEN: ${{ github.token }}
+          SLUG: spider
+          TAG: site-build
+          KEEP: 10
         run: |
-          # 1. Clone the main website repository (fuzzley/fuzzley)
-          git clone --depth 1 https://x-access-token:${{ env.PAT_TOKEN }}@github.com/fuzzley/fuzzley.git main-website
+          set -euo pipefail
+          asset="$SLUG-${GITHUB_SHA::7}.tar.gz"
+          tar -czf "$asset" -C dist .
+          jq -n \
+            --arg asset "$asset" \
+            --arg sha256 "$(sha256sum "$asset" | cut -d' ' -f1)" \
+            --arg commit "$GITHUB_SHA" \
+            --arg built "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            '{asset: $asset, sha256: $sha256, commit: $commit, built: $built}' \
+            > latest.json
 
-          # 2. Define the destination folder in the website repo
-          DEST_DIR="main-website/frontend/public/projects/spider/play"
-
-          # 3. Clean out any old files
-          rm -rf "$DEST_DIR"
-          mkdir -p "$DEST_DIR"
-
-          # 4. Copy new build files
-          cp -r dist/* "$DEST_DIR"/
-
-          # 5. Commit and push the updates if there are changes
-          cd main-website
-          git add .
-
-          if git diff-index --quiet HEAD && [ "$FORCE_DEPLOY" != "true" ]; then
-            echo "No changes in fSpider production build. Skipping commit."
-          else
-            git commit --allow-empty -m "chore(deploy): sync fSpider production build from fuzzley/fSpider@${{ github.sha }}"
-            git push origin HEAD
+          # The tag, and so the release, follows the newest build.
+          git tag -f "$TAG" "$GITHUB_SHA"
+          git push -f origin "refs/tags/$TAG"
+          if ! gh release view "$TAG" > /dev/null 2>&1; then
+            gh release create "$TAG" --latest=false --title "Site build" \
+              --notes "Production builds of the game for fuzzley.info, uploaded by the deploy workflow. Each archive is named after the commit it was built from, and latest.json names the newest. fuzzley/fuzzley pins one in frontend/games.json. The ten newest archives and the pinned one are kept."
           fi
 
+          # The archive goes up first, so latest.json never names a missing file.
+          gh release upload "$TAG" "$asset" --clobber
+          gh release upload "$TAG" latest.json --clobber
+
+          # Keep the newest archives and the one fuzzley.info pins. If the pin
+          # can't be read, keep everything rather than risk deleting it.
+          status=$(curl -sS -o pinned.json -w '%{http_code}' \
+            https://raw.githubusercontent.com/fuzzley/fuzzley/main/frontend/games.json || echo 000)
+          case "$status" in
+            200) pinned=$(jq -r --arg slug "$SLUG" '.[$slug].asset // empty' pinned.json) ;;
+            404) pinned="" ;;
+            *)
+              echo "::warning::Couldn't read fuzzley's games.json (HTTP $status), so no archives were deleted."
+              exit 0
+              ;;
+          esac
+          gh release view "$TAG" --json assets --jq \
+            ".assets | map(select(.name | endswith(\".tar.gz\"))) | sort_by(.createdAt) | reverse | .[$KEEP:] | .[].name" \
+            | while read -r old; do
+                if [ "$old" != "$pinned" ]; then
+                  gh release delete-asset "$TAG" "$old" --yes
+                fi
+              done
