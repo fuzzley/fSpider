@@ -19,7 +19,7 @@
     "url": "git+https://github.com/fuzzley/fSpider.git"
   },
   "author": "Andrey Gavel",
-  "license": "GPL-3.0-only",
+  "license": "GPL-3.0-or-later",
   "bugs": {
     "url": "https://github.com/fuzzley/fSpider/issues"
   },

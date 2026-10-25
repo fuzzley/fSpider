@@ -22,3 +22,7 @@ yarn prettier    # format the code with Prettier
 The game code lives in `src/` (bundled by Vite via `src/main.js`). The vendored
 libraries (jQuery, Knockout, KineticJS, Howler) and static assets are served
 as-is from `public/`.
+
+## License
+
+This project source code is licensed under the [GNU General Public License v3.0 or later](LICENSE).
